@@ -9,7 +9,8 @@ export type AdminSection =
   | "managers"
   | "reviews"
   | "tags"
-  | "hero-featured";
+  | "hero-featured"
+  | "pages";
 
 export type CorporateSection =
   | "overview"
@@ -27,6 +28,7 @@ export function AdminSidebar({ active, onChange }: SidebarProps<AdminSection>) {
     { id: "reviews", label: "Yorum Moderasyonu" },
     { id: "tags", label: "Etiketler" },
     { id: "hero-featured", label: "Hero / Öne Çıkanlar" },
+    { id: "pages", label: "Sayfa İçerikleri" },
   ];
   return (
     <aside className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">

@@ -7,12 +7,26 @@ import { getInstitutionScore } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
 
 export default function CorporatePanelPage() {
-  const { currentUser, institutions, reviews, updateInstitution, createInstitution, tags } =
-    useDemoPlatform();
+  const {
+    currentUser,
+    institutions,
+    reviews,
+    updateInstitution,
+    createInstitution,
+    tags,
+    instructors,
+    addInstructor,
+    removeInstructor,
+    updateInstitutionTags,
+    createTag,
+  } = useDemoPlatform();
   const [activeSection, setActiveSection] = useState<CorporateSection>("overview");
   const [newInstitutionName, setNewInstitutionName] = useState("");
   const [newInstitutionCity, setNewInstitutionCity] = useState("İstanbul");
   const [newInstitutionDistrict, setNewInstitutionDistrict] = useState("Merkez");
+  const [newInstructorName, setNewInstructorName] = useState("");
+  const [newInstructorBranch, setNewInstructorBranch] = useState("");
+  const [newTagName, setNewTagName] = useState("");
   const ownedInstitutions = institutions.filter((item) => item.ownerUserId === currentUser?.id);
   const institution = ownedInstitutions[0];
 
@@ -22,6 +36,9 @@ export default function CorporatePanelPage() {
 
   const institutionReviews = institution
     ? reviews.filter((item) => item.institutionId === institution.id)
+    : [];
+  const institutionInstructors = institution
+    ? instructors.filter((item) => item.institutionId === institution.id)
     : [];
   const score = institution ? getInstitutionScore(reviews, institution.id) : { average: 0, count: 0 };
 
@@ -111,6 +128,104 @@ export default function CorporatePanelPage() {
                     updateInstitution(institution.id, { longDescription: e.target.value })
                   }
                 />
+                <div>
+                  <p className="mb-1 text-sm font-semibold">Etiketler</p>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => {
+                      const active = institution.tags.includes(tag.id);
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() =>
+                            updateInstitutionTags(
+                              institution.id,
+                              active
+                                ? institution.tags.filter((t) => t !== tag.id)
+                                : [...institution.tags, tag.id],
+                            )
+                          }
+                          className={`rounded-full px-3 py-1 text-xs ${
+                            active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          {tag.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      placeholder="Yeni etiket adı"
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
+                      onClick={() => {
+                        if (!newTagName.trim()) return;
+                        const newTagId = newTagName.toLowerCase().replaceAll(" ", "-");
+                        createTag(newTagName);
+                        if (!institution.tags.includes(newTagId)) {
+                          updateInstitutionTags(institution.id, [...institution.tags, newTagId]);
+                        }
+                        setNewTagName("");
+                      }}
+                    >
+                      Etiket Ekle
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-1 text-sm font-semibold">Eğitmenler</p>
+                  <div className="space-y-2">
+                    {institutionInstructors.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between rounded-lg border border-slate-200 p-2 text-sm"
+                      >
+                        <span>
+                          {item.name} - {item.branch}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeInstructor(item.id)}
+                          className="rounded-md bg-rose-100 px-2 py-1 text-rose-700"
+                        >
+                          Çıkar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                    <input
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      placeholder="Eğitmen adı"
+                      value={newInstructorName}
+                      onChange={(e) => setNewInstructorName(e.target.value)}
+                    />
+                    <input
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      placeholder="Branş"
+                      value={newInstructorBranch}
+                      onChange={(e) => setNewInstructorBranch(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+                      onClick={() => {
+                        if (!newInstructorName.trim() || !newInstructorBranch.trim()) return;
+                        addInstructor(institution.id, newInstructorName, newInstructorBranch);
+                        setNewInstructorName("");
+                        setNewInstructorBranch("");
+                      }}
+                    >
+                      Eğitmen Ekle
+                    </button>
+                  </div>
+                </div>
               </>
             ) : (
               <p className="text-sm text-slate-600">

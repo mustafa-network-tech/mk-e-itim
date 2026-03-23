@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 import { heroSlides, institutions, reviews, tags, users } from "@/data/mockData";
-import { HeroSlide, Institution, Review, Tag, User, UserRole } from "@/types";
+import { HeroSlide, Institution, Instructor, Review, Tag, User, UserRole } from "@/types";
+import { instructors as seedInstructors } from "@/data/instructors";
 
 interface DemoContextValue {
   currentUser: User | null;
@@ -11,6 +12,7 @@ interface DemoContextValue {
   tags: Tag[];
   reviews: Review[];
   heroSlides: HeroSlide[];
+  instructors: Instructor[];
   login: (email: string, password: string) => UserRole | null;
   logout: () => void;
   addReview: (payload: Omit<Review, "id" | "createdAt" | "status">) => void;
@@ -23,6 +25,15 @@ interface DemoContextValue {
   updateReviewStatus: (reviewId: string, status: Review["status"]) => void;
   addHeroSlide: (payload: Omit<HeroSlide, "id">) => void;
   removeHeroSlide: (slideId: string) => void;
+  addInstructor: (institutionId: string, name: string, branch: string) => void;
+  removeInstructor: (instructorId: string) => void;
+  updateInstitutionTags: (institutionId: string, tags: string[]) => void;
+  staticPages: {
+    about: string;
+    privacy: string;
+    contact: string;
+  };
+  updateStaticPage: (key: "about" | "privacy" | "contact", content: string) => void;
 }
 
 const DemoContext = createContext<DemoContextValue | null>(null);
@@ -47,6 +58,12 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
   const [tagList, setTagList] = useState<Tag[]>(tags);
   const [reviewList, setReviewList] = useState<Review[]>(reviews);
   const [slideList, setSlideList] = useState<HeroSlide[]>(heroSlides);
+  const [instructorList, setInstructorList] = useState<Instructor[]>(seedInstructors);
+  const [staticPages, setStaticPages] = useState({
+    about: "Admin panelinden Admin tarafından düzenlenecektir.",
+    privacy: "Admin panelinden Admin tarafından düzenlenecektir.",
+    contact: "Admin panelinden Admin tarafından düzenlenecektir.",
+  });
 
   const login = (email: string, password: string) => {
     const found = userList.find((u) => u.email === email && u.password === password);
@@ -108,6 +125,7 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
   const deleteInstitution = (institutionId: string) => {
     setInstitutionList((prev) => prev.filter((item) => item.id !== institutionId));
     setReviewList((prev) => prev.filter((item) => item.institutionId !== institutionId));
+    setInstructorList((prev) => prev.filter((item) => item.institutionId !== institutionId));
     setUserList((prev) =>
       prev.map((item) =>
         item.institutionId === institutionId ? { ...item, institutionId: undefined } : item,
@@ -127,6 +145,44 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
     setSlideList((prev) => prev.filter((item) => item.id !== slideId));
   };
 
+  const addInstructor = (institutionId: string, name: string, branch: string) => {
+    const newInstructor: Instructor = {
+      id: `ins-${Date.now()}`,
+      institutionId,
+      name,
+      branch,
+    };
+    setInstructorList((prev) => [...prev, newInstructor]);
+    setInstitutionList((prev) =>
+      prev.map((item) =>
+        item.id === institutionId ? { ...item, teacherCount: item.teacherCount + 1 } : item,
+      ),
+    );
+  };
+
+  const removeInstructor = (instructorId: string) => {
+    const target = instructorList.find((item) => item.id === instructorId);
+    if (!target) return;
+    setInstructorList((prev) => prev.filter((item) => item.id !== instructorId));
+    setInstitutionList((prev) =>
+      prev.map((item) =>
+        item.id === target.institutionId
+          ? { ...item, teacherCount: Math.max(item.teacherCount - 1, 0) }
+          : item,
+      ),
+    );
+  };
+
+  const updateInstitutionTags = (institutionId: string, tags: string[]) => {
+    setInstitutionList((prev) =>
+      prev.map((item) => (item.id === institutionId ? { ...item, tags } : item)),
+    );
+  };
+
+  const updateStaticPage = (key: "about" | "privacy" | "contact", content: string) => {
+    setStaticPages((prev) => ({ ...prev, [key]: content }));
+  };
+
   const value = useMemo(
     () => ({
       currentUser,
@@ -135,6 +191,7 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
       tags: tagList,
       reviews: reviewList,
       heroSlides: slideList,
+      instructors: instructorList,
       login,
       logout,
       addReview,
@@ -147,8 +204,22 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
       updateReviewStatus,
       addHeroSlide,
       removeHeroSlide,
+      addInstructor,
+      removeInstructor,
+      updateInstitutionTags,
+      staticPages,
+      updateStaticPage,
     }),
-    [currentUser, userList, institutionList, tagList, reviewList, slideList],
+    [
+      currentUser,
+      userList,
+      institutionList,
+      tagList,
+      reviewList,
+      slideList,
+      instructorList,
+      staticPages,
+    ],
   );
 
   return <DemoContext.Provider value={value}>{children}</DemoContext.Provider>;

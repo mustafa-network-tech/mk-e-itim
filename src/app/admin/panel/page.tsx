@@ -15,18 +15,29 @@ export default function AdminPanelPage() {
     reviews,
     tags,
     heroSlides,
+    instructors,
     createTag,
     toggleFeatured,
     deleteInstitution,
     updateReviewStatus,
     addHeroSlide,
     removeHeroSlide,
+    addInstructor,
+    removeInstructor,
+    updateInstitutionTags,
+    updateInstitution,
+    staticPages,
+    updateStaticPage,
   } = useDemoPlatform();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [moderationMessage, setModerationMessage] = useState("");
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroImage, setHeroImage] = useState("");
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState<string>("");
+  const [newInstructorName, setNewInstructorName] = useState("");
+  const [newInstructorBranch, setNewInstructorBranch] = useState("");
+  const [newCardTagName, setNewCardTagName] = useState("");
 
   if (!currentUser || currentUser.role !== "admin") {
     return <div className="mx-auto max-w-4xl px-4 py-10">Bu alana erişim için admin girişi yapın.</div>;
@@ -76,6 +87,12 @@ export default function AdminPanelPage() {
                     </p>
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={() => setSelectedInstitutionId(item.id)}
+                        className="rounded-md bg-indigo-100 px-2 py-1 text-indigo-700"
+                      >
+                        Kartı Düzenle
+                      </button>
+                      <button
                         onClick={() => toggleFeatured(item.id)}
                         className="rounded-md bg-slate-100 px-2 py-1"
                       >
@@ -92,6 +109,134 @@ export default function AdminPanelPage() {
                 ))}
               </div>
             </div>
+            {selectedInstitutionId && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <h3 className="mb-3 text-lg font-bold">Seçili Kart Düzenleme</h3>
+                {(() => {
+                  const selected = institutions.find((i) => i.id === selectedInstitutionId);
+                  if (!selected) return <p className="text-sm text-slate-500">Kurum bulunamadı.</p>;
+                  const selectedInstructors = instructors.filter(
+                    (ins) => ins.institutionId === selected.id,
+                  );
+                  return (
+                    <div className="space-y-3">
+                      <input
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={selected.name}
+                        onChange={(e) => updateInstitution(selected.id, { name: e.target.value })}
+                      />
+                      <textarea
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={selected.longDescription}
+                        onChange={(e) =>
+                          updateInstitution(selected.id, { longDescription: e.target.value })
+                        }
+                      />
+                      <div>
+                        <p className="mb-1 text-sm font-semibold">Etiketler</p>
+                        <div className="flex flex-wrap gap-2">
+                          {tags.map((tag) => {
+                            const active = selected.tags.includes(tag.id);
+                            return (
+                              <button
+                                key={tag.id}
+                                type="button"
+                                onClick={() =>
+                                  updateInstitutionTags(
+                                    selected.id,
+                                    active
+                                      ? selected.tags.filter((t) => t !== tag.id)
+                                      : [...selected.tags, tag.id],
+                                  )
+                                }
+                                className={`rounded-full px-3 py-1 text-xs ${
+                                  active
+                                    ? "bg-slate-900 text-white"
+                                    : "bg-slate-100 text-slate-700"
+                                }`}
+                              >
+                                {tag.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-2 flex gap-2">
+                          <input
+                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                            placeholder="Yeni etiket adı"
+                            value={newCardTagName}
+                            onChange={(e) => setNewCardTagName(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
+                            onClick={() => {
+                              if (!newCardTagName.trim()) return;
+                              const newTagId = newCardTagName.toLowerCase().replaceAll(" ", "-");
+                              createTag(newCardTagName);
+                              if (!selected.tags.includes(newTagId)) {
+                                updateInstitutionTags(selected.id, [...selected.tags, newTagId]);
+                              }
+                              setNewCardTagName("");
+                            }}
+                          >
+                            Etiket Ekle
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mb-1 text-sm font-semibold">Eğitmenler</p>
+                        <div className="space-y-2">
+                          {selectedInstructors.map((ins) => (
+                            <div
+                              key={ins.id}
+                              className="flex items-center justify-between rounded-lg border border-slate-200 p-2 text-sm"
+                            >
+                              <span>
+                                {ins.name} - {ins.branch}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeInstructor(ins.id)}
+                                className="rounded-md bg-rose-100 px-2 py-1 text-rose-700"
+                              >
+                                Çıkar
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                          <input
+                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                            placeholder="Eğitmen adı"
+                            value={newInstructorName}
+                            onChange={(e) => setNewInstructorName(e.target.value)}
+                          />
+                          <input
+                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                            placeholder="Branş"
+                            value={newInstructorBranch}
+                            onChange={(e) => setNewInstructorBranch(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+                            onClick={() => {
+                              if (!newInstructorName.trim() || !newInstructorBranch.trim()) return;
+                              addInstructor(selected.id, newInstructorName, newInstructorBranch);
+                              setNewInstructorName("");
+                              setNewInstructorBranch("");
+                            }}
+                          >
+                            Eğitmen Ekle
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </>
         )}
 
@@ -264,6 +409,41 @@ export default function AdminPanelPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+        {activeSection === "pages" && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <h3 className="text-lg font-bold">Sayfa İçerikleri (Sadece Admin)</h3>
+            <p className="text-xs text-slate-500">
+              Hakkımızda, Gizlilik ve İletişim içerikleri yalnızca admin tarafından düzenlenir.
+            </p>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Hakkımızda</label>
+              <textarea
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                rows={4}
+                value={staticPages.about}
+                onChange={(e) => updateStaticPage("about", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Gizlilik</label>
+              <textarea
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                rows={4}
+                value={staticPages.privacy}
+                onChange={(e) => updateStaticPage("privacy", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">İletişim</label>
+              <textarea
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                rows={4}
+                value={staticPages.contact}
+                onChange={(e) => updateStaticPage("contact", e.target.value)}
+              />
             </div>
           </div>
         )}

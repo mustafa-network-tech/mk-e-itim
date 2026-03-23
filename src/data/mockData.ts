@@ -241,13 +241,6 @@ export const reviews: Review[] = [
 
 export const heroSlides: HeroSlide[] = [
   {
-    id: "h-1",
-    title: "Eğitim kariyerinize yön verecek platform",
-    subtitle: "Kursları keşfedin, karşılaştırın ve en doğru seçimi yapın",
-    image:
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1800&q=80",
-  },
-  {
     id: "h-2",
     title: "Doğru kurumu bulun, hedefinize hızla ulaşın",
     subtitle: "Şehir, etiket ve fiyat bazlı güçlü arama deneyimi",

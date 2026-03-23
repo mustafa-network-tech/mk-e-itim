@@ -14,13 +14,19 @@ export default function AdminPanelPage() {
     users,
     reviews,
     tags,
+    heroSlides,
     createTag,
     toggleFeatured,
     deleteInstitution,
     updateReviewStatus,
+    addHeroSlide,
+    removeHeroSlide,
   } = useDemoPlatform();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [moderationMessage, setModerationMessage] = useState("");
+  const [heroTitle, setHeroTitle] = useState("");
+  const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [heroImage, setHeroImage] = useState("");
 
   if (!currentUser || currentUser.role !== "admin") {
     return <div className="mx-auto max-w-4xl px-4 py-10">Bu alana erişim için admin girişi yapın.</div>;
@@ -173,11 +179,92 @@ export default function AdminPanelPage() {
         )}
 
         {activeSection === "hero-featured" && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <h3 className="mb-2 text-lg font-bold">Hero / Öne Çıkanlar</h3>
-            <p className="text-sm text-slate-600">
-              Bu bölümde hero slaytları ve öne çıkan kurum görünürlüğü admin tarafından yönetilir.
-            </p>
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h3 className="mb-2 text-lg font-bold">Hero / Öne Çıkanlar</h3>
+              <p className="mb-3 text-sm text-slate-600">
+                Bu bölümde sadece admin hero görsellerini yönetir ve kurumları öne çıkarır.
+              </p>
+              <div className="grid gap-2">
+                <input
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="Hero başlığı"
+                  value={heroTitle}
+                  onChange={(e) => setHeroTitle(e.target.value)}
+                />
+                <input
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="Hero alt başlığı"
+                  value={heroSubtitle}
+                  onChange={(e) => setHeroSubtitle(e.target.value)}
+                />
+                <input
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="Görsel URL"
+                  value={heroImage}
+                  onChange={(e) => setHeroImage(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!heroTitle.trim() || !heroSubtitle.trim() || !heroImage.trim()) return;
+                    addHeroSlide({
+                      title: heroTitle,
+                      subtitle: heroSubtitle,
+                      image: heroImage,
+                    });
+                    setHeroTitle("");
+                    setHeroSubtitle("");
+                    setHeroImage("");
+                  }}
+                  className="w-fit rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Hero Slide Ekle
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h4 className="mb-3 font-bold">Mevcut Hero Slaytları</h4>
+              <div className="space-y-2">
+                {heroSlides.map((slide) => (
+                  <div
+                    key={slide.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-2 text-sm"
+                  >
+                    <p>{slide.title}</p>
+                    <button
+                      type="button"
+                      onClick={() => removeHeroSlide(slide.id)}
+                      className="rounded-md bg-rose-100 px-2 py-1 text-rose-700"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h4 className="mb-3 font-bold">Öne Çıkan Kurumlar</h4>
+              <div className="space-y-2">
+                {institutions.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-2 text-sm"
+                  >
+                    <p>{item.name}</p>
+                    <button
+                      type="button"
+                      onClick={() => toggleFeatured(item.id)}
+                      className="rounded-md bg-slate-100 px-2 py-1"
+                    >
+                      {item.featured ? "Öne Çıkandan Kaldır" : "Öne Çıkar"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </section>

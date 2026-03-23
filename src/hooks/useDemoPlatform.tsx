@@ -21,6 +21,8 @@ interface DemoContextValue {
   toggleFeatured: (institutionId: string) => void;
   deleteInstitution: (institutionId: string) => void;
   updateReviewStatus: (reviewId: string, status: Review["status"]) => void;
+  addHeroSlide: (payload: Omit<HeroSlide, "id">) => void;
+  removeHeroSlide: (slideId: string) => void;
 }
 
 const DemoContext = createContext<DemoContextValue | null>(null);
@@ -44,7 +46,7 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
   const [institutionList, setInstitutionList] = useState<Institution[]>(institutions);
   const [tagList, setTagList] = useState<Tag[]>(tags);
   const [reviewList, setReviewList] = useState<Review[]>(reviews);
-  const [slideList] = useState<HeroSlide[]>(heroSlides);
+  const [slideList, setSlideList] = useState<HeroSlide[]>(heroSlides);
 
   const login = (email: string, password: string) => {
     const found = userList.find((u) => u.email === email && u.password === password);
@@ -117,6 +119,14 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
     setReviewList((prev) => prev.map((item) => (item.id === reviewId ? { ...item, status } : item)));
   };
 
+  const addHeroSlide = (payload: Omit<HeroSlide, "id">) => {
+    setSlideList((prev) => [{ ...payload, id: `h-${Date.now()}` }, ...prev]);
+  };
+
+  const removeHeroSlide = (slideId: string) => {
+    setSlideList((prev) => prev.filter((item) => item.id !== slideId));
+  };
+
   const value = useMemo(
     () => ({
       currentUser,
@@ -135,6 +145,8 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
       toggleFeatured,
       deleteInstitution,
       updateReviewStatus,
+      addHeroSlide,
+      removeHeroSlide,
     }),
     [currentUser, userList, institutionList, tagList, reviewList, slideList],
   );

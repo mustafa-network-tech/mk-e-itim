@@ -57,6 +57,13 @@ export interface HeroSlide {
   image: string;
 }
 
+export interface Instructor {
+  id: string;
+  institutionId: string;
+  name: string;
+  branch: string;
+}
+
 export interface InstitutionFilters {
   query: string;
   city: string;

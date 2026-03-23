@@ -7,12 +7,14 @@ import { TagBadge } from "@/components/ui/TagBadge";
 import { getInstitutionScore } from "@/lib/institutions";
 import { ReviewSection } from "@/components/review/ReviewSection";
 import { PageNav } from "@/components/ui/PageNav";
+import { instructors } from "@/data/instructors";
 
 export default function InstitutionDetailPage() {
   const params = useParams<{ id: string }>();
   const { institutions, tags, reviews } = useDemoPlatform();
   const institution = institutions.find((item) => item.id === params.id);
   if (!institution) return notFound();
+  const institutionInstructors = instructors.filter((item) => item.institutionId === institution.id);
 
   const score = getInstitutionScore(reviews, institution.id);
 
@@ -50,6 +52,17 @@ export default function InstitutionDetailPage() {
             <a href={institution.website} target="_blank" rel="noreferrer">
               Web sitesi
             </a>
+          </div>
+          <div className="pt-2">
+            <h2 className="mb-2 text-lg font-bold text-slate-900">Eğitmen Kadrosu</h2>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {institutionInstructors.map((item) => (
+                <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="font-semibold text-slate-900">{item.name}</p>
+                  <p className="text-sm text-slate-600">{item.branch}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

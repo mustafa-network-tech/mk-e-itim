@@ -7,6 +7,7 @@ export function InstitutionForm() {
   const { tags, users, createManager, createInstitution } = useDemoPlatform();
   const managers = users.filter((item) => item.role === "institution_manager");
   const [name, setName] = useState("");
+  const [institutionType, setInstitutionType] = useState<"kurs" | "dershane">("kurs");
   const [city, setCity] = useState("İstanbul");
   const [district, setDistrict] = useState("Merkez");
   const [managerId, setManagerId] = useState("");
@@ -33,7 +34,7 @@ export function InstitutionForm() {
         }
         createInstitution({
           name,
-          type: "kurs",
+          type: institutionType,
           city,
           district,
           address: `${district} / ${city}`,
@@ -53,9 +54,13 @@ export function InstitutionForm() {
           ownerUserId: ownerId,
         });
         setName("");
+        setInstitutionType("kurs");
       }}
     >
-      <h3 className="text-lg font-bold">Kurum Oluştur (Yönetici Ataması Zorunlu)</h3>
+      <h3 className="text-lg font-bold">Yeni Kurs / Dershane Kartı Oluştur</h3>
+      <p className="text-xs text-slate-500">
+        Admin panelinden yeni kurs, dershane veya kurum kartı oluşturabilirsiniz.
+      </p>
       <input
         className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
         placeholder="Kurum adı"
@@ -63,6 +68,14 @@ export function InstitutionForm() {
         onChange={(e) => setName(e.target.value)}
         required
       />
+      <select
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        value={institutionType}
+        onChange={(e) => setInstitutionType(e.target.value as "kurs" | "dershane")}
+      >
+        <option value="kurs">Kurs</option>
+        <option value="dershane">Dershane</option>
+      </select>
       <div className="grid grid-cols-2 gap-2">
         <input
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
@@ -119,7 +132,7 @@ export function InstitutionForm() {
         ))}
       </div>
       <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
-        Kurumu Kaydet
+        Kartı Kaydet
       </button>
     </form>
   );

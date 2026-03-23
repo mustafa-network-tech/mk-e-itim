@@ -20,6 +20,7 @@ export default function AdminPanelPage() {
     updateReviewStatus,
   } = useDemoPlatform();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
+  const [moderationMessage, setModerationMessage] = useState("");
 
   if (!currentUser || currentUser.role !== "admin") {
     return <div className="mx-auto max-w-4xl px-4 py-10">Bu alana erişim için admin girişi yapın.</div>;
@@ -55,6 +56,9 @@ export default function AdminPanelPage() {
             <InstitutionForm />
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <h3 className="mb-3 text-lg font-bold">Kurumlar Yönetimi</h3>
+              <p className="mb-3 text-xs text-slate-500">
+                Bu alanda admin yeni kurs/dershane ekleyebilir, kart oluşturabilir ve kurumları yönetebilir.
+              </p>
               <div className="space-y-2">
                 {institutions.map((item) => (
                   <div
@@ -110,6 +114,11 @@ export default function AdminPanelPage() {
         {activeSection === "reviews" && (
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <h3 className="mb-3 text-lg font-bold">Yorum Moderasyonu</h3>
+            {moderationMessage && (
+              <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                {moderationMessage}
+              </p>
+            )}
             <div className="space-y-2">
               {reviews.map((review) => {
                 const institution = institutions.find((i) => i.id === review.institutionId);
@@ -122,14 +131,24 @@ export default function AdminPanelPage() {
                     <p className="text-xs text-slate-500">Durum: {review.status}</p>
                     <div className="mt-2 flex gap-2">
                       <button
-                        onClick={() => updateReviewStatus(review.id, "onaylandi")}
-                        className="rounded-md bg-emerald-100 px-2 py-1 text-emerald-700"
+                        type="button"
+                        onClick={() => {
+                          if (currentUser.role !== "admin") return;
+                          updateReviewStatus(review.id, "onaylandi");
+                          setModerationMessage("Yorum başarıyla onaylandı.");
+                        }}
+                        className="cursor-pointer rounded-md bg-emerald-100 px-2 py-1 text-emerald-700"
                       >
                         Onayla
                       </button>
                       <button
-                        onClick={() => updateReviewStatus(review.id, "reddedildi")}
-                        className="rounded-md bg-rose-100 px-2 py-1 text-rose-700"
+                        type="button"
+                        onClick={() => {
+                          if (currentUser.role !== "admin") return;
+                          updateReviewStatus(review.id, "reddedildi");
+                          setModerationMessage("Yorum reddedildi.");
+                        }}
+                        className="cursor-pointer rounded-md bg-rose-100 px-2 py-1 text-rose-700"
                       >
                         Reddet
                       </button>

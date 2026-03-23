@@ -16,7 +16,8 @@ export type CorporateSection =
   | "institution-info"
   | "card-info"
   | "reviews-ratings"
-  | "edit-card";
+  | "edit-card"
+  | "new-institution";
 
 export function AdminSidebar({ active, onChange }: SidebarProps<AdminSection>) {
   const items: { id: AdminSection; label: string }[] = [
@@ -54,6 +55,7 @@ export function CorporateSidebar({ active, onChange }: SidebarProps<CorporateSec
     { id: "card-info", label: "Kart Bilgileri" },
     { id: "reviews-ratings", label: "Yorumlar ve Puanlar" },
     { id: "edit-card", label: "Kurum Kartını Düzenle" },
+    { id: "new-institution", label: "Yeni Kurum Ekle" },
   ];
   return (
     <aside className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">

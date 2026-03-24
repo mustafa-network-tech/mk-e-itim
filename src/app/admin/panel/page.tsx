@@ -4,7 +4,7 @@ import { useState } from "react";
 import { InstitutionForm } from "@/components/panel/InstitutionForm";
 import { AdminSection, AdminSidebar, StatsCard } from "@/components/panel/Sidebars";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
-import { getInstitutionScore } from "@/lib/institutions";
+import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
 
 export default function AdminPanelPage() {
@@ -46,7 +46,7 @@ export default function AdminPanelPage() {
   const avgRating =
     institutions.length === 0
       ? 0
-      : institutions.reduce((acc, item) => acc + getInstitutionScore(reviews, item.id).average, 0) /
+      : institutions.reduce((acc, item) => acc + getPublicRating(item, reviews).average, 0) /
         institutions.length;
 
   return (

@@ -5,13 +5,13 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { InstitutionCard } from "@/components/institution/InstitutionCard";
 import { TagBadge } from "@/components/ui/TagBadge";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
-import { getInstitutionScore } from "@/lib/institutions";
+import { getPublicRating } from "@/lib/institutions";
 
 export default function Home() {
   const { institutions, tags, reviews } = useDemoPlatform();
   const featured = institutions.filter((item) => item.featured).slice(0, 6);
   const topRated = [...institutions]
-    .sort((a, b) => getInstitutionScore(reviews, b.id).average - getInstitutionScore(reviews, a.id).average)
+    .sort((a, b) => getPublicRating(b, reviews).average - getPublicRating(a, reviews).average)
     .slice(0, 4);
   const latest = [...institutions].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
@@ -30,12 +30,7 @@ export default function Home() {
         <h2 className="text-2xl font-bold">Öne Çıkan Kurslar</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {featured.map((institution) => (
-            <InstitutionCard
-              key={institution.id}
-              institution={institution}
-              reviews={reviews}
-              tags={tags}
-            />
+            <InstitutionCard key={institution.id} institution={institution} reviews={reviews} />
           ))}
         </div>
       </section>
@@ -43,12 +38,7 @@ export default function Home() {
         <h2 className="text-2xl font-bold">En Yüksek Puanlı Kurumlar</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {topRated.map((institution) => (
-            <InstitutionCard
-              key={institution.id}
-              institution={institution}
-              reviews={reviews}
-              tags={tags}
-            />
+            <InstitutionCard key={institution.id} institution={institution} reviews={reviews} />
           ))}
         </div>
       </section>
@@ -56,12 +46,7 @@ export default function Home() {
         <h2 className="text-2xl font-bold">Yeni Eklenen Kurumlar</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {latest.map((institution) => (
-            <InstitutionCard
-              key={institution.id}
-              institution={institution}
-              reviews={reviews}
-              tags={tags}
-            />
+            <InstitutionCard key={institution.id} institution={institution} reviews={reviews} />
           ))}
         </div>
       </section>

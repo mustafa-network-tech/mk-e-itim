@@ -1,86 +1,66 @@
-"use client";
-
+import Image from "next/image";
 import Link from "next/link";
-import { Institution, Review, Tag } from "@/types";
-import { getInstitutionScore } from "@/lib/institutions";
+import { Institution, Review } from "@/types";
+import { getPublicRating, institutionCoverImage } from "@/lib/institutions";
 import { RatingStars } from "@/components/ui/RatingStars";
-import { TagBadge } from "@/components/ui/TagBadge";
-import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 
 interface InstitutionCardProps {
   institution: Institution;
   reviews: Review[];
-  tags: Tag[];
 }
 
-export function InstitutionCard({ institution, reviews, tags }: InstitutionCardProps) {
-  const { instructors } = useDemoPlatform();
-  const score = getInstitutionScore(reviews, institution.id);
-  const institutionInstructors = instructors.filter((item) => item.institutionId === institution.id);
-  const previewInstructors =
-    institutionInstructors.length > 0
-      ? institutionInstructors.slice(0, 2)
-      : [
-          { id: `${institution.id}-f1`, name: "Demo Eğitmen 1", branch: "Matematik" },
-          { id: `${institution.id}-f2`, name: "Demo Eğitmen 2", branch: "İngilizce" },
-        ];
-  const mappedTags = institution.tags
-    .map((tagId) => tags.find((item) => item.id === tagId)?.name ?? tagId)
-    .slice(0, 3);
-  const hiddenCount = Math.max(institution.tags.length - 3, 0);
+export function InstitutionCard({ institution, reviews }: InstitutionCardProps) {
+  const { average, count } = getPublicRating(institution, reviews);
+  const cover = institutionCoverImage(institution);
+  const categoryLabel = institution.category;
+  const priceLine = institution.price.trim() ? institution.price : institution.priceRange;
+
   return (
-    <article className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-      <img src={institution.coverImage} alt={institution.name} className="h-44 w-full object-cover" />
-      <div className="space-y-3 p-4">
-        <h3 className="text-lg font-bold text-slate-900">{institution.name}</h3>
-        <p className="text-sm text-slate-600">
-          {institution.city} / {institution.district} • {institution.type}
-        </p>
-        <div className="flex items-center gap-2">
-          <RatingStars value={score.average} size="sm" />
-          <span className="text-sm text-slate-500">
-            {score.average.toFixed(1)} ({score.count})
-          </span>
+    <Link
+      href={`/institutions/${institution.id}`}
+      className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+    >
+      <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition duration-300 ease-out hover:scale-[1.02] hover:shadow-xl">
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-200">
+          {cover ? (
+            <Image
+              src={cover}
+              alt={institution.name}
+              fill
+              className="object-cover transition duration-500 ease-out group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              loading="lazy"
+            />
+          ) : null}
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent"
+            aria-hidden
+          />
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-100/90">{categoryLabel}</p>
+            <h3 className="mt-1 line-clamp-2 text-lg font-bold leading-snug text-white drop-shadow-sm">
+              {institution.name}
+            </h3>
+          </div>
         </div>
-        <p className="line-clamp-2 text-sm text-slate-700">{institution.shortDescription}</p>
-        <div className="flex flex-wrap gap-2">
-          {mappedTags.map((tag) => (
-            <TagBadge key={tag} label={tag} />
-          ))}
-          {hiddenCount > 0 && <span className="text-sm text-slate-500">+{hiddenCount} etiket</span>}
+
+        <div className="flex flex-1 flex-col gap-3 p-4">
+          <p className="text-sm text-slate-600">
+            {institution.city} / {institution.district}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <RatingStars value={average} size="sm" />
+            <span className="text-sm text-slate-500">
+              {average.toFixed(1)} · {count} yorum
+            </span>
+          </div>
+
+          <p className="line-clamp-2 text-sm leading-relaxed text-slate-700">{institution.shortDescription}</p>
+
+          <p className="mt-auto text-sm font-semibold text-slate-900">{priceLine}</p>
         </div>
-        <p className="text-sm font-semibold text-slate-800">
-          ₺{institution.minPrice.toLocaleString("tr-TR")} - ₺
-          {institution.maxPrice.toLocaleString("tr-TR")} • {institution.teacherCount} eğitmen
-        </p>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
-          <p className="mb-1 text-xs font-semibold text-slate-700">Demo Eğitmenler</p>
-          {previewInstructors.map((instructor) => (
-            <p key={instructor.id} className="text-xs text-slate-600">
-              {instructor.name} - {instructor.branch}
-            </p>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 pt-1">
-          <Link
-            href={`/institutions/${institution.id}`}
-            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
-          >
-            Detay
-          </Link>
-          <a href={`tel:${institution.phone}`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
-            Ara
-          </a>
-          <a
-            href={institution.website}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          >
-            Web Sitesi
-          </a>
-        </div>
-      </div>
-    </article>
+      </article>
+    </Link>
   );
 }

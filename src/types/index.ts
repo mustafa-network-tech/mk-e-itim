@@ -14,20 +14,47 @@ export interface Institution {
   id: string;
   name: string;
   type: "kurs" | "dershane";
+  /** Kart ve detayda gösterilen ana kategori etiketi */
+  category: string;
   city: string;
   district: string;
+  neighborhood: string;
   address: string;
   phone: string;
   website: string;
+  /** WhatsApp için ülke kodlu rakam dizisi veya görüntülenebilir format */
+  whatsapp: string;
   shortDescription: string;
   longDescription: string;
-  teacherCount: number;
+  /** Tek satırlık fiyat özeti (örn. aylık paket) */
+  price: string;
+  /** Aralık veya aralık metni */
+  priceRange: string;
   minPrice: number;
   maxPrice: number;
+  /** Onaylı yorum yoksa kart/hero için gösterim */
+  rating: number;
+  /** Onaylı yorum yoksa gösterilecek toplam yorum sayısı (platform istatistiği) */
+  reviewCount: number;
+  teacherCount: number;
+  /** Kadro açıklaması (detay sayfası; öğretmen adı listesi değil, özet metin) */
+  teacherInfo: string;
   programs: string[];
   tags: string[];
-  coverImage: string;
-  galleryImages: string[];
+  /** [0] kapak görseli; galeri için ek URL'ler */
+  images: string[];
+  weeklyHours: number;
+  totalHours: number;
+  oneToOneLessonCount: number;
+  classroomCount: number;
+  capacity: number;
+  classSize: number;
+  libraryCapacity: number;
+  hasPublicationSupport: boolean;
+  examCount: number;
+  hasDigitalPlatform: boolean;
+  digitalPlatformInfo: string;
+  coachingRatio: string;
   featured: boolean;
   topVisible?: boolean;
   createdAt: string;

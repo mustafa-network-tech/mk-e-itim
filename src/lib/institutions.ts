@@ -1,13 +1,15 @@
 import { Institution, InstitutionFilters, Review } from "@/types";
 
-export function getInstitutionScore(reviews: Review[], institutionId: string) {
-  const institutionReviews = reviews.filter((r) => r.institutionId === institutionId);
-  const count = institutionReviews.length;
-  const average =
-    count === 0
-      ? 0
-      : institutionReviews.reduce((acc, item) => acc + item.rating, 0) / count;
-  return { average, count };
+/** Listeleme ve filtrelerde: onaylı yorum varsa ondan; yoksa kurumun sakladığı özet puan */
+export function getPublicRating(institution: Institution, reviews: Review[]) {
+  const approved = reviews.filter(
+    (r) => r.institutionId === institution.id && r.status === "onaylandi",
+  );
+  if (approved.length > 0) {
+    const average = approved.reduce((acc, r) => acc + r.rating, 0) / approved.length;
+    return { average, count: approved.length };
+  }
+  return { average: institution.rating, count: institution.reviewCount };
 }
 
 export function filterInstitutions(
@@ -16,7 +18,7 @@ export function filterInstitutions(
   filters: InstitutionFilters,
 ) {
   return institutions.filter((institution) => {
-    const text = `${institution.name} ${institution.shortDescription} ${institution.city}`.toLowerCase();
+    const text = `${institution.name} ${institution.shortDescription} ${institution.city} ${institution.category}`.toLowerCase();
     const queryMatch = filters.query ? text.includes(filters.query.toLowerCase()) : true;
     const cityMatch = filters.city ? institution.city === filters.city : true;
     const typeMatch = filters.type ? institution.type === filters.type : true;
@@ -28,8 +30,8 @@ export function filterInstitutions(
       filters.tags.length === 0
         ? true
         : filters.tags.every((selectedTag) => institution.tags.includes(selectedTag));
-    const score = getInstitutionScore(reviews, institution.id);
-    const ratingMatch = score.average >= filters.minRating;
+    const { average } = getPublicRating(institution, reviews);
+    const ratingMatch = average >= filters.minRating;
 
     return (
       queryMatch &&
@@ -41,4 +43,18 @@ export function filterInstitutions(
       ratingMatch
     );
   });
+}
+
+export function institutionWhatsAppHref(institution: Institution, presetMessage?: string) {
+  const digits = institution.whatsapp.replace(/\D/g, "");
+  const text = presetMessage ?? `Merhaba, ${institution.name} hakkında bilgi almak istiyorum.`;
+  const encoded = encodeURIComponent(text);
+  if (digits.length >= 10) {
+    return `https://api.whatsapp.com/send?phone=${digits}&text=${encoded}`;
+  }
+  return `https://api.whatsapp.com/send?text=${encoded}`;
+}
+
+export function institutionCoverImage(institution: Institution) {
+  return institution.images[0] ?? "";
 }

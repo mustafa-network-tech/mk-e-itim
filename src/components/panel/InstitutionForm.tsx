@@ -38,19 +38,9 @@ export function InstitutionForm() {
           city,
           district,
           address: `${district} / ${city}`,
-          phone: "0212 000 00 00",
-          website: "https://www.demo-kurum.com",
           shortDescription: "Admin panelinden oluşturulan demo kurum kartı.",
           longDescription: "Bu kurum, admin paneli create institution akışı için oluşturulmuştur.",
-          teacherCount: 10,
-          minPrice: 3000,
-          maxPrice: 7000,
-          programs: ["TYT", "AYT"],
           tags: selectedTags,
-          coverImage:
-            "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80",
-          galleryImages: [],
-          featured: false,
           ownerUserId: ownerId,
         });
         setName("");

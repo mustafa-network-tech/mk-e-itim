@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 import { heroSlides, institutions, reviews, tags, users } from "@/data/mockData";
+import { INSTITUTION_DEFAULTS, type InstitutionCreateInput } from "@/data/institutionDefaults";
 import { HeroSlide, Institution, Instructor, Review, Tag, User, UserRole } from "@/types";
 import { instructors as seedInstructors } from "@/data/instructors";
 
@@ -18,7 +19,7 @@ interface DemoContextValue {
   addReview: (payload: Omit<Review, "id" | "createdAt" | "status">) => void;
   updateInstitution: (institutionId: string, payload: Partial<Institution>) => void;
   createManager: (payload: Omit<User, "id" | "role">) => User;
-  createInstitution: (payload: Omit<Institution, "id" | "createdAt">) => Institution;
+  createInstitution: (payload: InstitutionCreateInput) => Institution;
   createTag: (name: string) => void;
   toggleFeatured: (institutionId: string) => void;
   deleteInstitution: (institutionId: string) => void;
@@ -100,11 +101,12 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
     return manager;
   };
 
-  const createInstitution = (payload: Omit<Institution, "id" | "createdAt">) => {
+  const createInstitution = (payload: InstitutionCreateInput) => {
     const institution: Institution = {
+      ...INSTITUTION_DEFAULTS,
       ...payload,
       id: `inst-${Date.now()}`,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString().slice(0, 10),
     };
     setInstitutionList((prev) => [institution, ...prev]);
     return institution;

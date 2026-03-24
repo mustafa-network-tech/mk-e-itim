@@ -50,12 +50,7 @@ function ListingsContent() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((institution) => (
-              <InstitutionCard
-                key={institution.id}
-                institution={institution}
-                reviews={reviews}
-                tags={tags}
-              />
+              <InstitutionCard key={institution.id} institution={institution} reviews={reviews} />
             ))}
           </div>
         )}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CorporateSection, CorporateSidebar, StatsCard } from "@/components/panel/Sidebars";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
-import { getInstitutionScore } from "@/lib/institutions";
+import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
 
 export default function CorporatePanelPage() {
@@ -40,7 +40,7 @@ export default function CorporatePanelPage() {
   const institutionInstructors = institution
     ? instructors.filter((item) => item.institutionId === institution.id)
     : [];
-  const score = institution ? getInstitutionScore(reviews, institution.id) : { average: 0, count: 0 };
+  const score = institution ? getPublicRating(institution, reviews) : { average: 0, count: 0 };
 
   return (
     <div className="mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:px-6 lg:grid-cols-[260px_1fr]">
@@ -272,20 +272,11 @@ export default function CorporatePanelPage() {
                   city: newInstitutionCity,
                   district: newInstitutionDistrict,
                   address: `${newInstitutionDistrict} / ${newInstitutionCity}`,
-                  phone: "0212 000 00 00",
                   website: "https://www.yeni-kurum.demo",
                   shortDescription: "Kurumsal panelden eklenen demo kurum kartı.",
                   longDescription:
                     "Bu kart kurum yöneticisi tarafından demo amaçlı eklenmiştir ve daha sonra düzenlenebilir.",
-                  teacherCount: 8,
-                  minPrice: 3000,
-                  maxPrice: 7000,
-                  programs: ["TYT", "AYT"],
                   tags: defaultTags,
-                  coverImage:
-                    "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80",
-                  galleryImages: [],
-                  featured: false,
                   ownerUserId: currentUser.id,
                 });
                 setNewInstitutionName("");

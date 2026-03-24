@@ -20,7 +20,7 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-slate-900/20" />
       <div className="absolute inset-0 mx-auto flex max-w-7xl flex-col justify-center px-6">
         <div className="max-w-2xl text-white">
-          <p className="mb-3 text-sm font-semibold text-indigo-200">MK Eğitim</p>
+          <p className="mb-3 text-sm font-semibold text-indigo-200">kursiyera</p>
           <h1 className="text-4xl font-bold leading-tight md:text-5xl">
             Eğitim kariyerinize yön verecek platform
           </h1>

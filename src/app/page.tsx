@@ -66,7 +66,7 @@ export default function Home() {
         </div>
       </section>
       <section className="rounded-3xl bg-slate-900 p-8 text-center text-white">
-        <h3 className="text-3xl font-bold">Kurumunuzla MK Eğitim&apos;de yerinizi alın</h3>
+        <h3 className="text-3xl font-bold">Kurumunuzla kursiyera&apos;da yerinizi alın</h3>
         <p className="mt-3 text-slate-300">
           Kurum kartınızı yönetin, yorumları takip edin ve görünürlüğünüzü artırın.
         </p>

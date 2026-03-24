@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MK Eğitim",
+  title: "kursiyera",
   description: "Kurs ve dershane keşif platformu - demo",
 };
 

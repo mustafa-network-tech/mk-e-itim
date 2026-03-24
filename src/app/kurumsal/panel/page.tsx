@@ -12,21 +12,16 @@ export default function CorporatePanelPage() {
     institutions,
     reviews,
     updateInstitution,
-    createInstitution,
     tags,
     instructors,
     addInstructor,
     removeInstructor,
     updateInstitutionTags,
-    createTag,
   } = useDemoPlatform();
   const [activeSection, setActiveSection] = useState<CorporateSection>("overview");
-  const [newInstitutionName, setNewInstitutionName] = useState("");
-  const [newInstitutionCity, setNewInstitutionCity] = useState("İstanbul");
-  const [newInstitutionDistrict, setNewInstitutionDistrict] = useState("Merkez");
   const [newInstructorName, setNewInstructorName] = useState("");
   const [newInstructorBranch, setNewInstructorBranch] = useState("");
-  const [newTagName, setNewTagName] = useState("");
+
   const ownedInstitutions = institutions.filter((item) => item.ownerUserId === currentUser?.id);
   const institution = ownedInstitutions[0];
 
@@ -47,18 +42,43 @@ export default function CorporatePanelPage() {
       <CorporateSidebar active={activeSection} onChange={setActiveSection} />
       <section className="space-y-4">
         <PageNav />
-        <h1 className="text-2xl font-bold">Kurumsal Dashboard</h1>
+        <h1 className="text-2xl font-bold">Kurumsal panel</h1>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+          <p className="font-semibold text-slate-800">Yetki özeti</p>
+          <p className="mt-1">
+            Etiket tanımlama, sınıf seçenekleri, hero görselleri, site sayfa metinleri ve yeni kurum
+            kartı oluşturma yalnızca <strong>platform yöneticisi</strong> içindir. Bu panelde yalnızca
+            size atanmış kurumun kartını ve eğitmen satırlarını düzenlersiniz.
+          </p>
+        </div>
+
+        {!institution ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
+            <p className="font-semibold">Henüz kurum kartınız atanmadı</p>
+            <p className="mt-2 text-amber-900/90">
+              Hesabınız yönetici davetiyle açıldıysa, platform yöneticisi yeni kurum kartını oluştururken
+              sizi &quot;kurum yöneticisi&quot; olarak seçmelidir. Atama yapıldığında bu panelde kurum
+              bilgileriniz görünür.
+            </p>
+          </div>
+        ) : ownedInstitutions.length > 1 ? (
+          <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+            Veri tutarsızlığı: hesabınıza birden fazla kurum bağlı görünüyor. Yalnızca ilki
+            düzenlenir; yöneticiden düzeltmesini isteyin.
+          </p>
+        ) : null}
+
         {activeSection === "overview" && (
           <div className="grid gap-3 sm:grid-cols-3">
-            <StatsCard label="Kurum Sayım" value={ownedInstitutions.length} />
-            <StatsCard label="Ortalama Puan" value={score.average.toFixed(1)} />
-            <StatsCard label="Yorum Sayısı" value={institutionReviews.length} />
+            <StatsCard label="Kurum" value={institution ? 1 : 0} />
+            <StatsCard label="Ortalama puan" value={score.average.toFixed(1)} />
+            <StatsCard label="Yorum sayısı" value={institutionReviews.length} />
           </div>
         )}
 
         {activeSection === "institution-info" && (
           <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-            <h2 className="text-lg font-bold">Kurum Bilgilerim</h2>
+            <h2 className="text-lg font-bold">Kurum bilgilerim</h2>
             {institution ? (
               <>
                 <p>Ad: {institution.name}</p>
@@ -70,50 +90,54 @@ export default function CorporatePanelPage() {
                 <p>Web: {institution.website}</p>
               </>
             ) : (
-              <p>Henüz kayıtlı kurum kartınız yok. "Yeni Kurum Ekle" sekmesinden oluşturabilirsiniz.</p>
+              <p className="text-slate-600">Atanmış kurum kartı olunca burada listelenir.</p>
             )}
           </div>
         )}
 
         {activeSection === "card-info" && (
           <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-            <h2 className="text-lg font-bold">Kart Bilgileri</h2>
+            <h2 className="text-lg font-bold">Kart bilgileri</h2>
             {institution ? (
               <>
                 <p>Programlar: {institution.programs.join(", ")}</p>
                 <p>
-                  Fiyat aralığı: ₺{institution.minPrice.toLocaleString("tr-TR")} - ₺
+                  Fiyat aralığı: ₺{institution.minPrice.toLocaleString("tr-TR")} – ₺
                   {institution.maxPrice.toLocaleString("tr-TR")}
                 </p>
-                <p>Eğitmen sayısı: {institution.teacherCount}</p>
+                <p>Eğitmen sayısı (özet): {institution.teacherCount}</p>
               </>
             ) : (
-              <p>Kurum kartı oluşturulduktan sonra burada listelenir.</p>
+              <p className="text-slate-600">Kurum atanınca özet burada görünür.</p>
             )}
           </div>
         )}
 
         {activeSection === "reviews-ratings" && (
           <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
-            <h2 className="text-lg font-bold">Yorumlar ve Puanlar</h2>
+            <h2 className="text-lg font-bold">Yorumlar ve puanlar</h2>
             <p className="text-xs text-slate-500">
-              Bu alanda kurum yöneticisi sadece görüntüler, yorum moderasyonu sadece admin tarafından yapılır.
+              Yorumları görüntüleyebilirsiniz; onay / red işlemleri yalnızca platform yöneticisindedir.
             </p>
-            {institutionReviews.map((item) => (
-              <div key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-                <p className="font-semibold">
-                  {item.userName} • {item.rating} yıldız
-                </p>
-                <p>{item.comment}</p>
-                <p className="text-xs text-slate-500">Durum: {item.status}</p>
-              </div>
-            ))}
+            {institutionReviews.length === 0 ? (
+              <p className="text-sm text-slate-500">Henüz yorum yok.</p>
+            ) : (
+              institutionReviews.map((item) => (
+                <div key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold">
+                    {item.userName} • {item.rating} yıldız
+                  </p>
+                  <p>{item.comment}</p>
+                  <p className="text-xs text-slate-500">Durum: {item.status}</p>
+                </div>
+              ))
+            )}
           </div>
         )}
 
         {activeSection === "edit-card" && (
           <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
-            <h2 className="text-lg font-bold">Kurum Kartını Düzenle</h2>
+            <h2 className="text-lg font-bold">Kurum kartını düzenle</h2>
             {institution ? (
               <>
                 <input
@@ -130,6 +154,10 @@ export default function CorporatePanelPage() {
                 />
                 <div>
                   <p className="mb-1 text-sm font-semibold">Etiketler</p>
+                  <p className="mb-2 text-xs text-slate-500">
+                    Yalnızca yöneticinin tanımladığı etiketlerden seçim yapılır; yeni etiket oluşturma
+                    admin panelindedir.
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {tags.map((tag) => {
                       const active = institution.tags.includes(tag.id);
@@ -154,29 +182,6 @@ export default function CorporatePanelPage() {
                       );
                     })}
                   </div>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Yeni etiket adı"
-                      value={newTagName}
-                      onChange={(e) => setNewTagName(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
-                      onClick={() => {
-                        if (!newTagName.trim()) return;
-                        const newTagId = newTagName.toLowerCase().replaceAll(" ", "-");
-                        createTag(newTagName);
-                        if (!institution.tags.includes(newTagId)) {
-                          updateInstitutionTags(institution.id, [...institution.tags, newTagId]);
-                        }
-                        setNewTagName("");
-                      }}
-                    >
-                      Etiket Ekle
-                    </button>
-                  </div>
                 </div>
                 <div>
                   <p className="mb-1 text-sm font-semibold">Eğitmenler</p>
@@ -187,7 +192,7 @@ export default function CorporatePanelPage() {
                         className="flex items-center justify-between rounded-lg border border-slate-200 p-2 text-sm"
                       >
                         <span>
-                          {item.name} - {item.branch}
+                          {item.name} – {item.branch}
                         </span>
                         <button
                           type="button"
@@ -222,70 +227,16 @@ export default function CorporatePanelPage() {
                         setNewInstructorBranch("");
                       }}
                     >
-                      Eğitmen Ekle
+                      Eğitmen ekle
                     </button>
                   </div>
                 </div>
               </>
             ) : (
               <p className="text-sm text-slate-600">
-                Düzenlenecek kurum bulunamadı. Önce "Yeni Kurum Ekle" ile kurum kartı oluşturun.
+                Düzenlenecek kurum yok. Atama için platform yöneticisiyle iletişime geçin.
               </p>
             )}
-          </div>
-        )}
-
-        {activeSection === "new-institution" && (
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
-            <h2 className="text-lg font-bold">Yeni Kurum Ekle</h2>
-            <p className="text-xs text-slate-500">
-              Kurum yöneticisi olarak yeni kurum kartı oluşturabilirsiniz. Yorum moderasyonu yetkisi
-              yalnızca admindedir.
-            </p>
-            <input
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="Kurum adı"
-              value={newInstitutionName}
-              onChange={(e) => setNewInstitutionName(e.target.value)}
-            />
-            <div className="grid gap-2 sm:grid-cols-2">
-              <input
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                placeholder="Şehir"
-                value={newInstitutionCity}
-                onChange={(e) => setNewInstitutionCity(e.target.value)}
-              />
-              <input
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                placeholder="İlçe"
-                value={newInstitutionDistrict}
-                onChange={(e) => setNewInstitutionDistrict(e.target.value)}
-              />
-            </div>
-            <button
-              onClick={() => {
-                if (!newInstitutionName.trim()) return;
-                const defaultTags = tags.slice(0, 2).map((item) => item.id);
-                createInstitution({
-                  name: newInstitutionName,
-                  type: "kurs",
-                  city: newInstitutionCity,
-                  district: newInstitutionDistrict,
-                  address: `${newInstitutionDistrict} / ${newInstitutionCity}`,
-                  website: "https://www.yeni-kurum.demo",
-                  shortDescription: "Kurumsal panelden eklenen demo kurum kartı.",
-                  longDescription:
-                    "Bu kart kurum yöneticisi tarafından demo amaçlı eklenmiştir ve daha sonra düzenlenebilir.",
-                  tags: defaultTags,
-                  ownerUserId: currentUser.id,
-                });
-                setNewInstitutionName("");
-                setActiveSection("overview");
-              }}
-              className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
-            >
-              Kurumu Kaydet
-            </button>
           </div>
         )}
       </section>

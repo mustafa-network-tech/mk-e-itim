@@ -21,6 +21,7 @@ export function filterInstitutions(
     const text = `${institution.name} ${institution.shortDescription} ${institution.city} ${institution.category}`.toLowerCase();
     const queryMatch = filters.query ? text.includes(filters.query.toLowerCase()) : true;
     const cityMatch = filters.city ? institution.city === filters.city : true;
+    const districtMatch = filters.district ? institution.district === filters.district : true;
     const typeMatch = filters.type ? institution.type === filters.type : true;
     const minPriceMatch =
       typeof filters.minPrice === "number" ? institution.maxPrice >= filters.minPrice : true;
@@ -30,16 +31,23 @@ export function filterInstitutions(
       filters.tags.length === 0
         ? true
         : filters.tags.every((selectedTag) => institution.tags.includes(selectedTag));
+    const gradeMatch =
+      !filters.gradeLevelId
+        ? true
+        : institution.gradeLevelIds.length > 0 &&
+          institution.gradeLevelIds.includes(filters.gradeLevelId);
     const { average } = getPublicRating(institution, reviews);
     const ratingMatch = average >= filters.minRating;
 
     return (
       queryMatch &&
       cityMatch &&
+      districtMatch &&
       typeMatch &&
       minPriceMatch &&
       maxPriceMatch &&
       tagMatch &&
+      gradeMatch &&
       ratingMatch
     );
   });

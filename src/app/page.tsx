@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { HeroSection } from "@/components/home/HeroSection";
 import { InstitutionCard } from "@/components/institution/InstitutionCard";
-import { TagBadge } from "@/components/ui/TagBadge";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { getPublicRating } from "@/lib/institutions";
 
 export default function Home() {
-  const { institutions, tags, reviews } = useDemoPlatform();
+  const { institutions, reviews } = useDemoPlatform();
   const featured = institutions.filter((item) => item.featured).slice(0, 6);
   const topRated = [...institutions]
     .sort((a, b) => getPublicRating(b, reviews).average - getPublicRating(a, reviews).average)
@@ -16,16 +15,8 @@ export default function Home() {
   const latest = [...institutions].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-12 px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
       <HeroSection />
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900">Popüler Etiketler / Kategoriler</h2>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <TagBadge key={tag.id} label={tag.name} href={`/listings?tags=${tag.id}`} />
-          ))}
-        </div>
-      </section>
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Öne Çıkan Kurslar</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

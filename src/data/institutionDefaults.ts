@@ -41,6 +41,12 @@ export const INSTITUTION_DEFAULTS: Omit<Institution, "id" | "createdAt" | "name"
   coachingRatio: "1 / 14",
   featured: false,
   topVisible: true,
+  gradeLevelIds: [],
+  discountActive: false,
+  discountPercent: 0,
+  discountText: "",
+  discountStartDate: "",
+  discountEndDate: "",
 };
 
 export type InstitutionCreateInput = Partial<Omit<Institution, "id" | "createdAt">> &

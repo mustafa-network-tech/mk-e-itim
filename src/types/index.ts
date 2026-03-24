@@ -59,6 +59,17 @@ export interface Institution {
   topVisible?: boolean;
   createdAt: string;
   ownerUserId: string;
+  /** Hero / listelemede sınıf filtresi; boşsa kurum okul kademesi hedeflemiyor demektir (ör. yalnızca mezun programı). */
+  gradeLevelIds: string[];
+  /** Kursiyera’ya özel kampanya — minPrice üzerinden otomatik hesap */
+  discountActive: boolean;
+  discountPercent: number;
+  /** Boşsa sistem metni üretir */
+  discountText: string;
+  /** YYYY-MM-DD; boşsa başlangıç sınırı yok */
+  discountStartDate: string;
+  /** YYYY-MM-DD; boşsa bitiş sınırı yok */
+  discountEndDate: string;
 }
 
 export interface Tag {
@@ -91,10 +102,19 @@ export interface Instructor {
   branch: string;
 }
 
+export interface GradeLevel {
+  id: string;
+  label: string;
+}
+
 export interface InstitutionFilters {
   query: string;
   city: string;
+  /** Seçili şehre göre ilçe; boş veya yoksa filtre uygulanmaz */
+  district?: string;
   tags: string[];
+  /** Tek seçim (hero araması); kurumun gradeLevelIds ile eşleşir */
+  gradeLevelId?: string;
   minPrice?: number;
   maxPrice?: number;
   type: "" | "kurs" | "dershane";

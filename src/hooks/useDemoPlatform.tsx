@@ -1,9 +1,18 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
-import { heroSlides, institutions, reviews, tags, users } from "@/data/mockData";
+import { advisorQuestionsSeed } from "@/data/advisorQuestionsSeed";
+import {
+  gradeLevelsSeed,
+  heroSlides,
+  institutions,
+  reviews,
+  tags,
+  users,
+} from "@/data/mockData";
 import { INSTITUTION_DEFAULTS, type InstitutionCreateInput } from "@/data/institutionDefaults";
-import { HeroSlide, Institution, Instructor, Review, Tag, User, UserRole } from "@/types";
+import type { AdvisorQuestion } from "@/types/advisor";
+import { GradeLevel, HeroSlide, Institution, Instructor, Review, Tag, User, UserRole } from "@/types";
 import { instructors as seedInstructors } from "@/data/instructors";
 
 interface DemoContextValue {
@@ -11,6 +20,7 @@ interface DemoContextValue {
   users: User[];
   institutions: Institution[];
   tags: Tag[];
+  gradeLevels: GradeLevel[];
   reviews: Review[];
   heroSlides: HeroSlide[];
   instructors: Instructor[];
@@ -18,9 +28,12 @@ interface DemoContextValue {
   logout: () => void;
   addReview: (payload: Omit<Review, "id" | "createdAt" | "status">) => void;
   updateInstitution: (institutionId: string, payload: Partial<Institution>) => void;
-  createManager: (payload: Omit<User, "id" | "role">) => User;
+  /** Aynı e-posta varsa null döner. Kurum ataması kart oluşturulunca ownerUserId ile yapılır. */
+  createManager: (payload: Omit<User, "id" | "role">) => User | null;
   createInstitution: (payload: InstitutionCreateInput) => Institution;
   createTag: (name: string) => void;
+  addGradeLevel: (label: string) => void;
+  removeGradeLevel: (id: string) => void;
   toggleFeatured: (institutionId: string) => void;
   deleteInstitution: (institutionId: string) => void;
   updateReviewStatus: (reviewId: string, status: Review["status"]) => void;
@@ -35,6 +48,9 @@ interface DemoContextValue {
     contact: string;
   };
   updateStaticPage: (key: "about" | "privacy" | "contact", content: string) => void;
+  /** Eğitim Danışmanı sohbet soruları (yalnızca metin; adım mantığı `stepKey` ile sabit). */
+  advisorQuestions: AdvisorQuestion[];
+  updateAdvisorQuestion: (id: string, prompt: string) => void;
 }
 
 const DemoContext = createContext<DemoContextValue | null>(null);
@@ -57,6 +73,7 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
   });
   const [institutionList, setInstitutionList] = useState<Institution[]>(institutions);
   const [tagList, setTagList] = useState<Tag[]>(tags);
+  const [gradeLevelList, setGradeLevelList] = useState<GradeLevel[]>(gradeLevelsSeed);
   const [reviewList, setReviewList] = useState<Review[]>(reviews);
   const [slideList, setSlideList] = useState<HeroSlide[]>(heroSlides);
   const [instructorList, setInstructorList] = useState<Instructor[]>(seedInstructors);
@@ -65,6 +82,7 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
     privacy: "Admin panelinden Admin tarafından düzenlenecektir.",
     contact: "Admin panelinden Admin tarafından düzenlenecektir.",
   });
+  const [advisorQuestionList, setAdvisorQuestionList] = useState<AdvisorQuestion[]>(advisorQuestionsSeed);
 
   const login = (email: string, password: string) => {
     const found = userList.find((u) => u.email === email && u.password === password);
@@ -91,14 +109,24 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
     );
   };
 
-  const createManager = (payload: Omit<User, "id" | "role">) => {
-    const manager: User = {
-      ...payload,
-      id: `u-manager-${Date.now()}`,
-      role: "institution_manager",
-    };
-    setUserList((prev) => [...prev, manager]);
-    return manager;
+  const createManager = (payload: Omit<User, "id" | "role">): User | null => {
+    const email = payload.email.trim().toLowerCase();
+    let created: User | null = null;
+    setUserList((prev) => {
+      if (prev.some((u) => u.email.trim().toLowerCase() === email)) {
+        return prev;
+      }
+      const manager: User = {
+        ...payload,
+        email: payload.email.trim(),
+        id: `u-manager-${Date.now()}`,
+        role: "institution_manager",
+        institutionId: undefined,
+      };
+      created = manager;
+      return [...prev, manager];
+    });
+    return created;
   };
 
   const createInstitution = (payload: InstitutionCreateInput) => {
@@ -109,11 +137,46 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
       createdAt: new Date().toISOString().slice(0, 10),
     };
     setInstitutionList((prev) => [institution, ...prev]);
+    setUserList((prev) =>
+      prev.map((u) =>
+        u.id === institution.ownerUserId ? { ...u, institutionId: institution.id } : u,
+      ),
+    );
     return institution;
   };
 
   const createTag = (name: string) => {
-    setTagList((prev) => [...prev, { id: name.toLowerCase().replaceAll(" ", "-"), name }]);
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const id =
+      trimmed
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9ığüşöç.\-]+/gi, "")
+        .replace(/^-+|-+$/g, "") || `etiket-${Date.now()}`;
+    setTagList((prev) => {
+      if (prev.some((t) => t.id === id || t.name.toLowerCase() === trimmed.toLowerCase())) {
+        return prev;
+      }
+      return [...prev, { id, name: trimmed }];
+    });
+  };
+
+  const addGradeLevel = (label: string) => {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    const id = `g-${Date.now()}`;
+    setGradeLevelList((prev) => [...prev, { id, label: trimmed }]);
+  };
+
+  const removeGradeLevel = (id: string) => {
+    setGradeLevelList((prev) => prev.filter((g) => g.id !== id));
+    setInstitutionList((prev) =>
+      prev.map((inst) => ({
+        ...inst,
+        gradeLevelIds: inst.gradeLevelIds.filter((gid) => gid !== id),
+      })),
+    );
   };
 
   const toggleFeatured = (institutionId: string) => {
@@ -125,14 +188,25 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
   };
 
   const deleteInstitution = (institutionId: string) => {
-    setInstitutionList((prev) => prev.filter((item) => item.id !== institutionId));
+    let ownerUserId: string | undefined;
+    setInstitutionList((prev) => {
+      const inst = prev.find((i) => i.id === institutionId);
+      ownerUserId = inst?.ownerUserId;
+      return prev.filter((item) => item.id !== institutionId);
+    });
+    setUserList((prev) =>
+      prev.map((item) => {
+        if (ownerUserId && item.id === ownerUserId) {
+          return { ...item, institutionId: undefined };
+        }
+        if (item.institutionId === institutionId) {
+          return { ...item, institutionId: undefined };
+        }
+        return item;
+      }),
+    );
     setReviewList((prev) => prev.filter((item) => item.institutionId !== institutionId));
     setInstructorList((prev) => prev.filter((item) => item.institutionId !== institutionId));
-    setUserList((prev) =>
-      prev.map((item) =>
-        item.institutionId === institutionId ? { ...item, institutionId: undefined } : item,
-      ),
-    );
   };
 
   const updateReviewStatus = (reviewId: string, status: Review["status"]) => {
@@ -185,12 +259,19 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
     setStaticPages((prev) => ({ ...prev, [key]: content }));
   };
 
+  const updateAdvisorQuestion = (id: string, prompt: string) => {
+    setAdvisorQuestionList((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, prompt: prompt.trim() || q.prompt } : q)),
+    );
+  };
+
   const value = useMemo(
     () => ({
       currentUser,
       users: userList,
       institutions: institutionList,
       tags: tagList,
+      gradeLevels: gradeLevelList,
       reviews: reviewList,
       heroSlides: slideList,
       instructors: instructorList,
@@ -201,6 +282,8 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
       createManager,
       createInstitution,
       createTag,
+      addGradeLevel,
+      removeGradeLevel,
       toggleFeatured,
       deleteInstitution,
       updateReviewStatus,
@@ -211,16 +294,20 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
       updateInstitutionTags,
       staticPages,
       updateStaticPage,
+      advisorQuestions: advisorQuestionList,
+      updateAdvisorQuestion,
     }),
     [
       currentUser,
       userList,
       institutionList,
       tagList,
+      gradeLevelList,
       reviewList,
       slideList,
       instructorList,
       staticPages,
+      advisorQuestionList,
     ],
   );
 

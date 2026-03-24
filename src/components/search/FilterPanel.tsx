@@ -1,15 +1,32 @@
 "use client";
 
-import { InstitutionFilters, Tag } from "@/types";
+import { useMemo } from "react";
+import { GradeLevel, Institution, InstitutionFilters, Tag } from "@/types";
 
 interface FilterPanelProps {
   filters: InstitutionFilters;
   cities: string[];
+  institutions: Institution[];
   tags: Tag[];
+  gradeLevels: GradeLevel[];
   onChange: (next: InstitutionFilters) => void;
 }
 
-export function FilterPanel({ filters, cities, tags, onChange }: FilterPanelProps) {
+export function FilterPanel({
+  filters,
+  cities,
+  institutions,
+  tags,
+  gradeLevels,
+  onChange,
+}: FilterPanelProps) {
+  const districts = useMemo(() => {
+    if (!filters.city) return [];
+    const set = new Set(
+      institutions.filter((i) => i.city === filters.city).map((i) => i.district).filter(Boolean),
+    );
+    return [...set].sort();
+  }, [institutions, filters.city]);
   return (
     <aside className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
       <input
@@ -21,12 +38,47 @@ export function FilterPanel({ filters, cities, tags, onChange }: FilterPanelProp
       <select
         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
         value={filters.city}
-        onChange={(e) => onChange({ ...filters, city: e.target.value })}
+        onChange={(e) =>
+          onChange({ ...filters, city: e.target.value, district: undefined })
+        }
       >
         <option value="">Tüm şehirler</option>
         {cities.map((city) => (
           <option key={city} value={city}>
             {city}
+          </option>
+        ))}
+      </select>
+      {filters.city && districts.length > 0 ? (
+        <select
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          value={filters.district ?? ""}
+          onChange={(e) =>
+            onChange({ ...filters, district: e.target.value || undefined })
+          }
+        >
+          <option value="">Tüm ilçeler</option>
+          {districts.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      ) : null}
+      <select
+        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        value={filters.gradeLevelId ?? ""}
+        onChange={(e) =>
+          onChange({
+            ...filters,
+            gradeLevelId: e.target.value || undefined,
+          })
+        }
+      >
+        <option value="">Tüm sınıflar</option>
+        {gradeLevels.map((g) => (
+          <option key={g.id} value={g.id}>
+            {g.label}
           </option>
         ))}
       </select>

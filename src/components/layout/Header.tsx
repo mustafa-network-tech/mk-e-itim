@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { KursiyeraWordmark } from "@/components/brand/KursiyeraWordmark";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
+import { HeaderNav } from "@/components/layout/HeaderNav";
 
 export function Header() {
   const { currentUser, logout } = useDemoPlatform();
@@ -13,21 +15,20 @@ export function Header() {
           href="/"
           className="group shrink-0 rounded-md px-2 py-1.5 transition-opacity duration-200 hover:opacity-[0.88] sm:px-3"
         >
-          <span className="relative inline-block after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-[#D4AF37] after:transition after:duration-300 after:ease-out group-hover:after:scale-x-100">
+          <span className="relative inline-block pb-0.5 after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:origin-left after:scale-x-0 after:rounded-full after:bg-[#D4AF37] after:transition after:duration-300 after:ease-out group-hover:after:scale-x-100">
             <KursiyeraWordmark variant="onLight" size="md" />
           </span>
         </Link>
-        <nav className="hidden items-center gap-7 text-sm font-medium text-[#111111] md:flex">
-          <Link href="/listings" className="transition-opacity duration-200 hover:opacity-70">
-            Kurslar & Dershaneler
-          </Link>
-          <Link href="/listings?featured=true" className="transition-opacity duration-200 hover:opacity-70">
-            Öne Çıkanlar
-          </Link>
-          <Link href="/listings?sort=top" className="transition-opacity duration-200 hover:opacity-70">
-            En Yüksek Puanlılar
-          </Link>
-        </nav>
+        <Suspense
+          fallback={
+            <nav
+              className="hidden h-8 min-w-[200px] md:block"
+              aria-hidden
+            />
+          }
+        >
+          <HeaderNav />
+        </Suspense>
         <div className="flex shrink-0 items-center gap-2">
           <Link
             href="/kurumsal-giris"

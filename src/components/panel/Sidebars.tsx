@@ -9,16 +9,17 @@ export type AdminSection =
   | "managers"
   | "reviews"
   | "tags"
+  | "grade-levels"
   | "hero-featured"
-  | "pages";
+  | "pages"
+  | "advisor";
 
 export type CorporateSection =
   | "overview"
   | "institution-info"
   | "card-info"
   | "reviews-ratings"
-  | "edit-card"
-  | "new-institution";
+  | "edit-card";
 
 export function AdminSidebar({ active, onChange }: SidebarProps<AdminSection>) {
   const items: { id: AdminSection; label: string }[] = [
@@ -27,8 +28,10 @@ export function AdminSidebar({ active, onChange }: SidebarProps<AdminSection>) {
     { id: "managers", label: "Yönetici Yönetimi" },
     { id: "reviews", label: "Yorum Moderasyonu" },
     { id: "tags", label: "Etiketler" },
+    { id: "grade-levels", label: "Sınıf seçenekleri" },
     { id: "hero-featured", label: "Hero / Öne Çıkanlar" },
     { id: "pages", label: "Sayfa İçerikleri" },
+    { id: "advisor", label: "Eğitim Danışmanı" },
   ];
   return (
     <aside className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">
@@ -57,7 +60,6 @@ export function CorporateSidebar({ active, onChange }: SidebarProps<CorporateSec
     { id: "card-info", label: "Kart Bilgileri" },
     { id: "reviews-ratings", label: "Yorumlar ve Puanlar" },
     { id: "edit-card", label: "Kurum Kartını Düzenle" },
-    { id: "new-institution", label: "Yeni Kurum Ekle" },
   ];
   return (
     <aside className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">

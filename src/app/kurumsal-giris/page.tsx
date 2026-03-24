@@ -21,7 +21,11 @@ export default function CorporateLoginPage() {
     <div className="mx-auto max-w-xl px-4 py-10">
       <PageNav />
       <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
-        <h1 className="text-2xl font-bold">Kurumsal Giriş</h1>
+        <h1 className="text-2xl font-bold">Kurumsal giriş</h1>
+        <p className="text-sm text-slate-600">
+          Açık üyelik veya kendi kendine kayıt yoktur. Kurum yöneticisi hesabı yalnızca platform
+          yöneticisinin davetiyle açılır; size iletilen e-posta ve şifre ile giriş yapın.
+        </p>
         <div className="grid gap-2 sm:grid-cols-3">
           <button
             type="button"

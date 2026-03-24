@@ -17,27 +17,26 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden rounded-3xl bg-[#111111]">
-      <img src={slide.image} alt={slide.title} className="h-[460px] w-full object-cover" />
-      {/* linear-gradient(to right, rgba(0,0,0,0.65), rgba(0,0,0,0.35)) */}
+      <img src={slide.image} alt={slide.title} className="h-[400px] w-full object-cover md:h-[420px]" />
       <div
         className="absolute inset-0 bg-gradient-to-r from-black/[0.65] to-black/[0.35]"
         aria-hidden
       />
-      {/* Hafif altın katmanı — marka dokunuşu */}
       <div className="absolute inset-0 bg-[rgba(212,175,55,0.08)]" aria-hidden />
-      <div className="absolute inset-0 mx-auto flex max-w-7xl flex-col justify-center px-6">
-        <div className="max-w-2xl">
-          <div className="mb-4">
+      <div className="absolute inset-0 mx-auto flex max-w-7xl flex-col px-4 pb-7 pt-10 sm:px-6 md:pb-9 md:pt-12">
+        <div className="min-h-0 flex-1" aria-hidden />
+        <div className="max-w-2xl shrink-0">
+          <div className="mb-3 md:mb-4">
             <KursiyeraWordmark variant="onDark" size="lg" />
           </div>
-          <h1 className="text-4xl font-bold leading-tight text-white md:text-5xl">
+          <h1 className="text-3xl font-bold leading-tight text-white md:text-4xl lg:text-[2.65rem] lg:leading-[1.12]">
             Eğitim kariyerinize yön verecek platform
           </h1>
-          <p className="mt-4 text-lg text-white/[0.8]">
+          <p className="mt-3 max-w-xl text-base text-white/[0.82] md:text-lg">
             Kursları keşfedin, karşılaştırın ve en doğru seçimi yapın
           </p>
         </div>
-        <div className="mt-8">
+        <div className="mt-5 w-full shrink-0 md:mt-6">
           <SearchBar />
         </div>
       </div>

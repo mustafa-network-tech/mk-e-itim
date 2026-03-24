@@ -1,4 +1,4 @@
-import { HeroSlide, Institution, Review, Tag, User } from "@/types";
+import { GradeLevel, HeroSlide, Institution, Review, Tag, User } from "@/types";
 
 export const tags: Tag[] = [
   { id: "tyt", name: "TYT" },
@@ -7,11 +7,34 @@ export const tags: Tag[] = [
   { id: "lgs", name: "LGS" },
   { id: "ingilizce", name: "İngilizce" },
   { id: "matematik", name: "Matematik" },
+  { id: "fizik", name: "Fizik" },
   { id: "yazilim", name: "Yazılım" },
   { id: "robotik", name: "Robotik" },
   { id: "resim", name: "Resim" },
   { id: "muzik", name: "Müzik" },
   { id: "dil-egitimi", name: "Dil Eğitimi" },
+];
+
+/** Hero “Ders seçimi”; etiket kimlikleriyle uyumlu (kurum.tags). */
+export const courseSubjects: { id: string; name: string }[] = [
+  { id: "matematik", name: "Matematik" },
+  { id: "fizik", name: "Fizik" },
+  { id: "ingilizce", name: "İngilizce" },
+  { id: "yazilim", name: "Yazılım" },
+  { id: "robotik", name: "Robotik" },
+];
+
+/** Admin panelinden genişletilebilir başlangıç listesi. */
+export const gradeLevelsSeed: GradeLevel[] = [
+  { id: "g-5", label: "5. sınıf" },
+  { id: "g-6", label: "6. sınıf" },
+  { id: "g-7", label: "7. sınıf" },
+  { id: "g-8", label: "8. sınıf" },
+  { id: "g-9", label: "9. sınıf" },
+  { id: "g-10", label: "10. sınıf" },
+  { id: "g-11", label: "11. sınıf" },
+  { id: "g-12", label: "12. sınıf" },
+  { id: "g-mezun", label: "Mezun" },
 ];
 
 export const users: User[] = [
@@ -81,6 +104,12 @@ export const institutions: Institution[] = [
       "Matematik ve geometri alanında 10+ yıl deneyime sahip öğretmenler; TYT/AYT müfredatına uyumlu içerik ve birebir destek oturumları ile görev almaktadır. Kadro, haftalık ortak değerlendirme toplantıları ile güncellenir.",
     programs: ["TYT Matematik", "AYT Matematik", "Geometri Kampı"],
     tags: ["tyt", "ayt", "matematik"],
+    gradeLevelIds: ["g-9", "g-10", "g-11", "g-12"],
+    discountActive: true,
+    discountPercent: 50,
+    discountText: "MK Digital Systems özel indirim %50",
+    discountStartDate: "",
+    discountEndDate: "",
     images: [img.study, img.library, img.class2],
     weeklyHours: 28,
     totalHours: 520,
@@ -125,6 +154,12 @@ export const institutions: Institution[] = [
       "Branş öğretmenleri ve sınav koçlarından oluşan geniş kadro; LGS ve YKS kademelerinde ayrı koordinatörlerle yönetilir. Öğretmen seçimi branş sınav performansı ve deneyim kriterlerine göre yapılır.",
     programs: ["TYT-AYT Tam Paket", "LGS Hazırlık", "Hafta Sonu Etüt"],
     tags: ["tyt", "ayt", "lgs", "ingilizce"],
+    gradeLevelIds: ["g-5", "g-6", "g-7", "g-8", "g-9", "g-10", "g-11", "g-12"],
+    discountActive: true,
+    discountPercent: 15,
+    discountText: "Kursiyera'ya özel %15 indirim",
+    discountStartDate: "",
+    discountEndDate: "",
     images: [img.campus, img.books, img.team],
     weeklyHours: 36,
     totalHours: 640,
@@ -169,6 +204,12 @@ export const institutions: Institution[] = [
       "Genel yetenek, güncel bilgiler ve İngilizce branşlarında uzman öğretmen kadrosu; KPSS ve YDS deneyimine sahip eğitmenlerden oluşur.",
     programs: ["KPSS Genel Yetenek", "YDS Hazırlık", "İngilizce Konuşma"],
     tags: ["kpss", "ingilizce", "dil-egitimi"],
+    gradeLevelIds: ["g-mezun"],
+    discountActive: false,
+    discountPercent: 0,
+    discountText: "",
+    discountStartDate: "",
+    discountEndDate: "",
     images: [img.office, img.meeting],
     weeklyHours: 22,
     totalHours: 380,
@@ -213,6 +254,12 @@ export const institutions: Institution[] = [
       "Deneyimli TYT-AYT öğretmenleri ve sınav koçları; kamp dönemlerinde ek destek personeli ile takviye edilir.",
     programs: ["TYT Kamp", "AYT Kamp", "Soru Çözüm Maratonu"],
     tags: ["tyt", "ayt", "matematik"],
+    gradeLevelIds: ["g-10", "g-11", "g-12"],
+    discountActive: false,
+    discountPercent: 0,
+    discountText: "",
+    discountStartDate: "",
+    discountEndDate: "",
     images: [img.reading, img.study],
     weeklyHours: 30,
     totalHours: 480,
@@ -257,6 +304,12 @@ export const institutions: Institution[] = [
       "Yabancı dil ve edebiyat öğretmenleri; native konuşmacı destekli atölyeler ve sınav deneyimli ekip.",
     programs: ["YDT Hazırlık", "İngilizce Yoğun", "TYT-AYT Destek"],
     tags: ["ingilizce", "dil-egitimi", "tyt", "ayt"],
+    gradeLevelIds: ["g-9", "g-10", "g-11", "g-12"],
+    discountActive: false,
+    discountPercent: 0,
+    discountText: "",
+    discountStartDate: "",
+    discountEndDate: "",
     images: [img.meeting, img.workspace],
     weeklyHours: 26,
     totalHours: 500,
@@ -301,6 +354,12 @@ export const institutions: Institution[] = [
       "Yazılım ve robotik eğitmenleri ile matematik-fen öğretmenleri ortak müfredat üzerinde çalışır; proje tabanlı öğrenme uygulanır.",
     programs: ["Robotik Kodlama", "Yazılım Temelleri", "Matematik Etüt"],
     tags: ["robotik", "yazilim", "matematik"],
+    gradeLevelIds: ["g-5", "g-6", "g-7", "g-8", "g-9"],
+    discountActive: false,
+    discountPercent: 0,
+    discountText: "",
+    discountStartDate: "",
+    discountEndDate: "",
     images: [img.workspace, img.team],
     weeklyHours: 20,
     totalHours: 360,
@@ -382,7 +441,7 @@ export const heroSlides: HeroSlide[] = [
   {
     id: "h-2",
     title: "Doğru kurumu bulun, hedefinize hızla ulaşın",
-    subtitle: "Şehir, etiket ve fiyat bazlı güçlü arama deneyimi",
+    subtitle: "Şehir, ders, sınıf ve minimum bütçe ile net arama",
     image:
       "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1800&q=80",
   },

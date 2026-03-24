@@ -4,8 +4,18 @@ import { useState } from "react";
 import { InstitutionForm } from "@/components/panel/InstitutionForm";
 import { AdminSection, AdminSidebar, StatsCard } from "@/components/panel/Sidebars";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
+import { formatTryAmount, getDiscountedPriceFromMin, getDiscountRibbonText } from "@/lib/discount";
 import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
+import type { AdvisorStepKey } from "@/types/advisor";
+
+const ADVISOR_STEP_HINT: Record<AdvisorStepKey, string> = {
+  city: "Kullanıcı şehir yazar; listede yoksa uyarı verilir.",
+  district: "Şehre göre ilçe listesi; seçim zorunlu.",
+  grade: "Sınıf düğmeleri; veri sınıf seçeneklerinden gelir.",
+  subject: "Ders etiketleri + «Atla»; isteğe bağlı filtre.",
+  price: "Üç sabit fiyat aralığı; serbest giriş yok.",
+};
 
 export default function AdminPanelPage() {
   const {
@@ -14,9 +24,13 @@ export default function AdminPanelPage() {
     users,
     reviews,
     tags,
+    gradeLevels,
     heroSlides,
     instructors,
     createTag,
+    createManager,
+    addGradeLevel,
+    removeGradeLevel,
     toggleFeatured,
     deleteInstitution,
     updateReviewStatus,
@@ -28,6 +42,8 @@ export default function AdminPanelPage() {
     updateInstitution,
     staticPages,
     updateStaticPage,
+    advisorQuestions,
+    updateAdvisorQuestion,
   } = useDemoPlatform();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [moderationMessage, setModerationMessage] = useState("");
@@ -38,6 +54,13 @@ export default function AdminPanelPage() {
   const [newInstructorName, setNewInstructorName] = useState("");
   const [newInstructorBranch, setNewInstructorBranch] = useState("");
   const [newCardTagName, setNewCardTagName] = useState("");
+  const [newGradeLevelLabel, setNewGradeLevelLabel] = useState("");
+  const [newTagName, setNewTagName] = useState("");
+  const [tagActionMessage, setTagActionMessage] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePassword, setInvitePassword] = useState("Demo123!");
+  const [inviteFeedback, setInviteFeedback] = useState("");
 
   if (!currentUser || currentUser.role !== "admin") {
     return <div className="mx-auto max-w-4xl px-4 py-10">Bu alana erişim için admin girişi yapın.</div>;
@@ -132,6 +155,100 @@ export default function AdminPanelPage() {
                           updateInstitution(selected.id, { longDescription: e.target.value })
                         }
                       />
+                      <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-3">
+                        <p className="text-sm font-bold text-slate-900">Kursiyera indirimi</p>
+                        <p className="mt-1 text-xs text-slate-600">
+                          İndirim <strong>min. fiyat</strong> üzerinden hesaplanır (kart ve detayda
+                          gösterilir).
+                        </p>
+                        <label className="mt-2 flex items-center gap-2 text-sm text-slate-800">
+                          <input
+                            type="checkbox"
+                            className="rounded border-slate-300"
+                            checked={selected.discountActive}
+                            onChange={(e) =>
+                              updateInstitution(selected.id, { discountActive: e.target.checked })
+                            }
+                          />
+                          Kampanya aktif
+                        </label>
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              İndirim (%)
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                              type="number"
+                              min={0}
+                              max={95}
+                              value={selected.discountPercent}
+                              onChange={(e) =>
+                                updateInstitution(selected.id, {
+                                  discountPercent: Number(e.target.value) || 0,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              Şerit metni (boş = otomatik)
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                              value={selected.discountText}
+                              onChange={(e) =>
+                                updateInstitution(selected.id, { discountText: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              Başlangıç
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                              type="date"
+                              value={selected.discountStartDate}
+                              onChange={(e) =>
+                                updateInstitution(selected.id, {
+                                  discountStartDate: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              Bitiş
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                              type="date"
+                              value={selected.discountEndDate}
+                              onChange={(e) =>
+                                updateInstitution(selected.id, { discountEndDate: e.target.value })
+                              }
+                            />
+                          </div>
+                        </div>
+                        {selected.discountActive && selected.discountPercent > 0 ? (
+                          <p className="mt-2 text-xs text-slate-700">
+                            Şerit: <strong>{getDiscountRibbonText(selected)}</strong> · Min:{" "}
+                            <span className="line-through opacity-70">
+                              {formatTryAmount(selected.minPrice)}
+                            </span>{" "}
+                            →{" "}
+                            <strong>
+                              {formatTryAmount(
+                                getDiscountedPriceFromMin(
+                                  selected.minPrice,
+                                  selected.discountPercent,
+                                ),
+                              )}
+                            </strong>
+                          </p>
+                        ) : null}
+                      </div>
                       <div>
                         <p className="mb-1 text-sm font-semibold">Etiketler</p>
                         <div className="flex flex-wrap gap-2">
@@ -182,6 +299,37 @@ export default function AdminPanelPage() {
                           >
                             Etiket Ekle
                           </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mb-1 text-sm font-semibold">Hedef sınıflar</p>
+                        <p className="mb-2 text-xs text-slate-500">
+                          Hero ve listelemede sınıf filtresi bu seçimlere göre çalışır.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {gradeLevels.map((gl) => {
+                            const active = selected.gradeLevelIds.includes(gl.id);
+                            return (
+                              <button
+                                key={gl.id}
+                                type="button"
+                                onClick={() =>
+                                  updateInstitution(selected.id, {
+                                    gradeLevelIds: active
+                                      ? selected.gradeLevelIds.filter((id) => id !== gl.id)
+                                      : [...selected.gradeLevelIds, gl.id],
+                                  })
+                                }
+                                className={`rounded-full px-3 py-1 text-xs ${
+                                  active
+                                    ? "bg-amber-700 text-white"
+                                    : "bg-slate-100 text-slate-700"
+                                }`}
+                              >
+                                {gl.label}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                       <div>
@@ -241,23 +389,112 @@ export default function AdminPanelPage() {
         )}
 
         {activeSection === "managers" && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <h3 className="mb-3 text-lg font-bold">Yönetici Yönetimi</h3>
-            <div className="space-y-2 text-sm">
-              {users
-                .filter((u) => u.role === "institution_manager")
-                .map((manager) => {
-                  const assigned = institutions.find((i) => i.ownerUserId === manager.id);
-                  return (
-                    <div key={manager.id} className="rounded-lg border border-slate-200 p-3">
-                      <p className="font-semibold">{manager.name}</p>
-                      <p className="text-slate-600">{manager.email}</p>
-                      <p className="text-slate-600">
-                        Atanan kurum: {assigned ? assigned.name : "Atama yok"}
-                      </p>
-                    </div>
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h3 className="text-lg font-bold">Yönetici daveti</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Sistemde açık kayıt yoktur. Kurum yöneticisi hesapları yalnızca sizin oluşturduğunuz
+                davet ile açılır. Davet sonrası kişi &quot;Kurumsal giriş&quot;ten e-posta ve şifreyle
+                girer. Ardından bir kurum kartı oluştururken veya düzenlerken bu kişiyi yönetici olarak
+                atayın — her yöneticiye yalnızca tek kurum bağlanır.
+              </p>
+              {inviteFeedback ? (
+                <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                  {inviteFeedback}
+                </p>
+              ) : null}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Ad soyad</label>
+                  <input
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    value={inviteName}
+                    onChange={(e) => {
+                      setInviteName(e.target.value);
+                      setInviteFeedback("");
+                    }}
+                    placeholder="Örn. Ayşe Yılmaz"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">E-posta</label>
+                  <input
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => {
+                      setInviteEmail(e.target.value);
+                      setInviteFeedback("");
+                    }}
+                    placeholder="yonetici@kurum.demo"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    İlk şifre (davet e-postasında iletilecek — demoda yerel)
+                  </label>
+                  <input
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    type="password"
+                    value={invitePassword}
+                    onChange={(e) => {
+                      setInvitePassword(e.target.value);
+                      setInviteFeedback("");
+                    }}
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                onClick={() => {
+                  const n = inviteName.trim();
+                  const em = inviteEmail.trim();
+                  if (!n || !em) {
+                    setInviteFeedback("Ad ve e-posta zorunludur.");
+                    return;
+                  }
+                  const pwd = invitePassword.trim() || "Demo123!";
+                  const created = createManager({ name: n, email: em, password: pwd });
+                  if (!created) {
+                    setInviteFeedback("Bu e-posta zaten kayıtlı.");
+                    return;
+                  }
+                  setInviteName("");
+                  setInviteEmail("");
+                  setInvitePassword("Demo123!");
+                  setInviteFeedback(
+                    `Davet oluşturuldu. Kurumsal giriş: ${em} / Şifre: ${pwd} (gerçek üründe e-posta ile gönderilir)`,
                   );
-                })}
+                }}
+              >
+                Daveti oluştur
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h3 className="mb-3 text-lg font-bold">Kurum yöneticileri</h3>
+              <div className="space-y-2 text-sm">
+                {users.filter((u) => u.role === "institution_manager").length === 0 ? (
+                  <p className="text-slate-500">Henüz yönetici yok.</p>
+                ) : (
+                  users
+                    .filter((u) => u.role === "institution_manager")
+                    .map((manager) => {
+                      const assigned = institutions.find((i) => i.ownerUserId === manager.id);
+                      return (
+                        <div key={manager.id} className="rounded-lg border border-slate-200 p-3">
+                          <p className="font-semibold">{manager.name}</p>
+                          <p className="text-slate-600">{manager.email}</p>
+                          <p className="text-slate-600">
+                            Bağlı kurum: {assigned ? assigned.name : "Henüz kurum atanmadı"}
+                          </p>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -312,14 +549,137 @@ export default function AdminPanelPage() {
         )}
 
         {activeSection === "tags" && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <h3 className="text-lg font-bold">Etiket Yönetimi</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Burada eklediğiniz her etiket, hero &quot;Ders seçimi&quot; ve kurum kartı etiketlerinde
+                kullanılabilir. Kurumu bu etiketle eşleştirmek için Kurum Yönetimi → Kartı Düzenle
+                bölümünden ilgili etiketi işaretleyin.
+              </p>
+            </div>
+            {tagActionMessage ? (
+              <p className="rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">{tagActionMessage}</p>
+            ) : null}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1">
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Yeni etiket adı</label>
+                <input
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="Örn. Altyazı M.K., Fizik, Satranç…"
+                  value={newTagName}
+                  onChange={(e) => {
+                    setNewTagName(e.target.value);
+                    setTagActionMessage("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const t = newTagName.trim();
+                      if (!t) {
+                        setTagActionMessage("Etiket adı yazın.");
+                        return;
+                      }
+                      if (tags.some((x) => x.name.toLowerCase() === t.toLowerCase())) {
+                        setTagActionMessage("Bu isimde bir etiket zaten var.");
+                        return;
+                      }
+                      createTag(t);
+                      setNewTagName("");
+                      setTagActionMessage("Etiket eklendi. Hero aramada hemen görünür.");
+                    }
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                onClick={() => {
+                  const t = newTagName.trim();
+                  if (!t) {
+                    setTagActionMessage("Etiket adı yazın.");
+                    return;
+                  }
+                  if (tags.some((x) => x.name.toLowerCase() === t.toLowerCase())) {
+                    setTagActionMessage("Bu isimde bir etiket zaten var.");
+                    return;
+                  }
+                  createTag(t);
+                  setNewTagName("");
+                  setTagActionMessage("Etiket eklendi. Hero aramada hemen görünür.");
+                }}
+              >
+                Etiket ekle
+              </button>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold text-slate-600">Mevcut etiketler ({tags.length})</p>
+              <ul className="max-h-64 space-y-1 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50/80 p-2 text-sm">
+                {tags.length === 0 ? (
+                  <li className="text-xs text-slate-500">Henüz etiket yok.</li>
+                ) : (
+                  tags
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name, "tr"))
+                    .map((tag) => (
+                      <li
+                        key={tag.id}
+                        className="flex flex-wrap items-baseline justify-between gap-2 rounded-md bg-white px-2 py-1.5"
+                      >
+                        <span className="font-medium text-slate-800">{tag.name}</span>
+                        <code className="text-[10px] text-slate-400">id: {tag.id}</code>
+                      </li>
+                    ))
+                )}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {activeSection === "grade-levels" && (
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <h3 className="mb-2 text-lg font-bold">Etiket Yönetimi</h3>
-            <button
-              className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
-              onClick={() => createTag(`Yeni Etiket ${tags.length + 1}`)}
-            >
-              Yeni Etiket Ekle
-            </button>
+            <h3 className="mb-2 text-lg font-bold">Sınıf seçenekleri</h3>
+            <p className="mb-3 text-xs text-slate-500">
+              Hero arama ve listeleme filtresinde görünen sınıf listesi. Yeni satır ekleyebilir veya
+              kaldırabilirsiniz; kaldırılan kimlik kurum kartlarından da düşer.
+            </p>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {gradeLevels.map((gl) => (
+                <div
+                  key={gl.id}
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm"
+                >
+                  <span>{gl.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeGradeLevel(gl.id)}
+                    className="text-xs font-medium text-rose-600 hover:underline"
+                  >
+                    Kaldır
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="min-w-[200px] flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                placeholder="Örn. 5. sınıf"
+                value={newGradeLevelLabel}
+                onChange={(e) => setNewGradeLevelLabel(e.target.value)}
+              />
+              <button
+                type="button"
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                onClick={() => {
+                  const t = newGradeLevelLabel.trim();
+                  if (!t) return;
+                  addGradeLevel(t);
+                  setNewGradeLevelLabel("");
+                }}
+              >
+                Sınıf ekle
+              </button>
+            </div>
           </div>
         )}
 
@@ -444,6 +804,41 @@ export default function AdminPanelPage() {
                 value={staticPages.contact}
                 onChange={(e) => updateStaticPage("contact", e.target.value)}
               />
+            </div>
+          </div>
+        )}
+
+        {activeSection === "advisor" && (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <h3 className="text-lg font-bold">Eğitim Danışmanı — sohbet metinleri</h3>
+            <p className="text-xs text-slate-600">
+              Sağ alttaki danışman balonunda sırayla gösterilir. Sadece <strong>metinleri</strong>{" "}
+              değiştirirsiniz; adım sırası ve filtre mantığı sabittir. Kurumsal panel kullanıcıları bu
+              alanı görmez — yalnızca platform yöneticisi (admin).
+            </p>
+            <div className="space-y-4">
+              {[...advisorQuestions]
+                .sort((a, b) => a.order - b.order)
+                .map((q) => (
+                  <div key={q.id} className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+                    <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Adım {q.order} · {q.stepKey}
+                      </span>
+                      <span className="text-[11px] text-slate-500">{ADVISOR_STEP_HINT[q.stepKey]}</span>
+                    </div>
+                    <label className="sr-only" htmlFor={`advisor-q-${q.id}`}>
+                      Soru metni
+                    </label>
+                    <textarea
+                      id={`advisor-q-${q.id}`}
+                      rows={3}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      value={q.prompt}
+                      onChange={(e) => updateAdvisorQuestion(q.id, e.target.value)}
+                    />
+                  </div>
+                ))}
             </div>
           </div>
         )}

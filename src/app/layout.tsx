@@ -16,9 +16,35 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "kursiyera",
   description: "Eğitim kurumlarını keşfedin — kurs ve dershane listeleme platformu.",
+  openGraph: {
+    title: "kursiyera",
+    description: "Eğitim kurumlarını keşfedin — kurs ve dershane listeleme platformu.",
+    siteName: "kursiyera",
+    locale: "tr_TR",
+    type: "website",
+    images: [
+      {
+        url: "/og/og.jpeg",
+        width: 1200,
+        height: 630,
+        alt: "kursiyera",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "kursiyera",
+    description: "Eğitim kurumlarını keşfedin — kurs ve dershane listeleme platformu.",
+    images: ["/og/og.jpeg"],
+  },
 };
 
 export default function RootLayout({

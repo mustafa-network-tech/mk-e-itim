@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "kursiyera-dev-notice-dismissed";
@@ -144,6 +145,16 @@ export function DevelopmentNoticeModal() {
           </button>
 
           <div className="relative text-center">
+            <div className="mx-auto mb-6 w-full max-w-[20rem] overflow-hidden rounded-xl border border-white/10 bg-black/30 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+              <Image
+                src="/og/og.jpeg"
+                alt="kursiyera"
+                width={640}
+                height={360}
+                className="h-auto w-full object-cover"
+                priority
+              />
+            </div>
             <p
               id="dev-notice-title"
               className="text-balance text-2xl font-semibold tracking-tight text-zinc-100 sm:text-[1.65rem] sm:leading-snug"
@@ -153,8 +164,8 @@ export function DevelopmentNoticeModal() {
             <p className="mx-auto mt-5 max-w-sm text-pretty text-[0.9375rem] leading-relaxed text-zinc-400">
               Eğitim kurumlarını keşfetmenin yeni yolu çok yakında hizmetinizde olacak.
             </p>
-            <p className="mt-8 text-xs font-medium tracking-[0.14em] text-zinc-600">
-              Powered by MK Digital Systems
+            <p className="mt-8 text-[0.6875rem] font-semibold leading-snug tracking-wide text-zinc-500 sm:text-xs">
+              MK DİGİTAL SYSTEMS TARAFINDAN GELİŞTİRİLMEKTEDİR
             </p>
 
             <a

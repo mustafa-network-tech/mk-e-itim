@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "kursiyera",
-  description: "Kurs ve dershane keşif platformu - demo",
+  description: "Eğitim kurumlarını keşfedin — kurs ve dershane listeleme platformu.",
 };
 
 export default function RootLayout({

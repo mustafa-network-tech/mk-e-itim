@@ -1,6 +1,5 @@
 "use client";
 
-import { DevelopmentNoticeModal } from "@/components/DevelopmentNoticeModal";
 import { AuthSessionProvider } from "@/hooks/useAuthSession";
 import { DemoPlatformProvider } from "@/hooks/useDemoPlatform";
 import { bindBrowserSupabasePublic } from "@/lib/supabase/browserOverride";
@@ -18,7 +17,6 @@ export function Providers({
     <DemoPlatformProvider supabasePublic={supabasePublic}>
       <AuthSessionProvider>
         {children}
-        <DevelopmentNoticeModal />
       </AuthSessionProvider>
     </DemoPlatformProvider>
   );

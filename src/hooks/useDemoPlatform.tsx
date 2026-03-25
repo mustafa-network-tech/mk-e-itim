@@ -57,20 +57,7 @@ const DemoContext = createContext<DemoContextValue | null>(null);
 
 export function DemoPlatformProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userList, setUserList] = useState<User[]>(() => {
-    const hasAdmin = users.some((item) => item.role === "admin");
-    if (hasAdmin) return users;
-    return [
-      ...users,
-      {
-        id: "u-admin-seeded",
-        role: "admin",
-        name: "Sistem Yöneticisi",
-        email: "admin@mkegitim.demo",
-        password: "Admin123!",
-      },
-    ];
-  });
+  const [userList, setUserList] = useState<User[]>(users);
   const [institutionList, setInstitutionList] = useState<Institution[]>(institutions);
   const [tagList, setTagList] = useState<Tag[]>(tags);
   const [gradeLevelList, setGradeLevelList] = useState<GradeLevel[]>(gradeLevelsSeed);

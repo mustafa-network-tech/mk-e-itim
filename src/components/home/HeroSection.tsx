@@ -2,18 +2,30 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { KursiyeraWordmark } from "@/components/brand/KursiyeraWordmark";
+import type { HeroSlide } from "@/types";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { SearchBar } from "@/components/search/SearchBar";
 
+const HERO_FALLBACK: HeroSlide[] = [
+  {
+    id: "hero-fallback",
+    title: "Eğitim kariyerinize yön verecek platform",
+    subtitle: "Kursları keşfedin, karşılaştırın ve en doğru seçimi yapın",
+    image:
+      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1800&q=80",
+  },
+];
+
 export function HeroSection() {
   const { heroSlides } = useDemoPlatform();
+  const slides = heroSlides.length > 0 ? heroSlides : HERO_FALLBACK;
   const [index, setIndex] = useState(0);
-  const slide = useMemo(() => heroSlides[index % heroSlides.length], [heroSlides, index]);
+  const slide = useMemo(() => slides[index % slides.length], [slides, index]);
 
   useEffect(() => {
-    const timer = setInterval(() => setIndex((prev) => (prev + 1) % heroSlides.length), 4500);
+    const timer = setInterval(() => setIndex((prev) => (prev + 1) % slides.length), 4500);
     return () => clearInterval(timer);
-  }, [heroSlides.length]);
+  }, [slides.length]);
 
   return (
     <section className="relative overflow-hidden rounded-3xl bg-[#111111]">

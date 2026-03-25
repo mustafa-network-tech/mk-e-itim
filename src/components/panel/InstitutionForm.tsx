@@ -75,7 +75,7 @@ export function InstitutionForm() {
   const [managerId, setManagerId] = useState("");
   const [newManagerName, setNewManagerName] = useState("");
   const [newManagerEmail, setNewManagerEmail] = useState("");
-  const [newManagerPassword, setNewManagerPassword] = useState("Demo123!");
+  const [newManagerPassword, setNewManagerPassword] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([]);
   const [discountActive, setDiscountActive] = useState(defaults.discountActive);
@@ -124,7 +124,7 @@ export function InstitutionForm() {
     setManagerId("");
     setNewManagerName("");
     setNewManagerEmail("");
-    setNewManagerPassword("Demo123!");
+    setNewManagerPassword("");
     setSelectedTags([]);
     setSelectedGradeIds([]);
     setDiscountActive(defaults.discountActive);
@@ -141,7 +141,11 @@ export function InstitutionForm() {
         e.preventDefault();
         let ownerId = managerId;
         if (!ownerId && newManagerName.trim() && newManagerEmail.trim()) {
-          const pwd = newManagerPassword.trim() || "Demo123!";
+          const pwd = newManagerPassword.trim();
+          if (!pwd) {
+            alert("Yeni yönetici için şifre zorunludur.");
+            return;
+          }
           const mgr = createManager({
             name: newManagerName.trim(),
             email: newManagerEmail.trim(),

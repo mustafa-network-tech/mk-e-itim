@@ -59,7 +59,7 @@ export default function AdminPanelPage() {
   const [tagActionMessage, setTagActionMessage] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [invitePassword, setInvitePassword] = useState("Demo123!");
+  const [invitePassword, setInvitePassword] = useState("");
   const [inviteFeedback, setInviteFeedback] = useState("");
 
   if (!currentUser || currentUser.role !== "admin") {
@@ -426,12 +426,12 @@ export default function AdminPanelPage() {
                       setInviteEmail(e.target.value);
                       setInviteFeedback("");
                     }}
-                    placeholder="yonetici@kurum.demo"
+                    placeholder="yonetici@kurum.com"
                   />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
-                    İlk şifre (davet e-postasında iletilecek — demoda yerel)
+                    İlk şifre (davet e-postasında iletilecek)
                   </label>
                   <input
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
@@ -455,7 +455,11 @@ export default function AdminPanelPage() {
                     setInviteFeedback("Ad ve e-posta zorunludur.");
                     return;
                   }
-                  const pwd = invitePassword.trim() || "Demo123!";
+                  const pwd = invitePassword.trim();
+                  if (!pwd) {
+                    setInviteFeedback("İlk şifre zorunludur.");
+                    return;
+                  }
                   const created = createManager({ name: n, email: em, password: pwd });
                   if (!created) {
                     setInviteFeedback("Bu e-posta zaten kayıtlı.");
@@ -463,9 +467,9 @@ export default function AdminPanelPage() {
                   }
                   setInviteName("");
                   setInviteEmail("");
-                  setInvitePassword("Demo123!");
+                  setInvitePassword("");
                   setInviteFeedback(
-                    `Davet oluşturuldu. Kurumsal giriş: ${em} / Şifre: ${pwd} (gerçek üründe e-posta ile gönderilir)`,
+                    `Yönetici kaydı oluşturuldu. Supabase Auth bağlandığında giriş bilgileri e-posta ile iletilebilir.`,
                   );
                 }}
               >

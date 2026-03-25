@@ -28,11 +28,11 @@ export function HeroSection() {
   }, [slides.length]);
 
   return (
-    <section className="relative overflow-visible rounded-3xl bg-[#111111] md:overflow-hidden">
+    <section className="relative overflow-hidden rounded-3xl bg-[#111111]">
       <img
         src={slide.image}
         alt={slide.title}
-        className="h-[360px] w-full object-cover sm:h-[400px] md:h-[420px]"
+        className="h-[380px] w-full object-cover sm:h-[400px] md:h-[420px]"
       />
       <div
         className="absolute inset-0 bg-gradient-to-r from-black/[0.65] to-black/[0.35]"

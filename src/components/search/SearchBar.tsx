@@ -12,6 +12,9 @@ const fieldClass =
 const buttonClass =
   "inline-flex h-10 w-full items-center justify-center rounded-[13px] bg-[#1f1f25] px-5 text-sm font-medium text-white shadow-sm transition hover:bg-[#2e2e36] hover:shadow-md hover:-translate-y-px active:translate-y-0 lg:w-auto lg:min-w-[132px]";
 
+const mobileAramaLinkClass =
+  "inline-flex h-10 shrink-0 items-center justify-center rounded-[13px] bg-[#1f1f25] px-4 text-sm font-medium text-white shadow-sm transition hover:bg-[#2e2e36] active:translate-y-0";
+
 export function SearchBar() {
   const { institutions, gradeLevels, tags } = useDemoPlatform();
 
@@ -78,57 +81,27 @@ export function SearchBar() {
 
   return (
     <div className="mx-auto w-full max-w-[820px] rounded-[18px] border border-black/[0.06] bg-white/[0.92] p-3 shadow-[0_12px_40px_rgba(0,0,0,0.12)] backdrop-blur-[10px] sm:p-3.5">
-      {/* Mobil */}
-      <div className="flex flex-col gap-2.5 lg:hidden">
-        <div className="min-w-0">
-          <label className={labelClass}>Şehir</label>
-          <select className={fieldClass} value={city} onChange={(e) => setCity(e.target.value)}>
-            <option value="">Şehir seçin</option>
-            {cities.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+      {/* Mobil: şehir + Arama → doğrudan listeleme (boş da /listings) */}
+      <div className="flex flex-col gap-2 lg:hidden">
+        <div className="flex min-w-0 items-end gap-2">
+          <div className="min-w-0 flex-1">
+            <label className={labelClass}>Şehir</label>
+            <select className={fieldClass} value={city} onChange={(e) => setCity(e.target.value)}>
+              <option value="">Şehir seçin</option>
+              {cities.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Link href={href} className={mobileAramaLinkClass}>
+            Arama
+          </Link>
         </div>
-        {districtSelect ? <div className="min-w-0">{districtSelect}</div> : null}
-        <div className="min-w-0">
-          <label className={labelClass}>Ders seçimi</label>
-          <select className={fieldClass} value={subject} onChange={(e) => setSubject(e.target.value)}>
-            <option value="">Ders seçin</option>
-            {dersSecenekleri.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="min-w-0">
-          <label className={labelClass}>Sınıf seçimi</label>
-          <select className={fieldClass} value={grade} onChange={(e) => setGrade(e.target.value)}>
-            <option value="">Sınıf seçin</option>
-            {gradeLevels.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="min-w-0">
-          <label className={labelClass}>Minimum fiyat (₺)</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            placeholder="Örn. 3000"
-            className={fieldClass}
-            value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-          />
-        </div>
-        <Link href={href} className={buttonClass}>
-          Kurumları Bul
-        </Link>
+        <p className="text-center text-[11px] leading-snug text-[#111]/40">
+          Arama ile listeleme sayfasına gidersiniz; tüm filtreleri orada, alttaki «Arama» ile açarsınız.
+        </p>
       </div>
 
       {/* Masaüstü — üst: şehir | ders | sınıf; alt: konum adımı | min fiyat | buton */}
@@ -168,7 +141,7 @@ export function SearchBar() {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-x-3 items-end">
+        <div className="grid grid-cols-3 items-end gap-x-3">
           <div className="min-w-0 rounded-[10px] border border-black/[0.06] bg-white/[0.55] p-2.5">
             {districtSelect ?? locationFollowUp}
           </div>

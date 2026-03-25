@@ -3,11 +3,16 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { KursiyeraWordmark } from "@/components/brand/KursiyeraWordmark";
+import { useAuthSession } from "@/hooks/useAuthSession";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { HeaderNav } from "@/components/layout/HeaderNav";
 
 export function Header() {
-  const { currentUser, logout } = useDemoPlatform();
+  const { currentUser, logout: demoLogout } = useDemoPlatform();
+  const { authUser, signOut: authSignOut } = useAuthSession();
+  const supabaseMode = isSupabaseConfigured();
+  const signedIn = supabaseMode ? authUser : currentUser;
   return (
     <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-3.5 sm:px-6 sm:py-4">
@@ -29,18 +34,29 @@ export function Header() {
         >
           <HeaderNav />
         </Suspense>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           <Link
             href="/kurumsal-giris"
             className="rounded-xl border border-black/[0.08] bg-white px-3 py-2 text-sm font-semibold text-[#111111] transition-opacity duration-200 hover:opacity-80"
           >
             Kurumsal Giriş
           </Link>
-          {currentUser && (
+          {supabaseMode && authUser ? (
+            <Link
+              href="/hesap/sifre"
+              className="rounded-xl border border-black/[0.08] bg-white px-3 py-2 text-sm font-semibold text-[#111111] transition-opacity duration-200 hover:opacity-80"
+            >
+              Şifre değiştir
+            </Link>
+          ) : null}
+          {signedIn && (
             <button
               type="button"
               className="rounded-xl bg-[#111111] px-3 py-2 text-sm font-semibold text-white transition-opacity duration-200 hover:opacity-90"
-              onClick={logout}
+              onClick={() => {
+                if (supabaseMode) void authSignOut();
+                else demoLogout();
+              }}
             >
               Çıkış
             </button>

@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { CorporateSection, CorporateSidebar, StatsCard } from "@/components/panel/Sidebars";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
+import { usePanelGate } from "@/hooks/usePanelGate";
 import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
 
 export default function CorporatePanelPage() {
+  const { user: panelUser, loading: panelLoading, allowed: panelAllowed } = usePanelGate([
+    "institution_manager",
+  ]);
   const {
-    currentUser,
     institutions,
     reviews,
     updateInstitution,
@@ -22,10 +25,13 @@ export default function CorporatePanelPage() {
   const [newInstructorName, setNewInstructorName] = useState("");
   const [newInstructorBranch, setNewInstructorBranch] = useState("");
 
-  const ownedInstitutions = institutions.filter((item) => item.ownerUserId === currentUser?.id);
+  const ownedInstitutions = institutions.filter((item) => item.ownerUserId === panelUser?.id);
   const institution = ownedInstitutions[0];
 
-  if (!currentUser || currentUser.role !== "institution_manager") {
+  if (panelLoading) {
+    return <div className="mx-auto max-w-4xl px-4 py-10 text-slate-600">Oturum kontrol ediliyor…</div>;
+  }
+  if (!panelAllowed || !panelUser) {
     return <div className="mx-auto max-w-4xl px-4 py-10">Bu alana erişim için kurumsal giriş yapın.</div>;
   }
 

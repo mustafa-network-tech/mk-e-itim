@@ -72,7 +72,7 @@ export function DemoPlatformProvider({ children }: { children: React.ReactNode }
   const [advisorQuestionList, setAdvisorQuestionList] = useState<AdvisorQuestion[]>(advisorQuestionsSeed);
 
   const login = (email: string, password: string) => {
-    const found = userList.find((u) => u.email === email && u.password === password);
+    const found = userList.find((u) => u.email === email && (u.password ?? "") === password);
     if (!found) return null;
     setCurrentUser(found);
     return found.role;

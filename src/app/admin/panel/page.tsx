@@ -4,6 +4,7 @@ import { useState } from "react";
 import { InstitutionForm } from "@/components/panel/InstitutionForm";
 import { AdminSection, AdminSidebar, StatsCard } from "@/components/panel/Sidebars";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
+import { usePanelGate } from "@/hooks/usePanelGate";
 import { formatTryAmount, getDiscountedPriceFromMin, getDiscountRibbonText } from "@/lib/discount";
 import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
@@ -18,8 +19,8 @@ const ADVISOR_STEP_HINT: Record<AdvisorStepKey, string> = {
 };
 
 export default function AdminPanelPage() {
+  const { user: panelUser, loading: panelLoading, allowed: panelAllowed } = usePanelGate(["admin"]);
   const {
-    currentUser,
     institutions,
     users,
     reviews,
@@ -62,7 +63,10 @@ export default function AdminPanelPage() {
   const [invitePassword, setInvitePassword] = useState("");
   const [inviteFeedback, setInviteFeedback] = useState("");
 
-  if (!currentUser || currentUser.role !== "admin") {
+  if (panelLoading) {
+    return <div className="mx-auto max-w-4xl px-4 py-10 text-slate-600">Oturum kontrol ediliyor…</div>;
+  }
+  if (!panelAllowed || !panelUser) {
     return <div className="mx-auto max-w-4xl px-4 py-10">Bu alana erişim için admin girişi yapın.</div>;
   }
 
@@ -525,7 +529,7 @@ export default function AdminPanelPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (currentUser.role !== "admin") return;
+                          if (panelUser.role !== "admin") return;
                           updateReviewStatus(review.id, "onaylandi");
                           setModerationMessage("Yorum başarıyla onaylandı.");
                         }}
@@ -536,7 +540,7 @@ export default function AdminPanelPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (currentUser.role !== "admin") return;
+                          if (panelUser.role !== "admin") return;
                           updateReviewStatus(review.id, "reddedildi");
                           setModerationMessage("Yorum reddedildi.");
                         }}

@@ -5,7 +5,8 @@ export interface User {
   role: UserRole;
   name: string;
   email: string;
-  password: string;
+  /** Yalnızca yerel demo girişi için; Supabase oturumunda boş bırakılır */
+  password?: string;
   phone?: string;
   institutionId?: string;
 }

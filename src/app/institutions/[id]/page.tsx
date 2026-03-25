@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { institutions } from "@/data/mockData";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { InstitutionDetailClient } from "./InstitutionDetailClient";
 
+export const dynamic = "force-dynamic";
+
 export async function generateStaticParams() {
-  return institutions.map((i) => ({ id: i.id }));
+  return [];
 }
 
 export async function generateMetadata({
@@ -12,19 +15,36 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const inst = institutions.find((i) => i.id === id);
-  if (!inst) {
-    return { title: "Kurum | kursiyera", description: "Eğitim kurumu detay sayfası." };
-  }
-  return {
-    title: `${inst.name} | kursiyera`,
-    description: inst.shortDescription,
-    openGraph: {
-      title: inst.name,
-      description: inst.shortDescription,
-      images: inst.images[0] ? [{ url: inst.images[0] }] : undefined,
-    },
+  const fallback = {
+    title: "Kurum | kursiyera",
+    description: "Eğitim kurumu detay sayfası.",
   };
+  if (!isSupabaseConfigured()) {
+    return fallback;
+  }
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data } = await supabase
+      .from("institutions")
+      .select("name, short_description, images")
+      .eq("id", id)
+      .maybeSingle();
+    if (!data) {
+      return fallback;
+    }
+    const images = (data.images as string[] | null) ?? [];
+    return {
+      title: `${data.name} | kursiyera`,
+      description: data.short_description,
+      openGraph: {
+        title: data.name,
+        description: data.short_description,
+        images: images[0] ? [{ url: images[0] }] : undefined,
+      },
+    };
+  } catch {
+    return fallback;
+  }
 }
 
 export default function InstitutionDetailPage() {

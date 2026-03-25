@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isBrowserSupabaseActive } from "@/lib/supabase/client";
 import { getPublicSiteUrlForRedirect } from "@/lib/siteUrl";
 import { PageNav } from "@/components/ui/PageNav";
 
@@ -38,7 +38,7 @@ function KurumsalGirisForm() {
         <p className="text-sm text-slate-600">
           Açık üyelik veya kendi kendine kayıt yoktur. Kurum yöneticisi hesabı yalnızca platform
           yöneticisinin davetiyle açılır; size iletilen e-posta ve şifre ile giriş yapın.
-          {isSupabaseConfigured() ? (
+          {isBrowserSupabaseActive() ? (
             <span className="mt-2 block text-slate-500">
               Oturum Supabase Auth üzerinden açılır; admin veya kurum rolü{" "}
               <code className="rounded bg-slate-100 px-1">profiles</code> tablosunda tanımlı olmalıdır.
@@ -71,7 +71,7 @@ function KurumsalGirisForm() {
           type="button"
           className="w-full rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white"
           onClick={async () => {
-            if (isSupabaseConfigured()) {
+            if (isBrowserSupabaseActive()) {
               const result = await signInWithEmailPassword(email.trim(), password);
               if (!result.ok) {
                 setError(result.message);
@@ -92,7 +92,7 @@ function KurumsalGirisForm() {
         </button>
         {error && <p className="text-sm text-rose-600">{error}</p>}
 
-        {isSupabaseConfigured() ? (
+        {isBrowserSupabaseActive() ? (
           <div className="border-t border-slate-100 pt-4">
             <button
               type="button"

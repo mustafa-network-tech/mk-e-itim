@@ -1,0 +1,9 @@
+Kursiyera — Supabase SQL çalıştırma sırası (Dashboard → SQL Editor, tek tek veya birleştirerek)
+
+1) 20260325120000_profiles.sql
+2) 20260325120100_platform_admin_allowlist.sql
+3) 20260325120200_profiles_grants.sql
+4) 20260325131000_platform_tables.sql      ← yeni: kurumlar, yorumlar, etiketler, …
+5) 20260325131100_platform_rls_and_grants.sql  ← yeni: RLS + GRANT + profiles politikaları güncellemesi
+
+Not: 311, profiles tablosundaki eski "select/update own" politikalarını kaldırıp admin genişletmesini uygular.

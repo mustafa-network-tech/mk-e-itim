@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createBrowserSupabaseClientOrNull, isBrowserSupabaseActive } from "@/lib/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { PageNav } from "@/components/ui/PageNav";
 
@@ -19,7 +18,7 @@ export default function AccountChangePasswordPage() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
-  if (!isSupabaseConfigured()) {
+  if (!isBrowserSupabaseActive()) {
     return (
       <div className="mx-auto max-w-xl px-4 py-10">
         <PageNav />

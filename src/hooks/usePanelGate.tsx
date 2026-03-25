@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isBrowserSupabaseActive } from "@/lib/supabase/client";
 import type { User, UserRole } from "@/types";
 
 /**
@@ -14,7 +14,7 @@ export function usePanelGate(allowedRoles: UserRole[]) {
   const { authUser, authLoading } = useAuthSession();
 
   return useMemo(() => {
-    const supabaseMode = isSupabaseConfigured();
+    const supabaseMode = isBrowserSupabaseActive();
     const user: User | null = supabaseMode ? authUser : currentUser;
     const loading = supabaseMode && authLoading;
     const allowed = Boolean(user && allowedRoles.includes(user.role));

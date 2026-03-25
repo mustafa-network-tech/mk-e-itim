@@ -139,6 +139,7 @@ export function InstitutionForm() {
       className="space-y-8 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
       onSubmit={(e) => {
         e.preventDefault();
+        void (async () => {
         let ownerId = managerId;
         if (!ownerId && newManagerName.trim() && newManagerEmail.trim()) {
           const pwd = newManagerPassword.trim();
@@ -146,16 +147,16 @@ export function InstitutionForm() {
             alert("Yeni yönetici için şifre zorunludur.");
             return;
           }
-          const mgr = createManager({
+          const mgrRes = await createManager({
             name: newManagerName.trim(),
             email: newManagerEmail.trim(),
             password: pwd,
           });
-          if (!mgr) {
-            alert("Bu e-posta adresi zaten kayıtlı. Mevcut yöneticiyi seçin veya farklı e-posta kullanın.");
+          if (!mgrRes.ok) {
+            alert(mgrRes.message);
             return;
           }
-          ownerId = mgr.id;
+          ownerId = mgrRes.user.id;
         }
         if (!ownerId) {
           alert("Kurum kartı kaydı için yönetici ataması zorunludur.");
@@ -174,7 +175,7 @@ export function InstitutionForm() {
         const resolvedAddress =
           address.trim() || `${neighborhood ? `${neighborhood}, ` : ""}${district} / ${city}`.trim();
 
-        createInstitution({
+        const created = await createInstitution({
           name: name.trim(),
           ownerUserId: ownerId,
           type: institutionType,
@@ -226,7 +227,12 @@ export function InstitutionForm() {
           discountStartDate: discountStartDate.trim(),
           discountEndDate: discountEndDate.trim(),
         });
+        if (!created.ok) {
+          alert(created.message);
+          return;
+        }
         resetForm();
+        })();
       }}
     >
       <div>

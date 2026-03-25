@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createBrowserSupabaseClientOrNull, isBrowserSupabaseActive } from "@/lib/supabase/client";
 import { PageNav } from "@/components/ui/PageNav";
 
 /**
@@ -20,7 +19,7 @@ export default function ResetPasswordPage() {
   const [sessionReady, setSessionReady] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
+    if (!isBrowserSupabaseActive()) {
       setSessionReady(false);
       return;
     }
@@ -54,7 +53,7 @@ export default function ResetPasswordPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (!isSupabaseConfigured()) {
+  if (!isBrowserSupabaseActive()) {
     return (
       <div className="mx-auto max-w-xl px-4 py-10">
         <PageNav />

@@ -8,8 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createBrowserSupabaseClientOrNull, isBrowserSupabaseActive } from "@/lib/supabase/client";
 import type { User, UserRole } from "@/types";
 
 type ProfileRow = {
@@ -69,7 +68,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   const [authLoading, setAuthLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
+    if (!isBrowserSupabaseActive()) {
       setAuthUser(null);
       setAuthLoading(false);
       return;
@@ -102,7 +101,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     void refreshUser();
-    if (!isSupabaseConfigured()) return;
+    if (!isBrowserSupabaseActive()) return;
     const supabase = createBrowserSupabaseClientOrNull();
     if (!supabase) return;
     const {
@@ -122,7 +121,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
 
   const signInWithEmailPassword = useCallback(
     async (email: string, password: string) => {
-      if (!isSupabaseConfigured()) {
+      if (!isBrowserSupabaseActive()) {
         return { ok: false as const, message: "Supabase ortam değişkenleri tanımlı değil." };
       }
       const supabase = createBrowserSupabaseClientOrNull();
@@ -160,7 +159,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   );
 
   const signOut = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
+    if (!isBrowserSupabaseActive()) {
       setAuthUser(null);
       return;
     }

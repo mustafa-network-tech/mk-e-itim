@@ -3,10 +3,19 @@
 import { DevelopmentNoticeModal } from "@/components/DevelopmentNoticeModal";
 import { AuthSessionProvider } from "@/hooks/useAuthSession";
 import { DemoPlatformProvider } from "@/hooks/useDemoPlatform";
+import { bindBrowserSupabasePublic } from "@/lib/supabase/browserOverride";
+import type { SupabasePublicConfig } from "@/lib/supabase/runtimePublic";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  supabasePublic,
+}: {
+  children: React.ReactNode;
+  supabasePublic: SupabasePublicConfig | null;
+}) {
+  bindBrowserSupabasePublic(supabasePublic);
   return (
-    <DemoPlatformProvider>
+    <DemoPlatformProvider supabasePublic={supabasePublic}>
       <AuthSessionProvider>
         {children}
         <DevelopmentNoticeModal />

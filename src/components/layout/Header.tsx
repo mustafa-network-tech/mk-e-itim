@@ -5,13 +5,13 @@ import { Suspense } from "react";
 import { KursiyeraWordmark } from "@/components/brand/KursiyeraWordmark";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isBrowserSupabaseActive } from "@/lib/supabase/client";
 import { HeaderNav } from "@/components/layout/HeaderNav";
 
 export function Header() {
   const { currentUser, logout: demoLogout } = useDemoPlatform();
   const { authUser, signOut: authSignOut } = useAuthSession();
-  const supabaseMode = isSupabaseConfigured();
+  const supabaseMode = isBrowserSupabaseActive();
   const signedIn = supabaseMode ? authUser : currentUser;
   return (
     <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]">

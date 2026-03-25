@@ -292,13 +292,14 @@ export default function AdminPanelPage() {
                             type="button"
                             className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
                             onClick={() => {
+                              void (async () => {
                               if (!newCardTagName.trim()) return;
-                              const newTagId = newCardTagName.toLowerCase().replaceAll(" ", "-");
-                              createTag(newCardTagName);
-                              if (!selected.tags.includes(newTagId)) {
-                                updateInstitutionTags(selected.id, [...selected.tags, newTagId]);
+                              const newTagId = await createTag(newCardTagName);
+                              if (newTagId && !selected.tags.includes(newTagId)) {
+                                await updateInstitutionTags(selected.id, [...selected.tags, newTagId]);
                               }
                               setNewCardTagName("");
+                              })();
                             }}
                           >
                             Etiket Ekle
@@ -453,6 +454,7 @@ export default function AdminPanelPage() {
                 type="button"
                 className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
                 onClick={() => {
+                  void (async () => {
                   const n = inviteName.trim();
                   const em = inviteEmail.trim();
                   if (!n || !em) {
@@ -464,17 +466,18 @@ export default function AdminPanelPage() {
                     setInviteFeedback("İlk şifre zorunludur.");
                     return;
                   }
-                  const created = createManager({ name: n, email: em, password: pwd });
-                  if (!created) {
-                    setInviteFeedback("Bu e-posta zaten kayıtlı.");
+                  const created = await createManager({ name: n, email: em, password: pwd });
+                  if (!created.ok) {
+                    setInviteFeedback(created.message);
                     return;
                   }
                   setInviteName("");
                   setInviteEmail("");
                   setInvitePassword("");
                   setInviteFeedback(
-                    `Yönetici kaydı oluşturuldu. Supabase Auth bağlandığında giriş bilgileri e-posta ile iletilebilir.`,
+                    `Yönetici kaydı oluşturuldu. Giriş bilgileri ile kurumsal panelden oturum açılabilir.`,
                   );
+                  })();
                 }}
               >
                 Daveti oluştur
@@ -581,8 +584,9 @@ export default function AdminPanelPage() {
                     setTagActionMessage("");
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    void (async () => {
                       const t = newTagName.trim();
                       if (!t) {
                         setTagActionMessage("Etiket adı yazın.");
@@ -592,10 +596,14 @@ export default function AdminPanelPage() {
                         setTagActionMessage("Bu isimde bir etiket zaten var.");
                         return;
                       }
-                      createTag(t);
+                      const id = await createTag(t);
+                      if (!id) {
+                        setTagActionMessage("Etiket eklenemedi (yetki veya ağ hatası).");
+                        return;
+                      }
                       setNewTagName("");
                       setTagActionMessage("Etiket eklendi. Hero aramada hemen görünür.");
-                    }
+                    })();
                   }}
                 />
               </div>
@@ -603,6 +611,7 @@ export default function AdminPanelPage() {
                 type="button"
                 className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
                 onClick={() => {
+                  void (async () => {
                   const t = newTagName.trim();
                   if (!t) {
                     setTagActionMessage("Etiket adı yazın.");
@@ -612,9 +621,14 @@ export default function AdminPanelPage() {
                     setTagActionMessage("Bu isimde bir etiket zaten var.");
                     return;
                   }
-                  createTag(t);
+                  const id = await createTag(t);
+                  if (!id) {
+                    setTagActionMessage("Etiket eklenemedi (yetki veya ağ hatası).");
+                    return;
+                  }
                   setNewTagName("");
                   setTagActionMessage("Etiket eklendi. Hero aramada hemen görünür.");
+                  })();
                 }}
               >
                 Etiket ekle

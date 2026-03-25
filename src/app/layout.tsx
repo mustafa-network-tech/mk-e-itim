@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers/Providers";
 import { getSupabasePublicForBrowser } from "@/lib/supabase/runtimePublic";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { PoweredByBalloon } from "@/components/layout/PoweredByBalloon";
 import { EducationAdvisorLauncher } from "@/components/education/EducationAdvisorLauncher";
 
 const geistSans = Geist({
@@ -59,6 +60,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-slate-50">
         <Providers supabasePublic={supabasePublic}>
           <Header />
+          <PoweredByBalloon />
           <main className="flex-1">{children}</main>
           <Footer />
           <EducationAdvisorLauncher />

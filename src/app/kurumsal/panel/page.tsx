@@ -11,6 +11,7 @@ import { usePanelGate } from "@/hooks/usePanelGate";
 import { getPublicRating } from "@/lib/institutions";
 import {
   buildInstitutionPersistencePayload,
+  formatInstitutionSaveError,
   mergeInstitutionWithPending,
 } from "@/lib/institutionSavePayload";
 import { PageNav } from "@/components/ui/PageNav";
@@ -48,6 +49,7 @@ export default function CorporatePanelPage() {
   const [institutionEditDraft, setInstitutionEditDraft] = useState<Institution | null>(null);
   const [institutionDraftDirty, setInstitutionDraftDirty] = useState(false);
   const [institutionFormMessage, setInstitutionFormMessage] = useState<string | null>(null);
+  const [institutionSaveBusy, setInstitutionSaveBusy] = useState(false);
   const institutionDraftDirtyRef = useRef(false);
   const prevInstitutionIdRef = useRef<string>("");
 
@@ -88,23 +90,40 @@ export default function CorporatePanelPage() {
   const handleSaveInstitutionDraft = async () => {
     if (!institution || !institutionEditDraft) return;
     const d = institutionEditDraft;
-    setInstitutionFormMessage("Gönderiliyor…");
-    if (!institution.listed) {
-      await updateInstitution(d.id, buildInstitutionPersistencePayload(d));
-      await updateInstitutionTags(d.id, d.tags);
+    setInstitutionSaveBusy(true);
+    try {
+      setInstitutionFormMessage("Gönderiliyor…");
+      if (!institution.listed) {
+        const r1 = await updateInstitution(d.id, buildInstitutionPersistencePayload(d));
+        if (!r1.ok) {
+          setInstitutionFormMessage(`Kayıt başarısız: ${formatInstitutionSaveError(r1.message)}`);
+          return;
+        }
+        const r2 = await updateInstitutionTags(d.id, d.tags);
+        if (!r2.ok) {
+          setInstitutionFormMessage(`Kayıt başarısız: ${formatInstitutionSaveError(r2.message)}`);
+          return;
+        }
+        institutionDraftDirtyRef.current = false;
+        setInstitutionDraftDirty(false);
+        setInstitutionFormMessage("Kayıt tamamlandı.");
+        setTimeout(() => setInstitutionFormMessage(null), 4000);
+        return;
+      }
+      const r = await submitInstitutionPendingReview(d.id, d);
+      if (!r.ok) {
+        setInstitutionFormMessage(`Gönderilemedi: ${formatInstitutionSaveError(r.message)}`);
+        return;
+      }
       institutionDraftDirtyRef.current = false;
       setInstitutionDraftDirty(false);
-      setInstitutionFormMessage("Kayıt tamamlandı.");
-      setTimeout(() => setInstitutionFormMessage(null), 4000);
-      return;
+      setInstitutionFormMessage(
+        "Değişiklik talebiniz platform yöneticisine iletildi. Onaylanana kadar sitede yayındaki metin görünür.",
+      );
+      setTimeout(() => setInstitutionFormMessage(null), 6500);
+    } finally {
+      setInstitutionSaveBusy(false);
     }
-    await submitInstitutionPendingReview(d.id, d);
-    institutionDraftDirtyRef.current = false;
-    setInstitutionDraftDirty(false);
-    setInstitutionFormMessage(
-      "Değişiklik talebiniz platform yöneticisine iletildi. Onaylanana kadar sitede yayındaki metin görünür.",
-    );
-    setTimeout(() => setInstitutionFormMessage(null), 6500);
   };
 
   if (panelLoading) {
@@ -240,7 +259,7 @@ export default function CorporatePanelPage() {
                     <div className="sticky bottom-2 z-10 flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white/95 pt-4 backdrop-blur-sm">
                       <button
                         type="button"
-                        disabled={!institutionDraftDirty}
+                        disabled={!institutionDraftDirty || institutionSaveBusy}
                         onClick={handleCancelInstitutionDraft}
                         className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                       >
@@ -248,13 +267,13 @@ export default function CorporatePanelPage() {
                       </button>
                       <button
                         type="button"
-                        disabled={!institutionDraftDirty}
+                        disabled={!institutionDraftDirty || institutionSaveBusy}
                         onClick={() => {
                           void handleSaveInstitutionDraft();
                         }}
                         className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                       >
-                        {saveLabel}
+                        {institutionSaveBusy ? "Bekleyin…" : saveLabel}
                       </button>
                     </div>
                   </InstitutionEditorFields>

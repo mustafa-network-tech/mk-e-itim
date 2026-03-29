@@ -6,7 +6,10 @@ import { InstitutionForm } from "@/components/panel/InstitutionForm";
 import { AdminSection, AdminSidebar, StatsCard } from "@/components/panel/Sidebars";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { usePanelGate } from "@/hooks/usePanelGate";
-import { buildInstitutionPersistencePayload } from "@/lib/institutionSavePayload";
+import {
+  buildInstitutionPersistencePayload,
+  formatInstitutionSaveError,
+} from "@/lib/institutionSavePayload";
 import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
 import { InstitutionEditHint } from "@/components/panel/InstitutionEditHint";
@@ -79,6 +82,7 @@ export default function AdminPanelPage() {
   const [institutionEditDraft, setInstitutionEditDraft] = useState<Institution | null>(null);
   const [institutionDraftDirty, setInstitutionDraftDirty] = useState(false);
   const [institutionFormMessage, setInstitutionFormMessage] = useState<string | null>(null);
+  const [institutionSaveBusy, setInstitutionSaveBusy] = useState(false);
   const institutionDraftDirtyRef = useRef(false);
   const prevSelectedInstitutionIdRef = useRef<string>("");
 
@@ -132,13 +136,26 @@ export default function AdminPanelPage() {
   const handleSaveInstitutionDraft = async () => {
     if (!institutionEditDraft) return;
     const d = institutionEditDraft;
-    setInstitutionFormMessage("Kaydediliyor…");
-    await updateInstitution(d.id, buildInstitutionPersistencePayload(d));
-    await updateInstitutionTags(d.id, d.tags);
-    institutionDraftDirtyRef.current = false;
-    setInstitutionDraftDirty(false);
-    setInstitutionFormMessage("Kayıt tamamlandı.");
-    setTimeout(() => setInstitutionFormMessage(null), 4000);
+    setInstitutionSaveBusy(true);
+    try {
+      setInstitutionFormMessage("Kaydediliyor…");
+      const r1 = await updateInstitution(d.id, buildInstitutionPersistencePayload(d));
+      if (!r1.ok) {
+        setInstitutionFormMessage(`Kayıt başarısız: ${formatInstitutionSaveError(r1.message)}`);
+        return;
+      }
+      const r2 = await updateInstitutionTags(d.id, d.tags);
+      if (!r2.ok) {
+        setInstitutionFormMessage(`Kayıt başarısız: ${formatInstitutionSaveError(r2.message)}`);
+        return;
+      }
+      institutionDraftDirtyRef.current = false;
+      setInstitutionDraftDirty(false);
+      setInstitutionFormMessage("Kayıt tamamlandı.");
+      setTimeout(() => setInstitutionFormMessage(null), 4000);
+    } finally {
+      setInstitutionSaveBusy(false);
+    }
   };
 
   const handleCancelInstitutionDraft = () => {
@@ -209,13 +226,20 @@ export default function AdminPanelPage() {
                   Sayfa açıldığında yalnızca <strong>kurum listesi</strong> görünür. Yeni kayıt formu
                   kapalıdır; <strong>Yeni kurum formunu aç</strong> ile açılır. Mevcut kurumda tüm detay
                   alanları (fiziksel imkanlar, programlar, konum vb.) seçip düzenledikten sonra{" "}
-                  <strong>Kaydet</strong> kullanın.
+                  <strong>Kaydet</strong> kullanın — sizin için bu işlem <strong>anında geçerlidir</strong>{" "}
+                  (kurum yöneticisindeki «onaya gönder» gibi ara adım yoktur).
                 </p>
               </div>
               <nav
                 className="flex flex-wrap gap-2 text-xs font-medium text-slate-700"
                 aria-label="Kurum sayfası bölümleri"
               >
+                <a
+                  href="#admin-onay-bekleyen"
+                  className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-950 hover:bg-amber-100"
+                >
+                  Yönetici onayı
+                </a>
                 <a
                   href="#admin-kurum-listesi"
                   className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50"
@@ -249,6 +273,63 @@ export default function AdminPanelPage() {
               </nav>
             </div>
             <div
+              id="admin-onay-bekleyen"
+              className="scroll-mt-24 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950"
+            >
+              <h3 className="text-base font-bold text-amber-950">Kurum yöneticisi — onay bekleyen talepler</h3>
+              <p className="mt-2 text-xs leading-relaxed text-amber-950/90">
+                <strong>Genel admin</strong> olarak yeni kurum oluşturduğunuzda veya listeden bir kurumu
+                düzenleyip <strong>Kaydet</strong> dediğinizde kayıt <strong>doğrudan uygulanır</strong>. Burada
+                yalnızca <strong>kurum yöneticisinin</strong> yayındaki kart için gönderdiği değişiklik
+                taslağı listelenir. Bir satıra <strong>İncele</strong> deyin; açılan düzenleme ekranının üstünde{" "}
+                <strong>Onayla ve uygula</strong> ile canlı veriye yazılır, <strong>Reddet</strong> ile talep
+                silinir (yayındaki metin değişmez).
+              </p>
+              {institutions.some((i) => i.pendingSubmittedAt) ? (
+                <ul className="mt-3 space-y-2 border-t border-amber-200/80 pt-3 text-xs">
+                  {institutions
+                    .filter((i) => i.pendingSubmittedAt)
+                    .map((i) => (
+                      <li
+                        key={i.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-white px-3 py-2"
+                      >
+                        <span>
+                          <span className="font-semibold text-slate-900">{i.name}</span>
+                          <span className="text-slate-600"> · {i.city}</span>
+                          <span className="block text-[11px] text-slate-500">
+                            Gönderim: {new Date(i.pendingSubmittedAt!).toLocaleString("tr-TR")}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          className="shrink-0 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800"
+                          onClick={() => {
+                            setSelectedInstitutionId(i.id);
+                            queueMicrotask(() =>
+                              document.getElementById("admin-kurum-duzenle")?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "start",
+                              }),
+                            );
+                          }}
+                        >
+                          İncele / onayla
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              ) : (
+                <p className="mt-3 border-t border-amber-200/80 pt-3 text-xs text-amber-900/80">
+                  Şu an bekleyen yönetici talebi yok. Talep geldiğinde hem burada hem kurum listesinde{" "}
+                  <span className="rounded bg-amber-200 px-1 py-0.5 font-semibold text-amber-950">
+                    Onay bekliyor
+                  </span>{" "}
+                  etiketi görünür.
+                </p>
+              )}
+            </div>
+            <div
               id="admin-kurum-listesi"
               className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4"
             >
@@ -256,8 +337,10 @@ export default function AdminPanelPage() {
                 <div>
                   <h3 className="text-lg font-bold">Kayıtlı kurumlar</h3>
                   <p className="mt-1 text-xs text-slate-500">
-                    Kurumu seçince aşağıda detay sayfasındaki tüm alanları düzenlersiniz; değişiklikler{" "}
-                    <strong>Kaydet</strong> ile yazılır.
+                    Kurumu <strong>Düzenle</strong> ile seçince aşağıda tüm alanlar açılır; sizin{" "}
+                    <strong>Kaydet</strong> işleminiz doğrudan sunucuya yazılır. Sarı{" "}
+                    <strong>Onay bekliyor</strong> etiketi, kurum yöneticisinin gönderdiği taslağı ifade eder —
+                    o kurumda üstte <strong>Onayla ve uygula</strong> / <strong>Reddet</strong> görünür.
                   </p>
                 </div>
                 <button
@@ -462,7 +545,7 @@ export default function AdminPanelPage() {
                       <div className="sticky bottom-2 z-10 flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white/95 pt-4 backdrop-blur-sm">
                         <button
                           type="button"
-                          disabled={!institutionDraftDirty}
+                          disabled={!institutionDraftDirty || institutionSaveBusy}
                           onClick={handleCancelInstitutionDraft}
                           className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                         >
@@ -470,13 +553,13 @@ export default function AdminPanelPage() {
                         </button>
                         <button
                           type="button"
-                          disabled={!institutionDraftDirty}
+                          disabled={!institutionDraftDirty || institutionSaveBusy}
                           onClick={() => {
                             void handleSaveInstitutionDraft();
                           }}
                           className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                         >
-                          Kaydet
+                          {institutionSaveBusy ? "Bekleyin…" : "Kaydet"}
                         </button>
                       </div>
                   </InstitutionEditorFields>

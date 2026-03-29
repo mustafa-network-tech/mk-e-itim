@@ -55,6 +55,9 @@ export type CreateInstitutionResult =
   | { ok: true; institution: Institution }
   | { ok: false; message: string };
 
+/** Kurum kaydı / RPC sonucu — çağıranlar başarısızlıkta formu sıfırlamamalı. */
+export type PlatformSaveResult = { ok: true } | { ok: false; message: string };
+
 interface DemoContextValue {
   currentUser: User | null;
   users: User[];
@@ -77,7 +80,10 @@ interface DemoContextValue {
   login: (email: string, password: string) => UserRole | null;
   logout: () => void;
   addReview: (payload: Omit<Review, "id" | "createdAt" | "status">) => void | Promise<void>;
-  updateInstitution: (institutionId: string, payload: Partial<Institution>) => void | Promise<void>;
+  updateInstitution: (
+    institutionId: string,
+    payload: Partial<Institution>,
+  ) => PlatformSaveResult | Promise<PlatformSaveResult>;
   createManager: (payload: Omit<User, "id" | "role">) => CreateManagerResult | Promise<CreateManagerResult>;
   createInstitution: (payload: InstitutionCreateInput) => CreateInstitutionResult | Promise<CreateInstitutionResult>;
   createTag: (name: string) => string | null | Promise<string | null>;
@@ -90,8 +96,11 @@ interface DemoContextValue {
   removeHeroSlide: (slideId: string) => void | Promise<void>;
   addInstructor: (institutionId: string, name: string, branch: string) => void | Promise<void>;
   removeInstructor: (instructorId: string) => void | Promise<void>;
-  updateInstitutionTags: (institutionId: string, tags: string[]) => void | Promise<void>;
-  submitInstitutionPendingReview: (institutionId: string, draft: Institution) => void | Promise<void>;
+  updateInstitutionTags: (institutionId: string, tags: string[]) => PlatformSaveResult | Promise<PlatformSaveResult>;
+  submitInstitutionPendingReview: (
+    institutionId: string,
+    draft: Institution,
+  ) => PlatformSaveResult | Promise<PlatformSaveResult>;
   clearInstitutionPending: (institutionId: string) => void | Promise<void>;
   approveInstitutionPending: (institutionId: string) => void | Promise<void>;
   setInstitutionListed: (institutionId: string, listed: boolean) => void | Promise<void>;
@@ -121,27 +130,37 @@ async function replaceInstitutionTags(
   supabase: SupabaseClient,
   institutionId: string,
   tagIds: string[],
-) {
-  await supabase.from("institution_tags").delete().eq("institution_id", institutionId);
-  if (tagIds.length === 0) return;
-  await supabase
+): Promise<string | null> {
+  const { error: delErr } = await supabase
+    .from("institution_tags")
+    .delete()
+    .eq("institution_id", institutionId);
+  if (delErr) return delErr.message;
+  if (tagIds.length === 0) return null;
+  const { error: insErr } = await supabase
     .from("institution_tags")
     .insert(tagIds.map((tag_id) => ({ institution_id: institutionId, tag_id })));
+  return insErr?.message ?? null;
 }
 
 async function replaceInstitutionGradeLevels(
   supabase: SupabaseClient,
   institutionId: string,
   gradeLevelIds: string[],
-) {
-  await supabase.from("institution_grade_levels").delete().eq("institution_id", institutionId);
-  if (gradeLevelIds.length === 0) return;
-  await supabase.from("institution_grade_levels").insert(
+): Promise<string | null> {
+  const { error: delErr } = await supabase
+    .from("institution_grade_levels")
+    .delete()
+    .eq("institution_id", institutionId);
+  if (delErr) return delErr.message;
+  if (gradeLevelIds.length === 0) return null;
+  const { error: insErr } = await supabase.from("institution_grade_levels").insert(
     gradeLevelIds.map((grade_level_id) => ({
       institution_id: institutionId,
       grade_level_id,
     })),
   );
+  return insErr?.message ?? null;
 }
 
 export function DemoPlatformProvider({
@@ -268,7 +287,10 @@ export function DemoPlatformProvider({
     await refreshPlatform();
   };
 
-  const updateInstitution = async (institutionId: string, payload: Partial<Institution>) => {
+  const updateInstitution = async (
+    institutionId: string,
+    payload: Partial<Institution>,
+  ): Promise<PlatformSaveResult> => {
     let mergedPayload: Partial<Institution> = { ...payload };
     if (payload.examNavIds !== undefined) {
       const n = normalizeExamNavIds(payload.examNavIds);
@@ -283,23 +305,30 @@ export function DemoPlatformProvider({
       setInstitutionList((prev) =>
         prev.map((item) => (item.id === institutionId ? { ...item, ...mergedPayload } : item)),
       );
-      return;
+      return { ok: true };
     }
     const supabase = createBrowserSupabaseClientOrNull();
-    if (!supabase) return;
+    if (!supabase) return { ok: false, message: "Bağlantı kurulamadı (Supabase)." };
     const { tags: nextTags, gradeLevelIds: nextGrades, ...rest } = mergedPayload;
     const row = institutionPartialToRow(rest);
+    const errors: string[] = [];
     if (Object.keys(row).length > 0) {
       const { error } = await supabase.from("institutions").update(row).eq("id", institutionId);
-      if (error) console.error(error);
+      if (error) errors.push(error.message);
     }
     if (nextTags !== undefined) {
-      await replaceInstitutionTags(supabase, institutionId, nextTags);
+      const tagErr = await replaceInstitutionTags(supabase, institutionId, nextTags);
+      if (tagErr) errors.push(tagErr);
     }
     if (nextGrades !== undefined) {
-      await replaceInstitutionGradeLevels(supabase, institutionId, nextGrades);
+      const gErr = await replaceInstitutionGradeLevels(supabase, institutionId, nextGrades);
+      if (gErr) errors.push(gErr);
     }
     await refreshPlatform();
+    if (errors.length > 0) {
+      return { ok: false, message: errors.join(" · ") };
+    }
+    return { ok: true };
   };
 
   const createManager = async (
@@ -399,8 +428,15 @@ export function DemoPlatformProvider({
     }
     const row = data as InstitutionDbRow;
     const institutionId = row.id;
-    await replaceInstitutionTags(supabase, institutionId, merged.tags);
-    await replaceInstitutionGradeLevels(supabase, institutionId, merged.gradeLevelIds);
+    const tagErr = await replaceInstitutionTags(supabase, institutionId, merged.tags);
+    const gErr = await replaceInstitutionGradeLevels(supabase, institutionId, merged.gradeLevelIds);
+    if (tagErr || gErr) {
+      await refreshPlatform();
+      return {
+        ok: false,
+        message: [tagErr, gErr].filter(Boolean).join(" · "),
+      };
+    }
     await supabase
       .from("profiles")
       .update({ institution_id: institutionId })
@@ -675,20 +711,28 @@ export function DemoPlatformProvider({
     await refreshPlatform();
   };
 
-  const updateInstitutionTags = async (institutionId: string, nextTags: string[]) => {
+  const updateInstitutionTags = async (
+    institutionId: string,
+    nextTags: string[],
+  ): Promise<PlatformSaveResult> => {
     if (!useRemote) {
       setInstitutionList((prev) =>
         prev.map((item) => (item.id === institutionId ? { ...item, tags: nextTags } : item)),
       );
-      return;
+      return { ok: true };
     }
     const supabase = createBrowserSupabaseClientOrNull();
-    if (!supabase) return;
-    await replaceInstitutionTags(supabase, institutionId, nextTags);
+    if (!supabase) return { ok: false, message: "Bağlantı kurulamadı (Supabase)." };
+    const tagErr = await replaceInstitutionTags(supabase, institutionId, nextTags);
     await refreshPlatform();
+    if (tagErr) return { ok: false, message: tagErr };
+    return { ok: true };
   };
 
-  const submitInstitutionPendingReview = async (institutionId: string, draft: Institution) => {
+  const submitInstitutionPendingReview = async (
+    institutionId: string,
+    draft: Institution,
+  ): Promise<PlatformSaveResult> => {
     const payload = buildPendingPayloadFromDraft(draft);
     if (!useRemote) {
       setInstitutionList((prev) =>
@@ -702,16 +746,25 @@ export function DemoPlatformProvider({
             : i,
         ),
       );
-      return;
+      return { ok: true };
     }
     const supabase = createBrowserSupabaseClientOrNull();
-    if (!supabase) return;
+    if (!supabase) return { ok: false, message: "Bağlantı kurulamadı (Supabase)." };
     const { error } = await supabase.rpc("submit_institution_pending_changes", {
       p_institution_id: institutionId,
       p_payload: payload,
     });
-    if (error) console.error(error);
     await refreshPlatform();
+    if (error) {
+      console.error(error);
+      return {
+        ok: false,
+        message:
+          error.message ||
+          "Onay talebi gönderilemedi. Veritabanında migration (submit_institution_pending_changes) ve yetkiler kontrol edin.",
+      };
+    }
+    return { ok: true };
   };
 
   const clearInstitutionPending = async (institutionId: string) => {
@@ -768,16 +821,25 @@ export function DemoPlatformProvider({
     }
     const pending = parsePendingPayloadFromDb(row.pending_manager_payload);
     if (!pending) return;
-    await updateInstitution(institutionId, {
+    const u1 = await updateInstitution(institutionId, {
       ...pending.body,
       gradeLevelIds: pending.body.gradeLevelIds,
     });
-    await updateInstitutionTags(institutionId, pending.tags);
+    if (!u1.ok) {
+      console.error(u1.message);
+      return;
+    }
+    const u2 = await updateInstitutionTags(institutionId, pending.tags);
+    if (!u2.ok) {
+      console.error(u2.message);
+      return;
+    }
     await clearInstitutionPending(institutionId);
   };
 
   const setInstitutionListed = async (institutionId: string, listed: boolean) => {
-    await updateInstitution(institutionId, { listed });
+    const r = await updateInstitution(institutionId, { listed });
+    if (!r.ok) console.error(r.message);
   };
 
   const updateStaticPage = async (key: "about" | "privacy" | "contact", content: string) => {

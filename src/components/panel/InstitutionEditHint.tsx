@@ -23,7 +23,10 @@ export function InstitutionEditHint({ variant }: { variant: "admin" | "corporate
       ) : (
         <p className="mt-2 border-t border-indigo-100 pt-2 text-slate-600">
           Aşağıda alanları &quot;kart&quot; ve &quot;sayfa&quot; olarak grupladık; tam alan seti için üstteki
-          yeni kurum formunu kullanın.
+          yeni kurum formunu kullanın. Siz (genel admin) <strong>Kaydet</strong> dediğinizde değişiklikler{" "}
+          <strong>doğrudan</strong> veritabanına yazılır, ek onay adımı yok. Yalnızca{" "}
+          <strong>kurum yöneticisinin</strong> yayındaki karta gönderdiği talepler ayrı kutuda listelenir;
+          ilgili kurumu <strong>Düzenle</strong> deyince formun üstünde onay / red butonları görünür.
         </p>
       )}
     </div>

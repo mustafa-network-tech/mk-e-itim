@@ -1,5 +1,22 @@
 import type { Institution, InstitutionManagerPendingPayload } from "@/types";
 
+/** Supabase/PostgREST hata metnini kullanıcıya daha anlaşılır Türkçe ile zenginleştirir. */
+export function formatInstitutionSaveError(message: string): string {
+  const m = message.toLowerCase();
+  if (
+    m.includes("row-level security") ||
+    m.includes("42501") ||
+    m.includes("violates row-level") ||
+    (m.includes("policy") && m.includes("permission"))
+  ) {
+    return `${message} — Yetki reddedildi: Kurum yayındaysa yönetici doğrudan satır güncelleyemez (yalnızca «Onaya gönder»). Taslak kurumda kayıt için hesabınızın bu kuruma bağlı olduğundan ve migration’ların uygulandığından emin olun.`;
+  }
+  if (m.includes("submit_institution_pending_changes") || m.includes("function public.submit_institution")) {
+    return `${message} — Veritabanında submit_institution_pending_changes RPC’si yok veya eski; migration uygulanmalı.`;
+  }
+  return message;
+}
+
 /** Admin / onay akışında kurum satırına yazılacak alanlar (etiketler ayrı). */
 export function buildInstitutionPersistencePayload(d: Institution): Partial<Institution> {
   return {

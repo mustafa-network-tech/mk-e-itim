@@ -10,6 +10,7 @@ export type AdminSection =
   | "reviews"
   | "tags"
   | "grade-levels"
+  | "institution-types"
   | "hero-featured"
   | "pages"
   | "advisor";
@@ -18,17 +19,18 @@ export type CorporateSection =
   | "overview"
   | "institution-info"
   | "card-info"
-  | "reviews-ratings"
-  | "edit-card";
+  | "edit-card"
+  | "reviews-ratings";
 
 export function AdminSidebar({ active, onChange }: SidebarProps<AdminSection>) {
   const items: { id: AdminSection; label: string }[] = [
     { id: "dashboard", label: "Dashboard" },
-    { id: "institutions", label: "Kurum Yönetimi" },
+    { id: "institutions", label: "Kurum düzenlemesi" },
     { id: "managers", label: "Yönetici Yönetimi" },
     { id: "reviews", label: "Yorum Moderasyonu" },
     { id: "tags", label: "Etiketler" },
     { id: "grade-levels", label: "Sınıf seçenekleri" },
+    { id: "institution-types", label: "Kurum türlerini düzenle" },
     { id: "hero-featured", label: "Hero / Öne Çıkanlar" },
     { id: "pages", label: "Sayfa İçerikleri" },
     { id: "advisor", label: "Eğitim Danışmanı" },
@@ -56,10 +58,10 @@ export function AdminSidebar({ active, onChange }: SidebarProps<AdminSection>) {
 export function CorporateSidebar({ active, onChange }: SidebarProps<CorporateSection>) {
   const items: { id: CorporateSection; label: string }[] = [
     { id: "overview", label: "Genel Bakış" },
-    { id: "institution-info", label: "Kurum Bilgilerim" },
-    { id: "card-info", label: "Kart Bilgileri" },
+    { id: "institution-info", label: "Kurum bilgilerim" },
+    { id: "card-info", label: "Kart bilgileri" },
+    { id: "edit-card", label: "Kurum kartını düzenle" },
     { id: "reviews-ratings", label: "Yorumlar ve Puanlar" },
-    { id: "edit-card", label: "Kurum Kartını Düzenle" },
   ];
   return (
     <aside className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">

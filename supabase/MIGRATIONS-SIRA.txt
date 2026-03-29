@@ -1,0 +1,30 @@
+Kursiyera — Supabase migration’ların uygulanma sırası
+=====================================================
+
+Dosya adındaki zaman damgası (YYYYMMDDHHmmss) küçükten büyüğe = uygulama sırası.
+Supabase CLI bunu otomatik yapar; elle sırayı karıştırmayın.
+
+Önerilen komut (proje kökünden):
+  supabase db push
+veya:
+  supabase migration up
+
+
+Sıra | Dosya                                      | Kısa açıklama
+-----|--------------------------------------------|-------------------------------------------
+  1  | 20260325120000_profiles.sql                | profiles tablosu, app_role enum
+  2  | 20260325120100_platform_admin_allowlist.sql| Yeni kullanıcı / admin tetikleyicileri
+  3  | 20260325120200_profiles_grants.sql         | profiles yetkileri
+  4  | 20260325131000_platform_tables.sql         | tags, grade_levels, institutions, … temel tablolar
+  5  | 20260325131100_platform_rls_and_grants.sql | RLS politikaları, is_admin, institution_visible, …
+  6  | 20260329103000_institutions_exam_nav_ids.sql | institutions.exam_nav_ids (kurum türü kodları dizisi)
+  7  | 20260329120000_fix_manages_institution.sql | manages_institution düzeltmesi
+  8  | 20260330100000_institutions_official_status.sql | institutions.official_status sütunu (kart/detay ince satır)
+  9  | 20260330104500_institutions_remove_kurs_dershane_type.sql | type (kurs/dershane) sütunu kaldırma, YGS→YKS, institution_visible yenileme
+ 10  | 20260330120000_institution_types.sql       | institution_types tablosu (admin düzenlenebilir etiket/sıra), RLS, tohum veri
+
+
+Notlar
+------
+• Sıfırdan kurulumda hepsini tek seferde uygulamak için `supabase db push` yeterlidir.
+• Zaten çalışan bir veritabanına sadece yeni dosyalar eklendiyse, yalnızca henüz uygulanmamış migration’lar çalışır.

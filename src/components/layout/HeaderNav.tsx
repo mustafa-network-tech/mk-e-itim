@@ -1,35 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useDemoPlatform } from "@/hooks/useDemoPlatform";
+import { INSTITUTION_TYPES_SEED, sortInstitutionTypes } from "@/data/institutionTypesSeed";
 
-type NavKey = "kurs" | "dershane" | "featured" | "top";
-
-function navActive(
+function navExamActive(
   pathname: string,
   searchParams: ReturnType<typeof useSearchParams>,
-  key: NavKey,
+  examValue: string,
 ): boolean {
   if (pathname !== "/listings") return false;
-  const section = searchParams.get("section");
-  const legacyType = searchParams.get("type");
-  const legacyFeatured = searchParams.get("featured") === "true";
-  const legacySort = searchParams.get("sort") === "top";
-
-  let active: NavKey | null = null;
-  if (section === "kurs" || section === "dershane" || section === "featured" || section === "top") {
-    active = section;
-  } else if (legacySort) {
-    active = "top";
-  } else if (legacyType === "kurs") {
-    active = "kurs";
-  } else if (legacyType === "dershane") {
-    active = "dershane";
-  } else if (legacyFeatured) {
-    active = "featured";
+  const raw = searchParams.get("exam");
+  if (raw == null) return false;
+  try {
+    return decodeURIComponent(raw) === examValue;
+  } catch {
+    return raw === examValue;
   }
-
-  return active === key;
 }
 
 function NavItem({
@@ -44,9 +33,9 @@ function NavItem({
   return (
     <Link
       href={href}
-      className="group relative inline-flex pb-1.5 text-sm font-medium text-[#111]/88 transition-colors hover:text-[#111]"
+      className="group relative inline-flex shrink-0 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#111]/88 transition-colors hover:text-[#111] sm:text-xs md:text-sm md:font-medium md:normal-case md:tracking-normal"
     >
-      <span className="relative z-10">{children}</span>
+      <span className="relative z-10 whitespace-nowrap">{children}</span>
       <span
         aria-hidden
         className={`absolute bottom-0 left-0 h-[2px] w-full origin-left rounded-full bg-[#D4AF37] transition-transform duration-300 ease-out ${
@@ -60,21 +49,30 @@ function NavItem({
 export function HeaderNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { institutionTypes } = useDemoPlatform();
+
+  const navItems = useMemo(() => {
+    const list =
+      institutionTypes.length > 0
+        ? sortInstitutionTypes(institutionTypes)
+        : sortInstitutionTypes(INSTITUTION_TYPES_SEED);
+    return list.map((t) => ({ label: t.label, value: t.id }));
+  }, [institutionTypes]);
 
   return (
-    <nav className="hidden max-w-[min(100vw-8rem,520px)] flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm md:flex md:max-w-none md:gap-x-7">
-      <NavItem href="/listings?section=kurs" active={navActive(pathname, searchParams, "kurs")}>
-        Kurslar
-      </NavItem>
-      <NavItem href="/listings?section=dershane" active={navActive(pathname, searchParams, "dershane")}>
-        Dershaneler
-      </NavItem>
-      <NavItem href="/listings?section=featured" active={navActive(pathname, searchParams, "featured")}>
-        Öne Çıkanlar
-      </NavItem>
-      <NavItem href="/listings?section=top" active={navActive(pathname, searchParams, "top")}>
-        En Yüksek Puanlılar
-      </NavItem>
+    <nav
+      className="order-3 flex min-w-0 w-full max-w-full basis-full flex-wrap items-center justify-center gap-x-2 gap-y-1.5 sm:gap-x-3 md:order-2 md:w-auto md:basis-auto md:max-w-none md:flex-1 md:justify-end md:gap-x-4 lg:gap-x-5"
+      aria-label="Kurum türleri — listeleme filtresi"
+    >
+      {navItems.map(({ label, value }) => (
+        <NavItem
+          key={value}
+          href={`/listings?exam=${encodeURIComponent(value)}`}
+          active={navExamActive(pathname, searchParams, value)}
+        >
+          {label}
+        </NavItem>
+      ))}
     </nav>
   );
 }

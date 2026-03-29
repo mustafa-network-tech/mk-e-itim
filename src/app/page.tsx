@@ -90,7 +90,7 @@ function HomeContent() {
           {!searchActive ? (
             <>
               <section className="space-y-4">
-                <h2 className="text-2xl font-bold">Öne Çıkan Kurslar</h2>
+                <h2 className="text-2xl font-bold">Öne çıkan kurumlar</h2>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {featured.map((institution) => (
                     <InstitutionCard key={institution.id} institution={institution} reviews={reviews} />

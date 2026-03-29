@@ -1,3 +1,4 @@
+import { institutionMatchesExamNav } from "@/lib/examMenuNav";
 import { Institution, InstitutionFilters, Review } from "@/types";
 
 /** Listeleme ve filtrelerde: onaylı yorum varsa ondan; yoksa kurumun sakladığı özet puan */
@@ -18,11 +19,14 @@ export function filterInstitutions(
   filters: InstitutionFilters,
 ) {
   return institutions.filter((institution) => {
-    const text = `${institution.name} ${institution.shortDescription} ${institution.city} ${institution.category}`.toLowerCase();
+    const text =
+      `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")}`.toLowerCase();
     const queryMatch = filters.query ? text.includes(filters.query.toLowerCase()) : true;
     const cityMatch = filters.city ? institution.city === filters.city : true;
     const districtMatch = filters.district ? institution.district === filters.district : true;
-    const typeMatch = filters.type ? institution.type === filters.type : true;
+    const neighborhoodMatch = filters.neighborhood
+      ? institution.neighborhood.trim() === filters.neighborhood.trim()
+      : true;
     const minPriceMatch =
       typeof filters.minPrice === "number" ? institution.maxPrice >= filters.minPrice : true;
     const maxPriceMatch =
@@ -38,17 +42,19 @@ export function filterInstitutions(
           institution.gradeLevelIds.includes(filters.gradeLevelId);
     const { average } = getPublicRating(institution, reviews);
     const ratingMatch = average >= filters.minRating;
+    const examMatch = institutionMatchesExamNav(institution.examNavIds, filters.examMenu);
 
     return (
       queryMatch &&
       cityMatch &&
       districtMatch &&
-      typeMatch &&
+      neighborhoodMatch &&
       minPriceMatch &&
       maxPriceMatch &&
       tagMatch &&
       gradeMatch &&
-      ratingMatch
+      ratingMatch &&
+      examMatch
     );
   });
 }

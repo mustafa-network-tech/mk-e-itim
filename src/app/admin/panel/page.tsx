@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
 import { InstitutionForm } from "@/components/panel/InstitutionForm";
 import { AdminSection, AdminSidebar, StatsCard } from "@/components/panel/Sidebars";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
@@ -8,6 +9,8 @@ import { usePanelGate } from "@/hooks/usePanelGate";
 import { formatTryAmount, getDiscountedPriceFromMin, getDiscountRibbonText } from "@/lib/discount";
 import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
+import { InstitutionEditHint } from "@/components/panel/InstitutionEditHint";
+import { INSTITUTION_TYPES_SEED, sortInstitutionTypes } from "@/data/institutionTypesSeed";
 import type { AdvisorStepKey } from "@/types/advisor";
 
 const ADVISOR_STEP_HINT: Record<AdvisorStepKey, string> = {
@@ -45,6 +48,9 @@ export default function AdminPanelPage() {
     updateStaticPage,
     advisorQuestions,
     updateAdvisorQuestion,
+    institutionTypes,
+    updateInstitutionType,
+    platformLoading,
   } = useDemoPlatform();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [moderationMessage, setModerationMessage] = useState("");
@@ -62,6 +68,20 @@ export default function AdminPanelPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [invitePassword, setInvitePassword] = useState("");
   const [inviteFeedback, setInviteFeedback] = useState("");
+  const [institutionTypeDrafts, setInstitutionTypeDrafts] = useState<
+    Record<string, { label: string; sortOrder: string }>
+  >({});
+
+  const examTypesForForms =
+    institutionTypes.length > 0 ? institutionTypes : INSTITUTION_TYPES_SEED;
+
+  useEffect(() => {
+    const next: Record<string, { label: string; sortOrder: string }> = {};
+    for (const t of institutionTypes) {
+      next[t.id] = { label: t.label, sortOrder: String(t.sortOrder) };
+    }
+    setInstitutionTypeDrafts(next);
+  }, [institutionTypes]);
 
   if (panelLoading) {
     return <div className="mx-auto max-w-4xl px-4 py-10 text-slate-600">Oturum kontrol ediliyor…</div>;
@@ -97,11 +117,82 @@ export default function AdminPanelPage() {
 
         {activeSection === "institutions" && (
           <>
-            <InstitutionForm />
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <h3 className="mb-3 text-lg font-bold">Kurumlar Yönetimi</h3>
+            <div className="space-y-3">
+              <h2 className="text-xl font-bold text-slate-900">Kurum düzenlemesi</h2>
+              <InstitutionEditHint variant="admin" />
+              <div className="rounded-xl border border-sky-100 bg-sky-50/90 px-4 py-3 text-xs leading-relaxed text-slate-700">
+                <p className="font-semibold text-slate-900">
+                  Kurumsal paneldeki menülerin admin karşılığı
+                </p>
+                <ul className="mt-2 list-inside list-disc space-y-1">
+                  <li>
+                    <strong>Kurum bilgilerim</strong> → Kurumu listeden seçtikten sonra aşağıda{" "}
+                    <strong>Kurum bilgileri (iletişim)</strong> kutusu (tür, ad, şehir, iletişim).
+                  </li>
+                  <li>
+                    <strong>Kart bilgileri</strong> → <strong>Liste ve kartta görünenler</strong> (kategori,
+                    kısa özet).
+                  </li>
+                  <li>
+                    <strong>Kurum kartını düzenle</strong> → Uzun açıklama, indirim, etiketler, hedef sınıflar
+                    ve eğitmenler.
+                  </li>
+                </ul>
+                <p className="mt-2 border-t border-sky-100/80 pt-2 text-slate-600">
+                  Bu sayfaya sol menüden <strong>Kurum düzenlemesi</strong> ile gelirsiniz; önce kurumu
+                  seçmeniz gerekir.
+                </p>
+              </div>
+              <nav
+                className="flex flex-wrap gap-2 text-xs font-medium text-slate-700"
+                aria-label="Kurum sayfası bölümleri"
+              >
+                <a
+                  href="#admin-yeni-kurum"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50"
+                >
+                  Yeni kurum
+                </a>
+                <a
+                  href="#admin-kurum-listesi"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50"
+                >
+                  Kurum listesi
+                </a>
+                <a
+                  href="#admin-kurum-duzenle"
+                  className={`rounded-lg border px-3 py-1.5 ${
+                    selectedInstitutionId
+                      ? "border-slate-200 bg-white hover:bg-slate-50"
+                      : "cursor-not-allowed border-slate-100 bg-slate-100 text-slate-400"
+                  }`}
+                  aria-disabled={!selectedInstitutionId}
+                  onClick={(e) => {
+                    if (!selectedInstitutionId) e.preventDefault();
+                  }}
+                >
+                  Seçili kurum düzenleme
+                </a>
+              </nav>
+            </div>
+            <div
+              id="admin-yeni-kurum"
+              className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4"
+            >
+              <h3 className="mb-2 text-lg font-bold">Yeni kurum (tam kayıt)</h3>
               <p className="mb-3 text-xs text-slate-500">
-                Bu alanda admin yeni kurs/dershane ekleyebilir, kart oluşturabilir ve kurumları yönetebilir.
+                Tüm alanlarla yeni kart oluşturma; mevcut kurumda eksik alan varsa buradaki şablonu referans
+                alabilirsiniz.
+              </p>
+              <InstitutionForm />
+            </div>
+            <div
+              id="admin-kurum-listesi"
+              className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4"
+            >
+              <h3 className="mb-3 text-lg font-bold">Kayıtlı kurumlar</h3>
+              <p className="mb-3 text-xs text-slate-500">
+                Kurumu seçince kart ve detay sayfası alanlarını gruplu düzenlersiniz.
               </p>
               <div className="space-y-2">
                 {institutions.map((item) => (
@@ -117,7 +208,7 @@ export default function AdminPanelPage() {
                         onClick={() => setSelectedInstitutionId(item.id)}
                         className="rounded-md bg-indigo-100 px-2 py-1 text-indigo-700"
                       >
-                        Kartı Düzenle
+                        Düzenle
                       </button>
                       <button
                         onClick={() => toggleFeatured(item.id)}
@@ -137,8 +228,15 @@ export default function AdminPanelPage() {
               </div>
             </div>
             {selectedInstitutionId && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <h3 className="mb-3 text-lg font-bold">Seçili Kart Düzenleme</h3>
+              <div
+                id="admin-kurum-duzenle"
+                className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4"
+              >
+                <h3 className="mb-1 text-lg font-bold">Seçili kurum</h3>
+                <p className="mb-4 text-xs text-slate-500">
+                  {institutions.find((i) => i.id === selectedInstitutionId)?.name ?? ""} — kurumsal paneldeki
+                  sekmelerle aynı gruplar.
+                </p>
                 {(() => {
                   const selected = institutions.find((i) => i.id === selectedInstitutionId);
                   if (!selected) return <p className="text-sm text-slate-500">Kurum bulunamadı.</p>;
@@ -146,21 +244,160 @@ export default function AdminPanelPage() {
                     (ins) => ins.institutionId === selected.id,
                   );
                   return (
-                    <div className="space-y-3">
-                      <input
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                        value={selected.name}
-                        onChange={(e) => updateInstitution(selected.id, { name: e.target.value })}
-                      />
-                      <textarea
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                        value={selected.longDescription}
-                        onChange={(e) =>
-                          updateInstitution(selected.id, { longDescription: e.target.value })
-                        }
-                      />
-                      <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-3">
-                        <p className="text-sm font-bold text-slate-900">Kursiyera indirimi</p>
+                    <div className="space-y-6">
+                      <div
+                        id="admin-kurum-bilgileri"
+                        className="scroll-mt-28 rounded-xl border border-slate-100 bg-slate-50/90 p-4"
+                      >
+                        <h4 className="text-sm font-bold text-slate-900">
+                          Kurum bilgileri (iletişim) — kurumsal «Kurum bilgilerim»
+                        </h4>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <div className="sm:col-span-2">
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              Kurum adı
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                              value={selected.name}
+                              onChange={(e) => updateInstitution(selected.id, { name: e.target.value })}
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              Resmi statü / tabela ünvanı (ismin altı)
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                              value={selected.officialStatus}
+                              onChange={(e) =>
+                                updateInstitution(selected.id, { officialStatus: e.target.value })
+                              }
+                              placeholder="Örn. Özel Öğretim Kursu"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">Şehir</label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                              value={selected.city}
+                              onChange={(e) => updateInstitution(selected.id, { city: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">İlçe</label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                              value={selected.district}
+                              onChange={(e) =>
+                                updateInstitution(selected.id, { district: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              Telefon
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                              value={selected.phone}
+                              onChange={(e) => updateInstitution(selected.id, { phone: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              Web sitesi
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                              value={selected.website}
+                              onChange={(e) =>
+                                updateInstitution(selected.id, { website: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="mb-1 block text-xs font-semibold text-slate-700">
+                              WhatsApp
+                            </label>
+                            <input
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                              value={selected.whatsapp}
+                              onChange={(e) =>
+                                updateInstitution(selected.id, { whatsapp: e.target.value })
+                              }
+                              placeholder="Ülke kodlu numara"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        id="admin-kart-bilgileri"
+                        className="scroll-mt-28 rounded-xl border border-slate-100 bg-slate-50/90 p-4"
+                      >
+                        <h4 className="text-sm font-bold text-slate-900">
+                          Liste ve kartta görünenler — kurumsal «Kart bilgileri»
+                        </h4>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Kurum türleri: LGS, YKS, … üst menü ve listeleme filtresiyle aynıdır. En az biri
+                          zorunludur; çoklu seçimde kurum ilgili her menüde görünür. Kart metni otomatik
+                          üretilir.
+                        </p>
+                        <div className="mt-3">
+                          <ExamNavMultiSelect
+                            types={examTypesForForms}
+                            idPrefix={`admin-inst-${selected.id}`}
+                            value={selected.examNavIds}
+                            onChange={(next) =>
+                              updateInstitution(selected.id, { examNavIds: next })
+                            }
+                          />
+                        </div>
+                        <label className="mb-1 mt-3 block text-xs font-semibold text-slate-700">
+                          Kısa özet (kartta ~2 satır)
+                        </label>
+                        <textarea
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                          rows={3}
+                          value={selected.shortDescription}
+                          onChange={(e) =>
+                            updateInstitution(selected.id, { shortDescription: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div
+                        id="admin-detay-metni"
+                        className="scroll-mt-28 rounded-xl border border-slate-100 bg-white p-4"
+                      >
+                        <h4 className="text-sm font-bold text-slate-900">
+                          Kurum sayfası (detay) — «Kurum kartını düzenle» uzun metin
+                        </h4>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Bu metin yalnızca kurum detay URL&apos;sinde &quot;Kurum hakkında&quot; bölümünde
+                          gösterilir.
+                        </p>
+                        <label className="mb-1 mt-3 block text-xs font-semibold text-slate-700">
+                          Uzun açıklama
+                        </label>
+                        <textarea
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                          rows={8}
+                          value={selected.longDescription}
+                          onChange={(e) =>
+                            updateInstitution(selected.id, { longDescription: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div
+                        id="admin-indirim-etiket"
+                        className="scroll-mt-28 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3"
+                      >
+                        <p className="text-sm font-bold text-slate-900">
+                          Kursiyera indirimi — «Kurum kartını düzenle» (kampanya)
+                        </p>
                         <p className="mt-1 text-xs text-slate-600">
                           İndirim <strong>min. fiyat</strong> üzerinden hesaplanır (kart ve detayda
                           gösterilir).
@@ -253,8 +490,10 @@ export default function AdminPanelPage() {
                           </p>
                         ) : null}
                       </div>
-                      <div>
-                        <p className="mb-1 text-sm font-semibold">Etiketler</p>
+                      <div id="admin-etiket-sinif-egitmen" className="scroll-mt-28">
+                        <p className="mb-1 text-sm font-semibold">
+                          Etiketler, hedef sınıflar, eğitmenler — «Kurum kartını düzenle»
+                        </p>
                         <div className="flex flex-wrap gap-2">
                           {tags.map((tag) => {
                             const active = selected.tags.includes(tag.id);
@@ -655,6 +894,93 @@ export default function AdminPanelPage() {
                 )}
               </ul>
             </div>
+          </div>
+        )}
+
+        {activeSection === "institution-types" && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <h3 className="mb-2 text-lg font-bold">Kurum türlerini düzenle</h3>
+            <p className="mb-4 text-xs text-slate-500">
+              <strong>Sabit kod</strong> (ör. LGS, YKS) URL ve veritabanında değişmez; yalnızca{" "}
+              <strong>görünen ad</strong> ve menü <strong>sırası</strong> güncellenir. Kayıt sonrası üst menü
+              ve kurum kartları yeni etiketleri kullanır.
+            </p>
+            {platformLoading && institutionTypes.length === 0 ? (
+              <p className="text-sm text-slate-600">Kurum türleri yükleniyor…</p>
+            ) : institutionTypes.length === 0 ? (
+              <p className="text-sm text-amber-800">
+                Henüz kurum türü satırı yok. Supabase&apos;de{" "}
+                <code className="rounded bg-amber-100 px-1">institution_types</code> migration&apos;ını
+                uygulayıp sayfayı yenileyin.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {sortInstitutionTypes(institutionTypes).map((t) => {
+                  const d = institutionTypeDrafts[t.id];
+                  return (
+                    <li
+                      key={t.id}
+                      className="flex flex-col gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-3 sm:flex-row sm:flex-wrap sm:items-end"
+                    >
+                      <div className="min-w-[140px] shrink-0">
+                        <p className="text-[10px] font-semibold uppercase text-slate-500">Sabit kod</p>
+                        <code className="text-xs text-slate-800">{t.id}</code>
+                      </div>
+                      <div className="min-w-[160px] flex-1">
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          Görünen ad
+                        </label>
+                        <input
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                          value={d?.label ?? t.label}
+                          onChange={(e) =>
+                            setInstitutionTypeDrafts((prev) => ({
+                              ...prev,
+                              [t.id]: {
+                                label: e.target.value,
+                                sortOrder: d?.sortOrder ?? String(t.sortOrder),
+                              },
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="w-24 shrink-0">
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">Sıra</label>
+                        <input
+                          type="number"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                          value={d?.sortOrder ?? String(t.sortOrder)}
+                          onChange={(e) =>
+                            setInstitutionTypeDrafts((prev) => ({
+                              ...prev,
+                              [t.id]: {
+                                label: d?.label ?? t.label,
+                                sortOrder: e.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                        onClick={() => {
+                          const dr = institutionTypeDrafts[t.id];
+                          const label = (dr?.label ?? t.label).trim();
+                          const so = Number(dr?.sortOrder ?? t.sortOrder);
+                          void updateInstitutionType(t.id, {
+                            label,
+                            sortOrder: Number.isFinite(so) ? so : t.sortOrder,
+                          });
+                        }}
+                      >
+                        Kaydet
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         )}
 

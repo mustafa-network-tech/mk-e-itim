@@ -6,47 +6,24 @@ import { FilterPanel } from "@/components/search/FilterPanel";
 import { InstitutionCard } from "@/components/institution/InstitutionCard";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { filterInstitutions, getPublicRating } from "@/lib/institutions";
+import {
+  institutionFiltersFromSearchParams,
+  institutionFiltersToSearchParams,
+} from "@/lib/homeSearchParams";
 import type { InstitutionFilters } from "@/types";
 import { PageNav } from "@/components/ui/PageNav";
-
-function tagsFromParams(params: URLSearchParams): string[] {
-  const subject = params.get("subject");
-  if (subject) return [subject];
-  const raw = params.get("tags");
-  return raw ? raw.split(",").filter(Boolean) : [];
-}
-
-function typeFromParams(params: URLSearchParams): "" | "kurs" | "dershane" {
-  const section = params.get("section");
-  if (section === "kurs") return "kurs";
-  if (section === "dershane") return "dershane";
-  const t = params.get("type");
-  if (t === "kurs" || t === "dershane") return t;
-  return "";
-}
 
 function buildListingsHref(
   filters: InstitutionFilters,
   base: { get(name: string): string | null },
 ): string {
-  const qs = new URLSearchParams();
+  const qs = institutionFiltersToSearchParams(filters);
   for (const key of ["section", "featured", "sort"] as const) {
     const v = base.get(key);
     if (v) qs.set(key, v);
   }
-  if (filters.city) qs.set("city", filters.city);
-  if (filters.district) qs.set("district", filters.district);
-  if (filters.tags[0]) qs.set("subject", filters.tags[0]);
-  if (filters.gradeLevelId) qs.set("grade", filters.gradeLevelId);
-  if (filters.minPrice != null && Number.isFinite(filters.minPrice)) {
-    qs.set("minPrice", String(filters.minPrice));
-  }
-  if (filters.maxPrice != null && Number.isFinite(filters.maxPrice)) {
-    qs.set("maxPrice", String(filters.maxPrice));
-  }
-  if (filters.type) qs.set("type", filters.type);
-  const q = qs.toString();
-  return q ? `/listings?${q}` : "/listings";
+  const s = qs.toString();
+  return s ? `/listings?${s}` : "/listings";
 }
 
 function ListingsContent() {
@@ -55,29 +32,12 @@ function ListingsContent() {
   const { institutions, reviews, tags, gradeLevels } = useDemoPlatform();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const [filters, setFilters] = useState<InstitutionFilters>({
-    query: "",
-    city: params.get("city") ?? "",
-    district: params.get("district") || undefined,
-    tags: tagsFromParams(params),
-    gradeLevelId: params.get("grade") ?? undefined,
-    minPrice: params.get("minPrice") ? Number(params.get("minPrice")) : undefined,
-    maxPrice: params.get("maxPrice") ? Number(params.get("maxPrice")) : undefined,
-    type: typeFromParams(params),
-    minRating: 0,
-  });
+  const [filters, setFilters] = useState<InstitutionFilters>(() =>
+    institutionFiltersFromSearchParams(params),
+  );
 
   useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      city: params.get("city") ?? "",
-      district: params.get("district") || undefined,
-      tags: tagsFromParams(params),
-      gradeLevelId: params.get("grade") || undefined,
-      minPrice: params.get("minPrice") ? Number(params.get("minPrice")) : undefined,
-      maxPrice: params.get("maxPrice") ? Number(params.get("maxPrice")) : undefined,
-      type: typeFromParams(params),
-    }));
+    setFilters(institutionFiltersFromSearchParams(params));
   }, [params]);
 
   useEffect(() => {
@@ -139,7 +99,7 @@ function ListingsContent() {
         <aside className="hidden lg:block">{filterPanel}</aside>
         <section className="space-y-4">
           <PageNav />
-          <h1 className="text-2xl font-bold text-slate-900">Kurs ve Dershane Listeleme</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Kurum listeleme</h1>
           {filtered.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
               Seçtiğiniz filtrelere uygun kurum bulunamadı.

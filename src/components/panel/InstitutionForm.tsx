@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import { INSTITUTION_DEFAULTS } from "@/data/institutionDefaults";
 import { formatTryAmount, getDiscountedPriceFromMin } from "@/lib/discount";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
+import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
+import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
+import { INSTITUTION_TYPES_SEED } from "@/data/institutionTypesSeed";
 
 const input =
   "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300";
@@ -21,8 +24,16 @@ function numField(raw: string, fallback: number) {
 }
 
 export function InstitutionForm() {
-  const { tags, gradeLevels, users, institutions, createManager, createInstitution } =
-    useDemoPlatform();
+  const {
+    tags,
+    gradeLevels,
+    users,
+    institutions,
+    institutionTypes,
+    createManager,
+    createInstitution,
+  } = useDemoPlatform();
+  const examTypes = institutionTypes.length > 0 ? institutionTypes : INSTITUTION_TYPES_SEED;
   /** Her kurumda tek yönetici: zaten bir kuruma atanmış olanlar seçilemez */
   const managers = users.filter(
     (item) =>
@@ -33,8 +44,8 @@ export function InstitutionForm() {
   const defaults = useMemo(() => INSTITUTION_DEFAULTS, []);
 
   const [name, setName] = useState("");
-  const [institutionType, setInstitutionType] = useState<"kurs" | "dershane">("kurs");
-  const [category, setCategory] = useState("");
+  const [officialStatus, setOfficialStatus] = useState("");
+  const [examNavIds, setExamNavIds] = useState<string[]>(() => [...defaults.examNavIds]);
   const [city, setCity] = useState(defaults.city);
   const [district, setDistrict] = useState(defaults.district);
   const [neighborhood, setNeighborhood] = useState("");
@@ -86,8 +97,8 @@ export function InstitutionForm() {
 
   const resetForm = () => {
     setName("");
-    setInstitutionType("kurs");
-    setCategory("");
+    setOfficialStatus("");
+    setExamNavIds([...defaults.examNavIds]);
     setCity(defaults.city);
     setDistrict(defaults.district);
     setNeighborhood("");
@@ -163,6 +174,12 @@ export function InstitutionForm() {
           return;
         }
 
+        const navIds = normalizeExamNavIds(examNavIds);
+        if (navIds.length === 0) {
+          alert("En az bir kurum türü (LGS, YKS, Yabancı dil, …) seçmelisiniz.");
+          return;
+        }
+
         const programs = programsText
           .split("\n")
           .map((s) => s.trim())
@@ -177,9 +194,10 @@ export function InstitutionForm() {
 
         const created = await createInstitution({
           name: name.trim(),
+          officialStatus: officialStatus.trim(),
           ownerUserId: ownerId,
-          type: institutionType,
-          category: category.trim() || "Genel",
+          examNavIds: navIds,
+          category: categoryDisplayFromExamNavIds(navIds),
           city: city.trim(),
           district: district.trim(),
           neighborhood: neighborhood.trim(),
@@ -236,7 +254,7 @@ export function InstitutionForm() {
       }}
     >
       <div>
-        <h3 className="text-lg font-bold text-slate-900">Yeni Kurs / Dershane Kartı Oluştur</h3>
+        <h3 className="text-lg font-bold text-slate-900">Yeni kurum kartı oluştur</h3>
         <p className="mt-1 text-xs text-slate-500">
           Kurum kartında ve detay sayfasında kullanılan tüm alanları buradan doldurabilirsiniz.
           Boş bıraktığınız metinlerde güvenli varsayılanlar uygulanır.
@@ -256,24 +274,22 @@ export function InstitutionForm() {
               required
             />
           </div>
-          <div>
-            <label className={label}>Tür</label>
-            <select
-              className={input}
-              value={institutionType}
-              onChange={(e) => setInstitutionType(e.target.value as "kurs" | "dershane")}
-            >
-              <option value="kurs">Kurs</option>
-              <option value="dershane">Dershane</option>
-            </select>
-          </div>
-          <div>
-            <label className={label}>Kategori (kart üst etiketi)</label>
+          <div className="sm:col-span-2">
+            <label className={label}>Resmi statü / tabela ünvanı (ismin altında ince satır)</label>
             <input
               className={input}
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Örn. Matematik · YKS"
+              value={officialStatus}
+              onChange={(e) => setOfficialStatus(e.target.value)}
+              placeholder="Örn. Özel Öğretim Kursu · MEB izin belge no …"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={label}>Kurum türleri (kartta birleşik gösterilir)</label>
+            <ExamNavMultiSelect
+              types={examTypes}
+              idPrefix="new-inst-exam"
+              value={examNavIds}
+              onChange={setExamNavIds}
             />
           </div>
         </div>

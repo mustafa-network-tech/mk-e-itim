@@ -69,6 +69,11 @@ export function InstitutionDetailClient() {
           <div className="absolute bottom-0 left-0 right-0 z-10 p-6 md:p-8">
             <p className="text-sm font-medium text-amber-200/95">{institution.category}</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">{institution.name}</h1>
+            {institution.officialStatus.trim() ? (
+              <p className="mt-2 max-w-3xl text-sm font-light leading-snug text-white/80 md:text-[0.9375rem]">
+                {institution.officialStatus.trim()}
+              </p>
+            ) : null}
             <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-200">
               <span className="inline-flex items-center gap-2">
                 <RatingStars value={average} size="sm" />

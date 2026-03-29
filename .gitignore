@@ -41,4 +41,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Supabase CLI (yerel link / geçici dosyalar)
+supabase/.temp/
+
 .vercel

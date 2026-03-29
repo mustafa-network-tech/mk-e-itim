@@ -9,8 +9,8 @@ import { SearchBar } from "@/components/search/SearchBar";
 const HERO_FALLBACK: HeroSlide[] = [
   {
     id: "hero-fallback",
-    title: "Eğitim kariyerinize yön verecek platform",
-    subtitle: "Kursları keşfedin, karşılaştırın ve en doğru seçimi yapın",
+    title: "Aradığın eğitim kurumunu hemen bul",
+    subtitle: "Türkiye'nin en kapsamlı kurum inceleme platformu",
     image:
       "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1800&q=80",
   },
@@ -46,10 +46,10 @@ export function HeroSection() {
             <KursiyeraWordmark variant="onDark" size="lg" />
           </div>
           <h1 className="text-3xl font-bold leading-tight text-white md:text-4xl lg:text-[2.65rem] lg:leading-[1.12]">
-            Eğitim kariyerinize yön verecek platform
+            {slide.title}
           </h1>
           <p className="mt-3 max-w-xl text-base text-white/[0.82] md:text-lg">
-            Kursları keşfedin, karşılaştırın ve en doğru seçimi yapın
+            {slide.subtitle}
           </p>
         </div>
         <div className="mt-5 w-full shrink-0 md:mt-6">

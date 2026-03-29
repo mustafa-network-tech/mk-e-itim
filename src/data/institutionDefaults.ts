@@ -1,9 +1,18 @@
 import type { Institution } from "@/types";
+import { categoryDisplayFromExamNavIds } from "@/lib/examMenuNav";
+import {
+  INSTITUTION_TYPES_SEED,
+  labelMapFromInstitutionTypes,
+} from "@/data/institutionTypesSeed";
+
+const DEFAULT_EXAM_NAV = ["LGS"] as const;
+const DEFAULT_TYPE_LABELS = labelMapFromInstitutionTypes(INSTITUTION_TYPES_SEED);
 
 /** Yeni kurum oluştururken `name` ve `ownerUserId` dışındaki alanlar için başlangıç değerleri */
 export const INSTITUTION_DEFAULTS: Omit<Institution, "id" | "createdAt" | "name" | "ownerUserId"> = {
-  type: "kurs",
-  category: "Genel",
+  officialStatus: "",
+  examNavIds: [...DEFAULT_EXAM_NAV],
+  category: categoryDisplayFromExamNavIds([...DEFAULT_EXAM_NAV], DEFAULT_TYPE_LABELS),
   city: "İstanbul",
   district: "Merkez",
   neighborhood: "",

@@ -6,7 +6,7 @@ export const advisorQuestionsSeed: AdvisorQuestion[] = [
     order: 1,
     stepKey: "city",
     prompt:
-      "Merhaba, ben eğitim danışmanınızım. Önce şunu öğreneyim: hangi şehirde kurs veya dershane arıyorsunuz? Lütfen şehir adını yazın.",
+      "Merhaba, ben eğitim danışmanınızım. Önce şunu öğreneyim: hangi şehirde eğitim kurumu arıyorsunuz? Lütfen şehir adını yazın.",
   },
   {
     id: "q-district",

@@ -60,6 +60,11 @@ export function InstitutionCard({ institution, reviews }: InstitutionCardProps) 
           <h3 className="mt-4 line-clamp-2 text-[1.375rem] font-bold leading-[1.2] tracking-[-0.02em] text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.75)] md:text-2xl md:leading-tight">
             {institution.name}
           </h3>
+          {institution.officialStatus.trim() ? (
+            <p className="mt-2 line-clamp-2 text-[0.6875rem] font-light leading-snug tracking-[0.02em] text-white/65 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)] md:text-[0.75rem]">
+              {institution.officialStatus.trim()}
+            </p>
+          ) : null}
 
           <p className="mt-3 text-[0.8125rem] leading-snug text-white/80 [text-shadow:0_1px_10px_rgba(0,0,0,0.55)]">
             {institution.city} / {institution.district}

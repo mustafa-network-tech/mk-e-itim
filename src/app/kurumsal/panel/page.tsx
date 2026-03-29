@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 import { CorporateSection, CorporateSidebar, StatsCard } from "@/components/panel/Sidebars";
+import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
+import { INSTITUTION_TYPES_SEED } from "@/data/institutionTypesSeed";
+import { InstitutionEditHint } from "@/components/panel/InstitutionEditHint";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { usePanelGate } from "@/hooks/usePanelGate";
 import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
+
+const inputClass = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm";
 
 export default function CorporatePanelPage() {
   const { user: panelUser, loading: panelLoading, allowed: panelAllowed } = usePanelGate([
@@ -20,7 +25,10 @@ export default function CorporatePanelPage() {
     addInstructor,
     removeInstructor,
     updateInstitutionTags,
+    institutionTypes,
   } = useDemoPlatform();
+  const examTypesForForms =
+    institutionTypes.length > 0 ? institutionTypes : INSTITUTION_TYPES_SEED;
   const [activeSection, setActiveSection] = useState<CorporateSection>("overview");
   const [newInstructorName, setNewInstructorName] = useState("");
   const [newInstructorBranch, setNewInstructorBranch] = useState("");
@@ -53,8 +61,9 @@ export default function CorporatePanelPage() {
           <p className="font-semibold text-slate-800">Yetki özeti</p>
           <p className="mt-1">
             Etiket tanımlama, sınıf seçenekleri, hero görselleri, site sayfa metinleri ve yeni kurum
-            kartı oluşturma yalnızca <strong>platform yöneticisi</strong> içindir. Bu panelde yalnızca
-            size atanmış kurumun kartını ve eğitmen satırlarını düzenlersiniz.
+            kartı oluşturma yalnızca <strong>platform yöneticisi</strong> içindir. Bu panelde size atanmış
+            kurumun <strong>metin ve iletişim</strong> alanlarını, kart özetini ve eğitmen satırlarını
+            düzenlersiniz.
           </p>
         </div>
 
@@ -83,86 +92,163 @@ export default function CorporatePanelPage() {
         )}
 
         {activeSection === "institution-info" && (
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-            <h2 className="text-lg font-bold">Kurum bilgilerim</h2>
-            {institution ? (
-              <>
-                <p>Ad: {institution.name}</p>
-                <p>Tür: {institution.type}</p>
-                <p>
-                  Konum: {institution.city} / {institution.district}
-                </p>
-                <p>Telefon: {institution.phone}</p>
-                <p>Web: {institution.website}</p>
-              </>
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <h2 className="text-lg font-bold text-slate-900">Kurum bilgilerim</h2>
+            <InstitutionEditHint variant="corporate" />
+            {!institution ? (
+              <p className="text-sm text-slate-600">
+                Atanmış kurum olunca iletişim ve konum alanlarını buradan düzenlersiniz.
+              </p>
             ) : (
-              <p className="text-slate-600">Atanmış kurum kartı olunca burada listelenir.</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Kurum adı</label>
+                  <input
+                    className={inputClass}
+                    value={institution.name}
+                    onChange={(e) => updateInstitution(institution.id, { name: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Resmi statü / tabela ünvanı (ismin altı)
+                  </label>
+                  <input
+                    className={inputClass}
+                    value={institution.officialStatus}
+                    onChange={(e) =>
+                      updateInstitution(institution.id, { officialStatus: e.target.value })
+                    }
+                    placeholder="Örn. Özel Öğretim Kursu"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Şehir</label>
+                  <input
+                    className={inputClass}
+                    value={institution.city}
+                    onChange={(e) => updateInstitution(institution.id, { city: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">İlçe</label>
+                  <input
+                    className={inputClass}
+                    value={institution.district}
+                    onChange={(e) => updateInstitution(institution.id, { district: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Telefon</label>
+                  <input
+                    className={inputClass}
+                    value={institution.phone}
+                    onChange={(e) => updateInstitution(institution.id, { phone: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Web sitesi</label>
+                  <input
+                    className={inputClass}
+                    value={institution.website}
+                    onChange={(e) => updateInstitution(institution.id, { website: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">WhatsApp</label>
+                  <input
+                    className={inputClass}
+                    value={institution.whatsapp}
+                    onChange={(e) => updateInstitution(institution.id, { whatsapp: e.target.value })}
+                    placeholder="Ülke kodlu numara"
+                  />
+                </div>
+              </div>
             )}
           </div>
         )}
 
         {activeSection === "card-info" && (
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-            <h2 className="text-lg font-bold">Kart bilgileri</h2>
-            {institution ? (
-              <>
-                <p>Programlar: {institution.programs.join(", ")}</p>
-                <p>
-                  Fiyat aralığı: ₺{institution.minPrice.toLocaleString("tr-TR")} – ₺
-                  {institution.maxPrice.toLocaleString("tr-TR")}
-                </p>
-                <p>Eğitmen sayısı (özet): {institution.teacherCount}</p>
-              </>
-            ) : (
-              <p className="text-slate-600">Kurum atanınca özet burada görünür.</p>
-            )}
-          </div>
-        )}
-
-        {activeSection === "reviews-ratings" && (
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
-            <h2 className="text-lg font-bold">Yorumlar ve puanlar</h2>
-            <p className="text-xs text-slate-500">
-              Yorumları görüntüleyebilirsiniz; onay / red işlemleri yalnızca platform yöneticisindedir.
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <h2 className="text-lg font-bold text-slate-900">Kart bilgileri</h2>
+            <p className="text-xs text-slate-600">
+              Listelerde ve küçük kartta görünen kategori ve kısa özet. Program / fiyat özetleri yönetici
+              kaydından gelir.
             </p>
-            {institutionReviews.length === 0 ? (
-              <p className="text-sm text-slate-500">Henüz yorum yok.</p>
+            {!institution ? (
+              <p className="text-sm text-slate-600">Kurum atanınca bu bölüm dolar.</p>
             ) : (
-              institutionReviews.map((item) => (
-                <div key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-                  <p className="font-semibold">
-                    {item.userName} • {item.rating} yıldız
+              <>
+                <div className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50/90 p-3 text-sm sm:grid-cols-3">
+                  <p>
+                    <span className="text-slate-500">Programlar: </span>
+                    {institution.programs.length ? institution.programs.join(", ") : "—"}
                   </p>
-                  <p>{item.comment}</p>
-                  <p className="text-xs text-slate-500">Durum: {item.status}</p>
+                  <p>
+                    <span className="text-slate-500">Fiyat aralığı: </span>₺
+                    {institution.minPrice.toLocaleString("tr-TR")} – ₺
+                    {institution.maxPrice.toLocaleString("tr-TR")}
+                  </p>
+                  <p>
+                    <span className="text-slate-500">Eğitmen (özet): </span>
+                    {institution.teacherCount}
+                  </p>
+                  <p className="sm:col-span-3 text-xs text-slate-500">
+                    Bu üç alanı değiştirmek için platform yöneticinize başvurun.
+                  </p>
                 </div>
-              ))
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Kurum türleri (en az biri zorunlu)
+                  </label>
+                  <ExamNavMultiSelect
+                    types={examTypesForForms}
+                    idPrefix={`corp-inst-${institution.id}`}
+                    value={institution.examNavIds}
+                    onChange={(next) => updateInstitution(institution.id, { examNavIds: next })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Kısa özet (kart)</label>
+                  <textarea
+                    className={inputClass}
+                    rows={4}
+                    value={institution.shortDescription}
+                    onChange={(e) =>
+                      updateInstitution(institution.id, { shortDescription: e.target.value })
+                    }
+                  />
+                </div>
+              </>
             )}
           </div>
         )}
 
         {activeSection === "edit-card" && (
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
-            <h2 className="text-lg font-bold">Kurum kartını düzenle</h2>
-            {institution ? (
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <h2 className="text-lg font-bold text-slate-900">Kurum kartını düzenle</h2>
+            <p className="text-xs text-slate-600">
+              Detay sayfası metni, sitede görünen etiketler ve eğitmen satırları.
+            </p>
+            {!institution ? (
+              <p className="text-sm text-slate-600">Kurum atanınca düzenleme alanları açılır.</p>
+            ) : (
               <>
-                <input
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  value={institution.name}
-                  onChange={(e) => updateInstitution(institution.id, { name: e.target.value })}
-                />
-                <textarea
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  value={institution.longDescription}
-                  onChange={(e) =>
-                    updateInstitution(institution.id, { longDescription: e.target.value })
-                  }
-                />
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Uzun açıklama</label>
+                  <textarea
+                    className={inputClass}
+                    rows={8}
+                    value={institution.longDescription}
+                    onChange={(e) =>
+                      updateInstitution(institution.id, { longDescription: e.target.value })
+                    }
+                  />
+                </div>
                 <div>
                   <p className="mb-1 text-sm font-semibold">Etiketler</p>
                   <p className="mb-2 text-xs text-slate-500">
-                    Yalnızca yöneticinin tanımladığı etiketlerden seçim yapılır; yeni etiket oluşturma
-                    admin panelindedir.
+                    Yeni etiket tanımı yalnızca admin panelindedir.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {tags.map((tag) => {
@@ -212,13 +298,13 @@ export default function CorporatePanelPage() {
                   </div>
                   <div className="mt-2 grid gap-2 sm:grid-cols-3">
                     <input
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      className={inputClass}
                       placeholder="Eğitmen adı"
                       value={newInstructorName}
                       onChange={(e) => setNewInstructorName(e.target.value)}
                     />
                     <input
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      className={inputClass}
                       placeholder="Branş"
                       value={newInstructorBranch}
                       onChange={(e) => setNewInstructorBranch(e.target.value)}
@@ -238,10 +324,28 @@ export default function CorporatePanelPage() {
                   </div>
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {activeSection === "reviews-ratings" && (
+          <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
+            <h2 className="text-lg font-bold">Yorumlar ve puanlar</h2>
+            <p className="text-xs text-slate-500">
+              Yorumları görüntüleyebilirsiniz; onay / red işlemleri yalnızca platform yöneticisindedir.
+            </p>
+            {institutionReviews.length === 0 ? (
+              <p className="text-sm text-slate-500">Henüz yorum yok.</p>
             ) : (
-              <p className="text-sm text-slate-600">
-                Düzenlenecek kurum yok. Atama için platform yöneticisiyle iletişime geçin.
-              </p>
+              institutionReviews.map((item) => (
+                <div key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold">
+                    {item.userName} • {item.rating} yıldız
+                  </p>
+                  <p>{item.comment}</p>
+                  <p className="text-xs text-slate-500">Durum: {item.status}</p>
+                </div>
+              ))
             )}
           </div>
         )}

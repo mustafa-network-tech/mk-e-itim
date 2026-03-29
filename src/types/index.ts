@@ -14,9 +14,15 @@ export interface User {
 export interface Institution {
   id: string;
   name: string;
-  type: "kurs" | "dershane";
-  /** Kart ve detayda gösterilen ana kategori etiketi */
+  /** Kart ve detayda ismin hemen altında, daha ince: resmi ünvan / tabela statüsü */
+  officialStatus: string;
+  /** Kart ve detayda gösterilen metin (`examNavIds` / kurum türleri ile senkron; arama metninde kullanılır) */
   category: string;
+  /**
+   * Kurum türleri (LGS, YKS, …, Diğer); en az biri zorunlu.
+   * Üst menü `?exam=` ile burada seçili türlere göre listeleme yapılır.
+   */
+  examNavIds: string[];
   city: string;
   district: string;
   neighborhood: string;
@@ -108,16 +114,26 @@ export interface GradeLevel {
   label: string;
 }
 
+/** Kurum türü: `id` sabit (URL ?exam=, exam_nav_ids); `label` admin tarafından değişir. */
+export interface InstitutionTypeDef {
+  id: string;
+  label: string;
+  sortOrder: number;
+}
+
 export interface InstitutionFilters {
   query: string;
   city: string;
+  /** Üst menüden: /listings?exam=… — kurum.examNavIds içinde aranır; DIGER yalnızca açıkça seçildiyse */
+  examMenu?: string;
   /** Seçili şehre göre ilçe; boş veya yoksa filtre uygulanmaz */
   district?: string;
+  /** Şehir (ve varsa ilçe) seçimine göre mahalle */
+  neighborhood?: string;
   tags: string[];
   /** Tek seçim (hero araması); kurumun gradeLevelIds ile eşleşir */
   gradeLevelId?: string;
   minPrice?: number;
   maxPrice?: number;
-  type: "" | "kurs" | "dershane";
   minRating: number;
 }

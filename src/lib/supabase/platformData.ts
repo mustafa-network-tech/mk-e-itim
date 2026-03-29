@@ -6,11 +6,22 @@ export const INSTITUTION_SELECT_WITH_RELS = `
   institution_tags ( tag_id ),
   institution_grade_levels ( grade_level_id )
 `;
+import {
+  categoryDisplayFromExamNavIds,
+  legacyCategoryToExamNavIds,
+  normalizeExamNavIds,
+} from "@/lib/examMenuNav";
 import type { AdvisorQuestion } from "@/types/advisor";
+import {
+  INSTITUTION_TYPES_SEED,
+  labelMapFromInstitutionTypes,
+  sortInstitutionTypes,
+} from "@/data/institutionTypesSeed";
 import type {
   GradeLevel,
   HeroSlide,
   Institution,
+  InstitutionTypeDef,
   Instructor,
   Review,
   Tag,
@@ -22,8 +33,9 @@ import type {
 export type InstitutionDbRow = {
   id: string;
   name: string;
-  type: string;
+  official_status: string;
   category: string;
+  exam_nav_ids?: string[] | null;
   city: string;
   district: string;
   neighborhood: string;
@@ -69,14 +81,24 @@ export type InstitutionDbRow = {
   institution_grade_levels?: { grade_level_id: string }[] | null;
 };
 
-export function mapInstitutionRow(row: InstitutionDbRow): Institution {
+export function mapInstitutionRow(
+  row: InstitutionDbRow,
+  typeLabelMap: Record<string, string>,
+): Institution {
   const tags = (row.institution_tags ?? []).map((t) => t.tag_id);
   const gradeLevelIds = (row.institution_grade_levels ?? []).map((g) => g.grade_level_id);
+  const fromDb = row.exam_nav_ids;
+  const examNavIds =
+    fromDb && fromDb.length > 0
+      ? normalizeExamNavIds(fromDb)
+      : legacyCategoryToExamNavIds(row.category ?? "");
+  const category = categoryDisplayFromExamNavIds(examNavIds, typeLabelMap);
   return {
     id: row.id,
     name: row.name,
-    type: row.type === "dershane" ? "dershane" : "kurs",
-    category: row.category,
+    officialStatus: row.official_status ?? "",
+    category,
+    examNavIds,
     city: row.city,
     district: row.district,
     neighborhood: row.neighborhood,
@@ -128,8 +150,8 @@ export function institutionToInsertRow(
   return {
     ...(i.id ? { id: i.id } : {}),
     name: i.name,
-    type: i.type,
     category: i.category,
+    exam_nav_ids: normalizeExamNavIds(i.examNavIds),
     city: i.city,
     district: i.district,
     neighborhood: i.neighborhood,
@@ -178,7 +200,7 @@ export function institutionPartialToRow(patch: Partial<Institution>): Record<str
   const o: Record<string, unknown> = {};
   const map: [keyof Institution, string][] = [
     ["name", "name"],
-    ["type", "type"],
+    ["officialStatus", "official_status"],
     ["category", "category"],
     ["city", "city"],
     ["district", "district"],
@@ -229,12 +251,16 @@ export function institutionPartialToRow(patch: Partial<Institution>): Record<str
       o[col] = v;
     }
   }
+  if (patch.examNavIds !== undefined) {
+    o.exam_nav_ids = normalizeExamNavIds(patch.examNavIds);
+  }
   return o;
 }
 
 export type PlatformSnapshot = {
   users: User[];
   institutions: Institution[];
+  institutionTypes: InstitutionTypeDef[];
   tags: Tag[];
   gradeLevels: GradeLevel[];
   reviews: Review[];
@@ -252,6 +278,7 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
 
   const [
     instRes,
+    instTypesRes,
     tagsRes,
     gradesRes,
     reviewsRes,
@@ -265,6 +292,7 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
       .from("institutions")
       .select(INSTITUTION_SELECT_WITH_RELS)
       .order("created_at", { ascending: false }),
+    supabase.from("institution_types").select("id, label, sort_order").order("sort_order", { ascending: true }),
     supabase.from("tags").select("id, name, category").order("name"),
     supabase.from("grade_levels").select("id, label").order("label"),
     supabase.from("reviews").select("*").order("created_at", { ascending: false }),
@@ -276,6 +304,7 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
   ]);
 
   if (instRes.error) errors.push(instRes.error.message);
+  if (instTypesRes.error) errors.push(instTypesRes.error.message);
   if (tagsRes.error) errors.push(tagsRes.error.message);
   if (gradesRes.error) errors.push(gradesRes.error.message);
   if (reviewsRes.error) errors.push(reviewsRes.error.message);
@@ -287,7 +316,21 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
     /* Anon veya profiles yetkisi yoksa boş liste */
   }
 
-  const institutions = (instRes.data ?? []).map((r) => mapInstitutionRow(r as InstitutionDbRow));
+  let institutionTypes: InstitutionTypeDef[] = (instTypesRes.data ?? []).map((r) => ({
+    id: r.id,
+    label: r.label,
+    sortOrder: Number(r.sort_order) || 0,
+  }));
+  if (institutionTypes.length === 0) {
+    institutionTypes = [...INSTITUTION_TYPES_SEED];
+  } else {
+    institutionTypes = sortInstitutionTypes(institutionTypes);
+  }
+  const typeLabelMap = labelMapFromInstitutionTypes(institutionTypes);
+
+  const institutions = (instRes.data ?? []).map((r) =>
+    mapInstitutionRow(r as InstitutionDbRow, typeLabelMap),
+  );
 
   const tags: Tag[] = (tagsRes.data ?? []).map((t) => ({
     id: t.id,
@@ -350,6 +393,7 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
     snapshot: {
       users,
       institutions,
+      institutionTypes,
       tags,
       gradeLevels,
       reviews,

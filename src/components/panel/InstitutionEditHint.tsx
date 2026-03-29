@@ -1,0 +1,30 @@
+/** Liste kartı ile kurum detay sayfasında hangi verinin nerede kullanıldığını özetler. */
+export function InstitutionEditHint({ variant }: { variant: "admin" | "corporate" }) {
+  return (
+    <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-xs leading-relaxed text-slate-700">
+      <p className="font-semibold text-slate-900">Kart ve kurum sayfası — tek kayıt, iki görünüm</p>
+      <ul className="mt-2 list-inside list-disc space-y-1.5">
+        <li>
+          <strong className="text-slate-800">Liste / kart:</strong> kapak görseli (görsellerin ilki), kategori,
+          kurum adı, şehir/ilçe, kısa özet, puan, fiyat ve indirim şeridi, WhatsApp; etiketler kartta da kısa
+          görünür.
+        </li>
+        <li>
+          <strong className="text-slate-800">Kurum sayfası:</strong> aynı kaydın uzun açıklaması, tüm galeri
+          görselleri, adres ve harita, programlar, derslik/istatistik blokları, kadro metni, yorumlar bölümü.
+        </li>
+      </ul>
+      {variant === "corporate" ? (
+        <p className="mt-2 border-t border-indigo-100 pt-2 text-slate-600">
+          Görsel URL’leri, fiyat aralığı, istatistik alanları ve yeni kurum oluşturma yalnızca platform
+          yöneticisindedir; metin ve iletişim bilgilerini buradan güncelleyebilirsiniz.
+        </p>
+      ) : (
+        <p className="mt-2 border-t border-indigo-100 pt-2 text-slate-600">
+          Aşağıda alanları &quot;kart&quot; ve &quot;sayfa&quot; olarak grupladık; tam alan seti için üstteki
+          yeni kurum formunu kullanın.
+        </p>
+      )}
+    </div>
+  );
+}

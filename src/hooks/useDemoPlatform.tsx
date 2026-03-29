@@ -13,6 +13,12 @@ import {
   users,
 } from "@/data/mockData";
 import { INSTITUTION_DEFAULTS, type InstitutionCreateInput } from "@/data/institutionDefaults";
+import {
+  INSTITUTION_TYPES_SEED,
+  labelMapFromInstitutionTypes,
+  sortInstitutionTypes,
+} from "@/data/institutionTypesSeed";
+import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
 import { instructors as seedInstructors } from "@/data/instructors";
 import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
 import type { SupabasePublicConfig } from "@/lib/supabase/runtimePublic";
@@ -29,6 +35,7 @@ import type {
   GradeLevel,
   HeroSlide,
   Institution,
+  InstitutionTypeDef,
   Instructor,
   Review,
   Tag,
@@ -48,6 +55,12 @@ interface DemoContextValue {
   currentUser: User | null;
   users: User[];
   institutions: Institution[];
+  /** Sabit kod + admin düzenlenebilir etiket; üst menü ve formlar bunu kullanır. */
+  institutionTypes: InstitutionTypeDef[];
+  updateInstitutionType: (
+    id: string,
+    patch: { label?: string; sortOrder?: number },
+  ) => void | Promise<void>;
   tags: Tag[];
   gradeLevels: GradeLevel[];
   reviews: Review[];
@@ -154,12 +167,18 @@ export function DemoPlatformProvider({
   const [advisorQuestionList, setAdvisorQuestionList] = useState<AdvisorQuestion[]>(
     useRemote ? [] : advisorQuestionsSeed,
   );
+  const [institutionTypeList, setInstitutionTypeList] = useState<InstitutionTypeDef[]>(() =>
+    useRemote ? [] : INSTITUTION_TYPES_SEED,
+  );
   const [platformLoading, setPlatformLoading] = useState(useRemote);
   const [platformError, setPlatformError] = useState<string | null>(null);
 
   const applySnapshot = useCallback((snap: Awaited<ReturnType<typeof loadPlatformSnapshot>>["snapshot"]) => {
     setUserList(snap.users);
     setInstitutionList(snap.institutions);
+    setInstitutionTypeList(
+      snap.institutionTypes.length > 0 ? snap.institutionTypes : INSTITUTION_TYPES_SEED,
+    );
     setTagList(snap.tags);
     setGradeLevelList(snap.gradeLevels);
     setReviewList(snap.reviews);
@@ -242,15 +261,25 @@ export function DemoPlatformProvider({
   };
 
   const updateInstitution = async (institutionId: string, payload: Partial<Institution>) => {
+    let mergedPayload: Partial<Institution> = { ...payload };
+    if (payload.examNavIds !== undefined) {
+      const n = normalizeExamNavIds(payload.examNavIds);
+      const lm = labelMapFromInstitutionTypes(sortInstitutionTypes(institutionTypeList));
+      mergedPayload = {
+        ...mergedPayload,
+        examNavIds: n,
+        category: categoryDisplayFromExamNavIds(n, lm),
+      };
+    }
     if (!useRemote) {
       setInstitutionList((prev) =>
-        prev.map((item) => (item.id === institutionId ? { ...item, ...payload } : item)),
+        prev.map((item) => (item.id === institutionId ? { ...item, ...mergedPayload } : item)),
       );
       return;
     }
     const supabase = createBrowserSupabaseClientOrNull();
     if (!supabase) return;
-    const { tags: nextTags, gradeLevelIds: nextGrades, ...rest } = payload;
+    const { tags: nextTags, gradeLevelIds: nextGrades, ...rest } = mergedPayload;
     const row = institutionPartialToRow(rest);
     if (Object.keys(row).length > 0) {
       const { error } = await supabase.from("institutions").update(row).eq("id", institutionId);
@@ -309,10 +338,17 @@ export function DemoPlatformProvider({
   const createInstitution = async (
     payload: InstitutionCreateInput,
   ): Promise<CreateInstitutionResult> => {
+    const examNavIds = normalizeExamNavIds(payload.examNavIds ?? INSTITUTION_DEFAULTS.examNavIds);
+    if (examNavIds.length === 0) {
+      return { ok: false, message: "En az bir kurum türü (LGS, YKS, …) seçilmelidir." };
+    }
+    const typeLabelMap = labelMapFromInstitutionTypes(sortInstitutionTypes(institutionTypeList));
     if (!useRemote) {
       const institution: Institution = {
         ...INSTITUTION_DEFAULTS,
         ...payload,
+        examNavIds,
+        category: categoryDisplayFromExamNavIds(examNavIds, typeLabelMap),
         id: `inst-${Date.now()}`,
         createdAt: new Date().toISOString().slice(0, 10),
       };
@@ -331,6 +367,8 @@ export function DemoPlatformProvider({
     const merged: Institution = {
       ...INSTITUTION_DEFAULTS,
       ...payload,
+      examNavIds,
+      category: categoryDisplayFromExamNavIds(examNavIds, typeLabelMap),
       id: "",
       createdAt: new Date().toISOString().slice(0, 10),
     };
@@ -353,8 +391,23 @@ export function DemoPlatformProvider({
       .from("profiles")
       .update({ institution_id: institutionId })
       .eq("id", payload.ownerUserId);
+    const { data: typeRows } = await supabase
+      .from("institution_types")
+      .select("id, label, sort_order")
+      .order("sort_order", { ascending: true });
+    const defs =
+      typeRows && typeRows.length > 0
+        ? sortInstitutionTypes(
+            typeRows.map((r) => ({
+              id: r.id,
+              label: r.label,
+              sortOrder: Number(r.sort_order) || 0,
+            })),
+          )
+        : INSTITUTION_TYPES_SEED;
+    const lm = labelMapFromInstitutionTypes(defs);
     await refreshPlatform();
-    return { ok: true, institution: mapInstitutionRow(row) };
+    return { ok: true, institution: mapInstitutionRow(row, lm) };
   };
 
   const createTag = async (name: string): Promise<string | null> => {
@@ -633,6 +686,42 @@ export function DemoPlatformProvider({
     await refreshPlatform();
   };
 
+  const updateInstitutionType = async (id: string, patch: { label?: string; sortOrder?: number }) => {
+    if (!useRemote) {
+      const next = sortInstitutionTypes(
+        institutionTypeList.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                label:
+                  patch.label !== undefined ? (patch.label.trim() || t.label) : t.label,
+                sortOrder:
+                  patch.sortOrder !== undefined ? Math.round(patch.sortOrder) : t.sortOrder,
+              }
+            : t,
+        ),
+      );
+      const lm = labelMapFromInstitutionTypes(next);
+      setInstitutionTypeList(next);
+      setInstitutionList((list) =>
+        list.map((i) => ({
+          ...i,
+          category: categoryDisplayFromExamNavIds(i.examNavIds, lm),
+        })),
+      );
+      return;
+    }
+    const supabase = createBrowserSupabaseClientOrNull();
+    if (!supabase) return;
+    const updates: Record<string, unknown> = {};
+    if (patch.label !== undefined) updates.label = patch.label.trim();
+    if (patch.sortOrder !== undefined) updates.sort_order = Math.round(patch.sortOrder);
+    if (Object.keys(updates).length === 0) return;
+    const { error } = await supabase.from("institution_types").update(updates).eq("id", id);
+    if (error) console.error(error);
+    await refreshPlatform();
+  };
+
   const updateAdvisorQuestion = async (id: string, prompt: string) => {
     const next = prompt.trim();
     if (!useRemote) {
@@ -652,6 +741,8 @@ export function DemoPlatformProvider({
     currentUser,
     users: userList,
     institutions: institutionList,
+    institutionTypes: institutionTypeList,
+    updateInstitutionType,
     tags: tagList,
     gradeLevels: gradeLevelList,
     reviews: reviewList,

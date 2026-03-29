@@ -101,8 +101,8 @@ interface DemoContextValue {
     institutionId: string,
     draft: Institution,
   ) => PlatformSaveResult | Promise<PlatformSaveResult>;
-  clearInstitutionPending: (institutionId: string) => void | Promise<void>;
-  approveInstitutionPending: (institutionId: string) => void | Promise<void>;
+  clearInstitutionPending: (institutionId: string) => PlatformSaveResult | Promise<PlatformSaveResult>;
+  approveInstitutionPending: (institutionId: string) => PlatformSaveResult | Promise<PlatformSaveResult>;
   setInstitutionListed: (institutionId: string, listed: boolean) => void | Promise<void>;
   staticPages: {
     about: string;
@@ -785,7 +785,7 @@ export function DemoPlatformProvider({
     return { ok: true };
   };
 
-  const clearInstitutionPending = async (institutionId: string) => {
+  const clearInstitutionPending = async (institutionId: string): Promise<PlatformSaveResult> => {
     if (!useRemote) {
       setInstitutionList((prev) =>
         prev.map((i) =>
@@ -794,18 +794,25 @@ export function DemoPlatformProvider({
             : i,
         ),
       );
-      return;
+      return { ok: true };
     }
     const supabase = createBrowserSupabaseClientOrNull();
-    if (!supabase) return;
+    if (!supabase) return { ok: false, message: "Bağlantı kurulamadı (Supabase)." };
     const { error } = await supabase.rpc("clear_institution_pending", {
       p_institution_id: institutionId,
     });
-    if (error) console.error(error);
     await refreshPlatform();
+    if (error) {
+      console.error(error);
+      return {
+        ok: false,
+        message: error.message || "Taslak silinemedi (yalnızca admin RPC: clear_institution_pending).",
+      };
+    }
+    return { ok: true };
   };
 
-  const approveInstitutionPending = async (institutionId: string) => {
+  const approveInstitutionPending = async (institutionId: string): Promise<PlatformSaveResult> => {
     if (!useRemote) {
       setInstitutionList((prev) => {
         const inst = prev.find((i) => i.id === institutionId);
@@ -824,35 +831,38 @@ export function DemoPlatformProvider({
             : i,
         );
       });
-      return;
+      return { ok: true };
     }
     const supabase = createBrowserSupabaseClientOrNull();
-    if (!supabase) return;
+    if (!supabase) return { ok: false, message: "Bağlantı kurulamadı (Supabase)." };
     const { data: row, error: fetchErr } = await supabase
       .from("institutions")
       .select("pending_manager_payload")
       .eq("id", institutionId)
       .maybeSingle();
-    if (fetchErr || !row) {
+    if (fetchErr) {
       console.error(fetchErr);
-      return;
+      return { ok: false, message: fetchErr.message };
+    }
+    if (!row) {
+      return { ok: false, message: "Kurum veya onay verisi bulunamadı." };
     }
     const pending = parsePendingPayloadFromDb(row.pending_manager_payload);
-    if (!pending) return;
+    if (!pending) {
+      return {
+        ok: false,
+        message:
+          "Onay verisi okunamadı (pending_manager_payload: body veya tags JSON formatı). Sayfayı yenileyip tekrar deneyin.",
+      };
+    }
     const u1 = await updateInstitution(institutionId, {
       ...pending.body,
       gradeLevelIds: pending.body.gradeLevelIds,
     });
-    if (!u1.ok) {
-      console.error(u1.message);
-      return;
-    }
+    if (!u1.ok) return u1;
     const u2 = await updateInstitutionTags(institutionId, pending.tags);
-    if (!u2.ok) {
-      console.error(u2.message);
-      return;
-    }
-    await clearInstitutionPending(institutionId);
+    if (!u2.ok) return u2;
+    return clearInstitutionPending(institutionId);
   };
 
   const setInstitutionListed = async (institutionId: string, listed: boolean) => {

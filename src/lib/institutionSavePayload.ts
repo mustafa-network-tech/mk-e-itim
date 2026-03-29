@@ -83,11 +83,162 @@ export function mergeInstitutionWithPending(inst: Institution): Institution {
   };
 }
 
+/** buildInstitutionPersistencePayload ile aynı alan anahtarları (sıra korunur). */
+const PERSISTENCE_BODY_KEYS: (keyof Institution)[] = [
+  "name",
+  "officialStatus",
+  "city",
+  "district",
+  "neighborhood",
+  "address",
+  "phone",
+  "website",
+  "whatsapp",
+  "shortDescription",
+  "longDescription",
+  "examNavIds",
+  "price",
+  "priceRange",
+  "minPrice",
+  "maxPrice",
+  "rating",
+  "reviewCount",
+  "teacherCount",
+  "teacherInfo",
+  "programs",
+  "images",
+  "weeklyHours",
+  "totalHours",
+  "oneToOneLessonCount",
+  "classroomCount",
+  "capacity",
+  "classSize",
+  "libraryCapacity",
+  "hasPublicationSupport",
+  "examCount",
+  "hasDigitalPlatform",
+  "digitalPlatformInfo",
+  "coachingRatio",
+  "featured",
+  "topVisible",
+  "discountActive",
+  "discountPercent",
+  "discountText",
+  "discountStartDate",
+  "discountEndDate",
+  "gradeLevelIds",
+];
+
+const PENDING_FIELD_LABELS: Partial<Record<keyof Institution, string>> = {
+  name: "Kurum adı",
+  officialStatus: "Resmî statü",
+  city: "Şehir",
+  district: "İlçe",
+  neighborhood: "Mahalle",
+  address: "Adres",
+  phone: "Telefon",
+  website: "Web sitesi",
+  whatsapp: "WhatsApp",
+  shortDescription: "Kısa açıklama",
+  longDescription: "Uzun açıklama",
+  examNavIds: "Kurum türleri (menü)",
+  price: "Fiyat metni",
+  priceRange: "Fiyat aralığı etiketi",
+  minPrice: "Min. fiyat",
+  maxPrice: "Maks. fiyat",
+  rating: "Puan",
+  reviewCount: "Yorum sayısı",
+  teacherCount: "Öğretmen sayısı",
+  teacherInfo: "Kadro metni",
+  programs: "Programlar",
+  images: "Görseller",
+  weeklyHours: "Haftalık saat",
+  totalHours: "Toplam saat",
+  oneToOneLessonCount: "Birebir ders sayısı",
+  classroomCount: "Derslik sayısı",
+  "capacity": "Kontenjan",
+  classSize: "Sınıf mevcudu",
+  libraryCapacity: "Kütüphane kapasitesi",
+  hasPublicationSupport: "Yayın desteği",
+  examCount: "Deneme sayısı",
+  hasDigitalPlatform: "Dijital platform",
+  digitalPlatformInfo: "Dijital platform bilgisi",
+  coachingRatio: "Koçluk oranı",
+  featured: "Öne çıkan",
+  topVisible: "Üst görünürlük",
+  discountActive: "İndirim aktif",
+  discountPercent: "İndirim %",
+  discountText: "İndirim metni",
+  discountStartDate: "İndirim başlangıç",
+  discountEndDate: "İndirim bitiş",
+  gradeLevelIds: "Sınıf seviyeleri",
+};
+
+function previewFieldValue(key: keyof Institution, v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  if (Array.isArray(v)) {
+    if (v.length === 0) return "—";
+    if (key === "images" || key === "programs") return `${v.length} satır`;
+    return v.map((x) => String(x)).join(", ");
+  }
+  if (typeof v === "boolean") return v ? "Evet" : "Hayır";
+  if (typeof v === "number") return String(v);
+  const s = String(v).trim();
+  return s.length > 160 ? `${s.slice(0, 157)}…` : s || "—";
+}
+
+function valuesDiffer(key: keyof Institution, a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return JSON.stringify(a ?? []) !== JSON.stringify(b ?? []);
+  }
+  if (typeof a === "number" || typeof b === "number") {
+    return Number(a) !== Number(b);
+  }
+  return String(a ?? "") !== String(b ?? "");
+}
+
+/** Yönetici taslağında canlıya göre değişen alanların kısa listesi (admin özet kutusu). */
+export function summarizePendingFieldChanges(inst: Institution): {
+  label: string;
+  before: string;
+  after: string;
+}[] {
+  const p = inst.pendingManagerPayload;
+  if (!p?.body) return [];
+  const body = p.body;
+  const rows: { label: string; before: string; after: string }[] = [];
+  for (const key of PERSISTENCE_BODY_KEYS) {
+    if (!(key in body)) continue;
+    const beforeV = inst[key as keyof Institution];
+    const afterV = body[key];
+    if (!valuesDiffer(key, beforeV, afterV)) continue;
+    const label = PENDING_FIELD_LABELS[key] ?? String(key);
+    rows.push({
+      label,
+      before: previewFieldValue(key, beforeV),
+      after: previewFieldValue(key, afterV),
+    });
+  }
+  const liveTags = [...inst.tags].map(String).sort().join("\n");
+  const pendTags = [...(p.tags ?? [])].map(String).sort().join("\n");
+  if (liveTags !== pendTags) {
+    rows.push({
+      label: "Etiketler",
+      before: inst.tags.length ? inst.tags.join(", ") : "—",
+      after: p.tags?.length ? p.tags.join(", ") : "—",
+    });
+  }
+  return rows;
+}
+
 export function parsePendingPayloadFromDb(raw: unknown): InstitutionManagerPendingPayload | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   if (!o.body || typeof o.body !== "object") return null;
-  const tags = o.tags;
-  if (!Array.isArray(tags) || !tags.every((t) => typeof t === "string")) return null;
-  return { body: o.body as Partial<Institution>, tags: tags as string[] };
+  const rawTags = o.tags;
+  let tags: string[];
+  if (rawTags == null) tags = [];
+  else if (Array.isArray(rawTags)) tags = rawTags.map((t) => String(t));
+  else return null;
+  return { body: o.body as Partial<Institution>, tags };
 }

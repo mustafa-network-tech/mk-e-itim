@@ -9,6 +9,8 @@ import { usePanelGate } from "@/hooks/usePanelGate";
 import {
   buildInstitutionPersistencePayload,
   formatInstitutionSaveError,
+  mergeInstitutionWithPending,
+  summarizePendingFieldChanges,
 } from "@/lib/institutionSavePayload";
 import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
@@ -83,6 +85,7 @@ export default function AdminPanelPage() {
   const [institutionDraftDirty, setInstitutionDraftDirty] = useState(false);
   const [institutionFormMessage, setInstitutionFormMessage] = useState<string | null>(null);
   const [institutionSaveBusy, setInstitutionSaveBusy] = useState(false);
+  const [pendingReviewBusy, setPendingReviewBusy] = useState<"approve" | "reject" | null>(null);
   const institutionDraftDirtyRef = useRef(false);
   const prevSelectedInstitutionIdRef = useRef<string>("");
 
@@ -121,7 +124,7 @@ export default function AdminPanelPage() {
     const row = institutions.find((i) => i.id === selectedInstitutionId);
     if (!row) return;
     if (!institutionDraftDirtyRef.current) {
-      setInstitutionEditDraft({ ...row });
+      setInstitutionEditDraft({ ...mergeInstitutionWithPending(row) });
       setInstitutionDraftDirty(false);
     }
     /** institutionDraftDirty: Kayıt sonrası liste referansı değişmese bile taslak sunucu satırıyla hizalanır. */
@@ -163,7 +166,7 @@ export default function AdminPanelPage() {
     const row = institutions.find((i) => i.id === selectedInstitutionId);
     institutionDraftDirtyRef.current = false;
     setInstitutionDraftDirty(false);
-    setInstitutionEditDraft(row ? { ...row } : null);
+    setInstitutionEditDraft(row ? { ...mergeInstitutionWithPending(row) } : null);
     setInstitutionFormMessage("Taslak sıfırlandı (sunucudaki son hâl).");
     setTimeout(() => setInstitutionFormMessage(null), 3500);
   };
@@ -491,30 +494,106 @@ export default function AdminPanelPage() {
                           </div>
                         ) : null}
                         {liveInstitution?.pendingSubmittedAt ? (
-                          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                          <div className="relative z-[60] mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 shadow-sm">
                             <p className="font-semibold">Kurum yöneticisi değişiklik talebi</p>
                             <p className="mt-1">
                               Gönderim:{" "}
                               {new Date(liveInstitution.pendingSubmittedAt).toLocaleString("tr-TR")}
                             </p>
+                            <p className="mt-2 rounded-md border border-emerald-200/90 bg-emerald-50/80 px-2 py-1.5 text-[11px] text-emerald-950">
+                              Aşağıdaki form, yöneticinin <strong>önerdiği metinleri</strong> gösterir
+                              (yayındaki kartta henüz bu hâl yok). Kaydet ile siz de doğrudan
+                              düzenleyebilirsiniz; onaylarsanız bu içerik canlıya yazılır.
+                            </p>
+                            {(() => {
+                              const changes = summarizePendingFieldChanges(liveInstitution);
+                              if (changes.length === 0) {
+                                return (
+                                  <p className="mt-2 text-[11px] text-amber-900/85">
+                                    Otomatik fark özeti boş (gönderilen alanlar canlıyla aynı görünüyor veya
+                                    veri biçimi beklenenden farklı). Yine de gönderim zamanı kayıtlı; formu
+                                    inceleyin.
+                                  </p>
+                                );
+                              }
+                              return (
+                                <div className="mt-2 max-h-52 overflow-y-auto rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-800">
+                                  <p className="mb-1 font-semibold text-slate-900">
+                                    Yayındakine göre değişen alanlar
+                                  </p>
+                                  <ul className="space-y-2">
+                                    {changes.map((c) => (
+                                      <li
+                                        key={c.label}
+                                        className="rounded border border-amber-100 bg-amber-50/50 px-2 py-1.5"
+                                      >
+                                        <span className="font-semibold text-amber-950">{c.label}</span>
+                                        <div className="mt-0.5 grid gap-0.5 sm:grid-cols-2">
+                                          <span className="text-rose-800/90">
+                                            <span className="font-medium">Önce: </span>
+                                            {c.before}
+                                          </span>
+                                          <span className="text-emerald-800/90">
+                                            <span className="font-medium">Sonra: </span>
+                                            {c.after}
+                                          </span>
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            })()}
                             <div className="mt-2 flex flex-wrap gap-2">
                               <button
                                 type="button"
-                                className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white"
-                                onClick={() => {
-                                  void approveInstitutionPending(liveInstitution.id);
+                                disabled={pendingReviewBusy !== null || institutionSaveBusy}
+                                className="cursor-pointer rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                onClick={async () => {
+                                  setPendingReviewBusy("approve");
+                                  setInstitutionFormMessage(null);
+                                  try {
+                                    const r = await approveInstitutionPending(liveInstitution.id);
+                                    if (!r.ok) {
+                                      setInstitutionFormMessage(
+                                        `Onay başarısız: ${formatInstitutionSaveError(r.message)}`,
+                                      );
+                                      return;
+                                    }
+                                    setInstitutionFormMessage(
+                                      "Yönetici değişiklikleri yayındaki kuruma uygulandı.",
+                                    );
+                                    setTimeout(() => setInstitutionFormMessage(null), 5500);
+                                  } finally {
+                                    setPendingReviewBusy(null);
+                                  }
                                 }}
                               >
-                                Onayla ve uygula
+                                {pendingReviewBusy === "approve" ? "Uygulanıyor…" : "Onayla ve uygula"}
                               </button>
                               <button
                                 type="button"
-                                className="rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900"
-                                onClick={() => {
-                                  void clearInstitutionPending(liveInstitution.id);
+                                disabled={pendingReviewBusy !== null || institutionSaveBusy}
+                                className="cursor-pointer rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                onClick={async () => {
+                                  setPendingReviewBusy("reject");
+                                  setInstitutionFormMessage(null);
+                                  try {
+                                    const r = await clearInstitutionPending(liveInstitution.id);
+                                    if (!r.ok) {
+                                      setInstitutionFormMessage(
+                                        `Red başarısız: ${formatInstitutionSaveError(r.message)}`,
+                                      );
+                                      return;
+                                    }
+                                    setInstitutionFormMessage("Taslak silindi; yayındaki metin aynı kaldı.");
+                                    setTimeout(() => setInstitutionFormMessage(null), 5000);
+                                  } finally {
+                                    setPendingReviewBusy(null);
+                                  }
                                 }}
                               >
-                                Reddet (taslağı sil)
+                                {pendingReviewBusy === "reject" ? "İşleniyor…" : "Reddet (taslağı sil)"}
                               </button>
                             </div>
                           </div>

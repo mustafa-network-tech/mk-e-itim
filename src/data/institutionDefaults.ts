@@ -56,6 +56,9 @@ export const INSTITUTION_DEFAULTS: Omit<Institution, "id" | "createdAt" | "name"
   discountText: "",
   discountStartDate: "",
   discountEndDate: "",
+  listed: true,
+  pendingSubmittedAt: null,
+  pendingManagerPayload: null,
 };
 
 export type InstitutionCreateInput = Partial<Omit<Institution, "id" | "createdAt">> &

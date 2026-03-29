@@ -16,8 +16,9 @@ export function InstitutionEditHint({ variant }: { variant: "admin" | "corporate
       </ul>
       {variant === "corporate" ? (
         <p className="mt-2 border-t border-indigo-100 pt-2 text-slate-600">
-          Görsel URL’leri, fiyat aralığı, istatistik alanları ve yeni kurum oluşturma yalnızca platform
-          yöneticisindedir; metin ve iletişim bilgilerini buradan güncelleyebilirsiniz.
+          Alan seti admin paneliyle aynıdır. Yayındaki kurumda değişiklikler <strong>onaya</strong> gider;
+          yalnızca <strong>yeni etiket adı</strong> tanımlama admin içindedir (mevcut etiketleri
+          seçebilirsiniz).
         </p>
       ) : (
         <p className="mt-2 border-t border-indigo-100 pt-2 text-slate-600">

@@ -17,9 +17,7 @@ export type AdminSection =
 
 export type CorporateSection =
   | "overview"
-  | "institution-info"
-  | "card-info"
-  | "edit-card"
+  | "institution-edit"
   | "reviews-ratings";
 
 export function AdminSidebar({ active, onChange }: SidebarProps<AdminSection>) {
@@ -58,9 +56,7 @@ export function AdminSidebar({ active, onChange }: SidebarProps<AdminSection>) {
 export function CorporateSidebar({ active, onChange }: SidebarProps<CorporateSection>) {
   const items: { id: CorporateSection; label: string }[] = [
     { id: "overview", label: "Genel Bakış" },
-    { id: "institution-info", label: "Kurum bilgilerim" },
-    { id: "card-info", label: "Kart bilgileri" },
-    { id: "edit-card", label: "Kurum kartını düzenle" },
+    { id: "institution-edit", label: "Kurum düzenleme" },
     { id: "reviews-ratings", label: "Yorumlar ve Puanlar" },
   ];
   return (

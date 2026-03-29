@@ -1,15 +1,12 @@
-/**
- * Şifre sıfırlama redirectTo kökü.
- * Localhost’ta her zaman mevcut origin; aksi halde NEXT_PUBLIC_SITE_URL veya origin.
- */
+/** Canlıda mutlaka NEXT_PUBLIC_SITE_URL (https://alanadiniz.com) ayarlayın; meta, sitemap ve OAuth/şifre yönlendirmeleri bunu kullanır. */
+export function getSiteOrigin(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`;
+  return "http://localhost:3000";
+}
+
+/** Tarayıcıda Supabase redirectTo vb. için aynı kök URL (client’ta da NEXT_PUBLIC_SITE_URL ile derlenir). */
 export function getPublicSiteUrlForRedirect(): string {
-  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "") ?? "";
-  if (typeof window !== "undefined") {
-    const { hostname, origin } = window.location;
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return origin;
-    }
-    return fromEnv || origin;
-  }
-  return fromEnv;
+  return getSiteOrigin();
 }

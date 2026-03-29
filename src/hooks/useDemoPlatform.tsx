@@ -18,6 +18,10 @@ import {
   labelMapFromInstitutionTypes,
   sortInstitutionTypes,
 } from "@/data/institutionTypesSeed";
+import {
+  buildPendingPayloadFromDraft,
+  parsePendingPayloadFromDb,
+} from "@/lib/institutionSavePayload";
 import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
 import { instructors as seedInstructors } from "@/data/instructors";
 import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
@@ -87,6 +91,10 @@ interface DemoContextValue {
   addInstructor: (institutionId: string, name: string, branch: string) => void | Promise<void>;
   removeInstructor: (instructorId: string) => void | Promise<void>;
   updateInstitutionTags: (institutionId: string, tags: string[]) => void | Promise<void>;
+  submitInstitutionPendingReview: (institutionId: string, draft: Institution) => void | Promise<void>;
+  clearInstitutionPending: (institutionId: string) => void | Promise<void>;
+  approveInstitutionPending: (institutionId: string) => void | Promise<void>;
+  setInstitutionListed: (institutionId: string, listed: boolean) => void | Promise<void>;
   staticPages: {
     about: string;
     privacy: string;
@@ -351,6 +359,9 @@ export function DemoPlatformProvider({
         category: categoryDisplayFromExamNavIds(examNavIds, typeLabelMap),
         id: `inst-${Date.now()}`,
         createdAt: new Date().toISOString().slice(0, 10),
+        listed: payload.listed ?? true,
+        pendingSubmittedAt: null,
+        pendingManagerPayload: null,
       };
       setInstitutionList((prev) => [institution, ...prev]);
       setUserList((prev) =>
@@ -371,6 +382,9 @@ export function DemoPlatformProvider({
       category: categoryDisplayFromExamNavIds(examNavIds, typeLabelMap),
       id: "",
       createdAt: new Date().toISOString().slice(0, 10),
+      listed: payload.listed ?? true,
+      pendingSubmittedAt: null,
+      pendingManagerPayload: null,
     };
     const insertPayload = institutionToInsertRow(merged);
     delete (insertPayload as { id?: string }).id;
@@ -674,6 +688,98 @@ export function DemoPlatformProvider({
     await refreshPlatform();
   };
 
+  const submitInstitutionPendingReview = async (institutionId: string, draft: Institution) => {
+    const payload = buildPendingPayloadFromDraft(draft);
+    if (!useRemote) {
+      setInstitutionList((prev) =>
+        prev.map((i) =>
+          i.id === institutionId
+            ? {
+                ...i,
+                pendingSubmittedAt: new Date().toISOString(),
+                pendingManagerPayload: payload,
+              }
+            : i,
+        ),
+      );
+      return;
+    }
+    const supabase = createBrowserSupabaseClientOrNull();
+    if (!supabase) return;
+    const { error } = await supabase.rpc("submit_institution_pending_changes", {
+      p_institution_id: institutionId,
+      p_payload: payload,
+    });
+    if (error) console.error(error);
+    await refreshPlatform();
+  };
+
+  const clearInstitutionPending = async (institutionId: string) => {
+    if (!useRemote) {
+      setInstitutionList((prev) =>
+        prev.map((i) =>
+          i.id === institutionId
+            ? { ...i, pendingSubmittedAt: null, pendingManagerPayload: null }
+            : i,
+        ),
+      );
+      return;
+    }
+    const supabase = createBrowserSupabaseClientOrNull();
+    if (!supabase) return;
+    const { error } = await supabase.rpc("clear_institution_pending", {
+      p_institution_id: institutionId,
+    });
+    if (error) console.error(error);
+    await refreshPlatform();
+  };
+
+  const approveInstitutionPending = async (institutionId: string) => {
+    if (!useRemote) {
+      setInstitutionList((prev) => {
+        const inst = prev.find((i) => i.id === institutionId);
+        if (!inst?.pendingManagerPayload) return prev;
+        const { body, tags } = inst.pendingManagerPayload;
+        return prev.map((i) =>
+          i.id === institutionId
+            ? {
+                ...i,
+                ...body,
+                tags,
+                gradeLevelIds: body.gradeLevelIds ?? i.gradeLevelIds,
+                pendingSubmittedAt: null,
+                pendingManagerPayload: null,
+              }
+            : i,
+        );
+      });
+      return;
+    }
+    const supabase = createBrowserSupabaseClientOrNull();
+    if (!supabase) return;
+    const { data: row, error: fetchErr } = await supabase
+      .from("institutions")
+      .select("pending_manager_payload")
+      .eq("id", institutionId)
+      .maybeSingle();
+    if (fetchErr || !row) {
+      console.error(fetchErr);
+      return;
+    }
+    const pending = parsePendingPayloadFromDb(row.pending_manager_payload);
+    if (!pending) return;
+    await updateInstitution(institutionId, {
+      ...pending.body,
+      gradeLevelIds: pending.body.gradeLevelIds,
+    });
+    await updateInstitutionTags(institutionId, pending.tags);
+    await clearInstitutionPending(institutionId);
+  };
+
+  const setInstitutionListed = async (institutionId: string, listed: boolean) => {
+    await updateInstitution(institutionId, { listed });
+  };
+
   const updateStaticPage = async (key: "about" | "privacy" | "contact", content: string) => {
     if (!useRemote) {
       setStaticPages((prev) => ({ ...prev, [key]: content }));
@@ -768,6 +874,10 @@ export function DemoPlatformProvider({
     addInstructor,
     removeInstructor,
     updateInstitutionTags,
+    submitInstitutionPendingReview,
+    clearInstitutionPending,
+    approveInstitutionPending,
+    setInstitutionListed,
     staticPages,
     updateStaticPage,
     advisorQuestions: advisorQuestionList,

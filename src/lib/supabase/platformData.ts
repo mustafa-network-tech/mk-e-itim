@@ -17,6 +17,7 @@ import {
   labelMapFromInstitutionTypes,
   sortInstitutionTypes,
 } from "@/data/institutionTypesSeed";
+import { parsePendingPayloadFromDb } from "@/lib/institutionSavePayload";
 import type {
   GradeLevel,
   HeroSlide,
@@ -77,6 +78,8 @@ export type InstitutionDbRow = {
   discount_text: string;
   discount_start_date: string | null;
   discount_end_date: string | null;
+  pending_manager_payload?: unknown | null;
+  pending_submitted_at?: string | null;
   institution_tags?: { tag_id: string }[] | null;
   institution_grade_levels?: { grade_level_id: string }[] | null;
 };
@@ -141,6 +144,9 @@ export function mapInstitutionRow(
     discountText: row.discount_text,
     discountStartDate: row.discount_start_date ?? "",
     discountEndDate: row.discount_end_date ?? "",
+    listed: row.listed ?? true,
+    pendingSubmittedAt: row.pending_submitted_at ?? null,
+    pendingManagerPayload: parsePendingPayloadFromDb(row.pending_manager_payload ?? null),
   };
 }
 
@@ -185,7 +191,7 @@ export function institutionToInsertRow(
     coaching_ratio: i.coachingRatio,
     featured: i.featured,
     top_visible: i.topVisible ?? true,
-    listed: true,
+    listed: i.listed ?? true,
     created_at: i.createdAt,
     owner_user_id: i.ownerUserId,
     discount_active: i.discountActive,
@@ -235,6 +241,7 @@ export function institutionPartialToRow(patch: Partial<Institution>): Record<str
     ["coachingRatio", "coaching_ratio"],
     ["featured", "featured"],
     ["topVisible", "top_visible"],
+    ["listed", "listed"],
     ["ownerUserId", "owner_user_id"],
     ["discountActive", "discount_active"],
     ["discountPercent", "discount_percent"],

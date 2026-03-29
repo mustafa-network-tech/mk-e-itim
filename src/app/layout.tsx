@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers/Providers";
 import { getSupabasePublicForBrowser } from "@/lib/supabase/runtimePublic";
+import { getSiteOrigin } from "@/lib/siteUrl";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PoweredByBalloon } from "@/components/layout/PoweredByBalloon";
@@ -10,43 +11,63 @@ import { EducationAdvisorLauncher } from "@/components/education/EducationAdviso
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+const siteUrl = getSiteOrigin();
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+  colorScheme: "light dark",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "kursiyera",
-  description: "Eğitim kurumlarını keşfedin — LGS, YKS, KPSS ve diğer kurum türlerine göre arayın.",
+  title: {
+    default: "kursiyera",
+    template: "%s | kursiyera",
+  },
+  description:
+    "Eğitim kurumlarını keşfedin — LGS, YKS, KPSS ve diğer kurum türlerine göre arayın.",
+  applicationName: "kursiyera",
+  referrer: "strict-origin-when-cross-origin",
+  appleWebApp: {
+    capable: true,
+    title: "kursiyera",
+    statusBarStyle: "default",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
   openGraph: {
     title: "kursiyera",
-    description: "Eğitim kurumlarını keşfedin — LGS, YKS, KPSS ve diğer kurum türlerine göre arayın.",
+    description:
+      "Eğitim kurumlarını keşfedin — LGS, YKS, KPSS ve diğer kurum türlerine göre arayın.",
     siteName: "kursiyera",
     locale: "tr_TR",
     type: "website",
-    images: [
-      {
-        url: "/og/og.jpeg",
-        width: 1200,
-        height: 630,
-        alt: "kursiyera",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "kursiyera",
-    description: "Eğitim kurumlarını keşfedin — LGS, YKS, KPSS ve diğer kurum türlerine göre arayın.",
-    images: ["/og/og.jpeg"],
+    description:
+      "Eğitim kurumlarını keşfedin — LGS, YKS, KPSS ve diğer kurum türlerine göre arayın.",
   },
+  category: "education",
 };
 
 export default function RootLayout({

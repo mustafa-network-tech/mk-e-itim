@@ -11,6 +11,12 @@ export interface User {
   institutionId?: string;
 }
 
+/** Kurum yöneticisinin onaya gönderdiği taslak (canlı satır + etiketler ayrı uygulanır). */
+export type InstitutionManagerPendingPayload = {
+  body: Partial<Institution>;
+  tags: string[];
+};
+
 export interface Institution {
   id: string;
   name: string;
@@ -77,6 +83,11 @@ export interface Institution {
   discountStartDate: string;
   /** YYYY-MM-DD; boşsa bitiş sınırı yok */
   discountEndDate: string;
+  /** Anon listelerde görünür; false = taslak (ör. yönetici oluşturdu, admin yayına alır) */
+  listed: boolean;
+  /** ISO zaman; yayında kurumda yönetici değişikliği admin onayı bekliyor */
+  pendingSubmittedAt?: string | null;
+  pendingManagerPayload?: InstitutionManagerPendingPayload | null;
 }
 
 export interface Tag {

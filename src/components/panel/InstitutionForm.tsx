@@ -23,7 +23,17 @@ function numField(raw: string, fallback: number) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-export function InstitutionForm() {
+type InstitutionFormProps = {
+  /** Kurumsal panel: kart taslak oluşur, admin yayına alır */
+  listedOnCreate?: boolean;
+  /** Giriş yapan yönetici owner olur; yönetici seçimi gizlenir */
+  selfServeManager?: boolean;
+};
+
+export function InstitutionForm({
+  listedOnCreate = true,
+  selfServeManager = false,
+}: InstitutionFormProps = {}) {
   const {
     tags,
     gradeLevels,
@@ -32,6 +42,7 @@ export function InstitutionForm() {
     institutionTypes,
     createManager,
     createInstitution,
+    currentUser,
   } = useDemoPlatform();
   const examTypes = institutionTypes.length > 0 ? institutionTypes : INSTITUTION_TYPES_SEED;
   /** Her kurumda tek yönetici: zaten bir kuruma atanmış olanlar seçilemez */
@@ -151,7 +162,7 @@ export function InstitutionForm() {
       onSubmit={(e) => {
         e.preventDefault();
         void (async () => {
-        let ownerId = managerId;
+        let ownerId = selfServeManager && currentUser?.id ? currentUser.id : managerId;
         if (!ownerId && newManagerName.trim() && newManagerEmail.trim()) {
           const pwd = newManagerPassword.trim();
           if (!pwd) {
@@ -244,6 +255,7 @@ export function InstitutionForm() {
           discountText: discountText.trim(),
           discountStartDate: discountStartDate.trim(),
           discountEndDate: discountEndDate.trim(),
+          listed: listedOnCreate,
         });
         if (!created.ok) {
           alert(created.message);
@@ -764,50 +776,57 @@ export function InstitutionForm() {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <SectionTitle>Kurum yöneticisi (tek kişi) *</SectionTitle>
-        <p className="text-xs text-slate-500">
-          Her kurum kartında yalnızca bir yönetici olur. Listede yalnızca henüz başka kuruma atanmamış
-          yöneticiler görünür. Davet akışı için &quot;Yönetici Yönetimi&quot; sekmesini de
-          kullanabilirsiniz.
-        </p>
-        <select
-          className={input}
-          value={managerId}
-          onChange={(e) => setManagerId(e.target.value)}
-        >
-          <option value="">Mevcut yönetici seç</option>
-          {managers.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name} — {m.email}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs font-medium text-slate-600">veya bu kartla birlikte yeni hesap oluştur</p>
-        <div className="grid gap-2 sm:grid-cols-3">
-          <input
+      {!selfServeManager ? (
+        <div className="space-y-4">
+          <SectionTitle>Kurum yöneticisi (tek kişi) *</SectionTitle>
+          <p className="text-xs text-slate-500">
+            Her kurum kartında yalnızca bir yönetici olur. Listede yalnızca henüz başka kuruma atanmamış
+            yöneticiler görünür. Davet akışı için &quot;Yönetici Yönetimi&quot; sekmesini de
+            kullanabilirsiniz.
+          </p>
+          <select
             className={input}
-            placeholder="Ad soyad"
-            value={newManagerName}
-            onChange={(e) => setNewManagerName(e.target.value)}
-          />
-          <input
-            className={input}
-            type="email"
-            placeholder="E-posta (giriş için)"
-            value={newManagerEmail}
-            onChange={(e) => setNewManagerEmail(e.target.value)}
-          />
-          <input
-            className={input}
-            type="password"
-            placeholder="İlk şifre (davet)"
-            value={newManagerPassword}
-            onChange={(e) => setNewManagerPassword(e.target.value)}
-            autoComplete="new-password"
-          />
+            value={managerId}
+            onChange={(e) => setManagerId(e.target.value)}
+          >
+            <option value="">Mevcut yönetici seç</option>
+            {managers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} — {m.email}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs font-medium text-slate-600">veya bu kartla birlikte yeni hesap oluştur</p>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <input
+              className={input}
+              placeholder="Ad soyad"
+              value={newManagerName}
+              onChange={(e) => setNewManagerName(e.target.value)}
+            />
+            <input
+              className={input}
+              type="email"
+              placeholder="E-posta (giriş için)"
+              value={newManagerEmail}
+              onChange={(e) => setNewManagerEmail(e.target.value)}
+            />
+            <input
+              className={input}
+              type="password"
+              placeholder="İlk şifre (davet)"
+              value={newManagerPassword}
+              onChange={(e) => setNewManagerPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <p className="text-xs text-slate-600">
+          Bu kart sizin hesabınıza atanır. Kayıt <strong>taslak</strong> olarak oluşur; platform
+          yöneticisi yayına alana kadar anonim listede görünmez.
+        </p>
+      )}
 
       <button
         type="submit"

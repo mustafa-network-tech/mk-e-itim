@@ -84,6 +84,7 @@ grant execute on function public.clear_institution_pending(uuid) to authenticate
 
 -- Yönetici: yalnızca listed = false kurumda doğrudan UPDATE
 drop policy if exists "institutions_update_managers" on public.institutions;
+drop policy if exists "institutions_update_managers_unlisted" on public.institutions;
 create policy "institutions_update_managers_unlisted"
   on public.institutions
   for update
@@ -102,6 +103,7 @@ create policy "institutions_update_managers_unlisted"
 -- Etiket / sınıf: admin her zaman; yönetici yalnızca listed = false kurumda (taslak kart)
 drop policy if exists "institution_tags_write" on public.institution_tags;
 drop policy if exists "institution_tags_write_admin" on public.institution_tags;
+drop policy if exists "institution_tags_write_admin_or_unlisted_manager" on public.institution_tags;
 create policy "institution_tags_write_admin_or_unlisted_manager"
   on public.institution_tags
   for all
@@ -131,6 +133,8 @@ create policy "institution_tags_write_admin_or_unlisted_manager"
 
 drop policy if exists "institution_grade_levels_write" on public.institution_grade_levels;
 drop policy if exists "institution_grade_levels_write_admin" on public.institution_grade_levels;
+drop policy if exists "institution_grade_levels_write_admin_or_unlisted_manager"
+  on public.institution_grade_levels;
 create policy "institution_grade_levels_write_admin_or_unlisted_manager"
   on public.institution_grade_levels
   for all

@@ -3,6 +3,9 @@ import type { Institution, InstitutionManagerPendingPayload } from "@/types";
 /** Supabase/PostgREST hata metnini kullanıcıya daha anlaşılır Türkçe ile zenginleştirir. */
 export function formatInstitutionSaveError(message: string): string {
   const m = message.toLowerCase();
+  if (m.includes("0 satır") || m.includes("kurum güncellenemedi (0 satır)")) {
+    return `${message} — Çoğunlukla veritabanında «institutions_update_admin» RLS politikası yoktur (20260329120000 atlanmış olabilir). Supabase’te migration «20260330150000_ensure_institutions_update_admin.sql» çalıştırın veya aynı CREATE POLICY’yi SQL Editor’de uygulayın. Ayrıca profiles.role gerçekten «admin» mi kontrol edin.`;
+  }
   if (
     m.includes("row-level security") ||
     m.includes("42501") ||

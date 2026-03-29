@@ -23,6 +23,7 @@ Sıra | Dosya                                      | Kısa açıklama
   9  | 20260330104500_institutions_remove_kurs_dershane_type.sql | type (kurs/dershane) sütunu kaldırma, YGS→YKS, institution_visible yenileme
  10  | 20260330120000_institution_types.sql       | institution_types tablosu (admin düzenlenebilir etiket/sıra), RLS, tohum veri
  11  | 20260330140000_institution_manager_pending_review.sql | Yönetici onay kuyruğu (pending payload), RLS (yayında doğrudan güncelleme kısıtı), taslak INSERT
+ 12  | 20260330150000_ensure_institutions_update_admin.sql | Admin UPDATE politikası (29120000 atlandıysa 0 satır hatasını giderir)
 
 
 Notlar

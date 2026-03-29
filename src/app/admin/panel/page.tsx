@@ -124,7 +124,8 @@ export default function AdminPanelPage() {
       setInstitutionEditDraft({ ...row });
       setInstitutionDraftDirty(false);
     }
-  }, [selectedInstitutionId, institutions]);
+    /** institutionDraftDirty: Kayıt sonrası liste referansı değişmese bile taslak sunucu satırıyla hizalanır. */
+  }, [selectedInstitutionId, institutions, institutionDraftDirty]);
 
   const patchInstitutionDraft = (patch: Partial<Institution>) => {
     institutionDraftDirtyRef.current = true;

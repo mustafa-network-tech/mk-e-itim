@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { inviteInstitutionManager } from "@/app/actions/inviteInstitutionManager";
 import { advisorQuestionsSeed } from "@/data/advisorQuestionsSeed";
@@ -199,6 +199,8 @@ export function DemoPlatformProvider({
   );
   const [platformLoading, setPlatformLoading] = useState(useRemote);
   const [platformError, setPlatformError] = useState<string | null>(null);
+  /** Ardışık refresh’lerin üst üste binip eski snapshot’ın yeniyi ezmesini önler (kayıt + TOKEN_REFRESHED yarışı). */
+  const refreshQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const applySnapshot = useCallback((snap: Awaited<ReturnType<typeof loadPlatformSnapshot>>["snapshot"]) => {
     setUserList(snap.users);
@@ -219,18 +221,25 @@ export function DemoPlatformProvider({
 
   const refreshPlatform = useCallback(async () => {
     if (!useRemote) return;
-    const supabase = createBrowserSupabaseClientOrNull();
-    if (!supabase) {
-      setPlatformLoading(false);
-      setPlatformError("Supabase istemcisi oluşturulamadı.");
-      return;
-    }
-    setPlatformLoading(true);
-    const { snapshot, errors } = await loadPlatformSnapshot(supabase);
-    applySnapshot(snapshot);
-    setPlatformError(errors.length > 0 ? errors.join(" · ") : null);
-    setPlatformLoading(false);
-  }, [applySnapshot]);
+    const queued = refreshQueueRef.current.then(async () => {
+      const supabase = createBrowserSupabaseClientOrNull();
+      if (!supabase) {
+        setPlatformLoading(false);
+        setPlatformError("Supabase istemcisi oluşturulamadı.");
+        return;
+      }
+      setPlatformLoading(true);
+      try {
+        const { snapshot, errors } = await loadPlatformSnapshot(supabase);
+        applySnapshot(snapshot);
+        setPlatformError(errors.length > 0 ? errors.join(" · ") : null);
+      } finally {
+        setPlatformLoading(false);
+      }
+    });
+    refreshQueueRef.current = queued.catch(() => {});
+    await queued;
+  }, [applySnapshot, useRemote]);
 
   useEffect(() => {
     if (!useRemote) {
@@ -313,8 +322,17 @@ export function DemoPlatformProvider({
     const row = institutionPartialToRow(rest);
     const errors: string[] = [];
     if (Object.keys(row).length > 0) {
-      const { error } = await supabase.from("institutions").update(row).eq("id", institutionId);
+      const { data: updatedRows, error } = await supabase
+        .from("institutions")
+        .update(row)
+        .eq("id", institutionId)
+        .select("id");
       if (error) errors.push(error.message);
+      else if (Array.isArray(updatedRows) && updatedRows.length === 0) {
+        errors.push(
+          "Kurum güncellenemedi (0 satır). profiles.role=admin ve institutions RLS (institutions_update_admin) kontrol edin.",
+        );
+      }
     }
     if (nextTags !== undefined) {
       const tagErr = await replaceInstitutionTags(supabase, institutionId, nextTags);

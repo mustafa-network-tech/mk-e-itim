@@ -1166,8 +1166,8 @@ export default function AdminPanelPage() {
               <h3 className="mb-2 text-lg font-bold">Hero ana başlığı (4 metin)</h3>
               <p className="mb-3 text-sm text-slate-600">
                 Ana sayfadaki büyük başlık bu dört metni sırayla gösterir; her biri yaklaşık{" "}
-                <strong>7 saniye</strong> kalır ve metin <strong>yanıp sönerek</strong> vurgulanır (daktilo
-                yok). Arka plan görselleri ve alt metin aşağıdaki slaytlardan gelir.
+                <strong>4 saniye</strong> kalır ve metin <strong>yanıp sönerek</strong> vurgulanır (daktilo
+                yok). Başlık ve slayt alt metni ortalanır; arka plan görselleri slaytlardan gelir.
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {[0, 1, 2, 3].map((i) => (

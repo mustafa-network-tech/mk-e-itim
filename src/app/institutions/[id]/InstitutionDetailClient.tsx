@@ -12,6 +12,7 @@ import {
   InstitutionDetailDiscountBand,
   InstitutionPriceBlock,
 } from "@/components/institution/InstitutionPriceBlock";
+import { InstitutionProgramCardsSection } from "@/components/institution/InstitutionProgramCardsSection";
 import { ReviewSection } from "@/components/review/ReviewSection";
 import { PageNav } from "@/components/ui/PageNav";
 
@@ -24,15 +25,6 @@ function DetailSection({ id, title, children }: { id?: string; title: string; ch
       <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
       <div className="mt-4 text-slate-700">{children}</div>
     </section>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-base font-semibold text-slate-900">{value}</p>
-    </div>
   );
 }
 
@@ -87,7 +79,12 @@ export function InstitutionDetailClient() {
 
         <InstitutionDetailDiscountBand institution={institution} />
 
-        <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-start md:p-8">
+        <div className="border-t border-slate-100 px-6 pb-2 pt-5 md:px-8">
+          <h2 id="genel-bilgiler" className="text-lg font-semibold tracking-tight text-slate-900">
+            Genel bilgiler
+          </h2>
+        </div>
+        <div className="grid gap-6 p-6 pt-2 md:grid-cols-[1fr_auto] md:items-start md:p-8 md:pt-2">
           <div className="space-y-3 text-slate-700">
             <p className="text-sm leading-relaxed">
               <span className="font-medium text-slate-900">Konum: </span>
@@ -155,26 +152,36 @@ export function InstitutionDetailClient() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <DetailSection id="aciklama" title="Kurum hakkında">
-            <p className="whitespace-pre-line text-base leading-relaxed">{institution.longDescription}</p>
-          </DetailSection>
-
-          <DetailSection title="Eğitim yapısı">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Stat label="Haftalık ders saati" value={`${institution.weeklyHours} saat`} />
-              <Stat label="Toplam program saati" value={`${institution.totalHours} saat`} />
-              <Stat label="Birebir ders (dönem)" value={institution.oneToOneLessonCount} />
+          <section
+            id="aciklama"
+            className="scroll-mt-28 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm sm:p-6"
+            aria-labelledby="kurum-hakkinda-heading"
+          >
+            <h2 id="kurum-hakkinda-heading" className="text-lg font-semibold tracking-tight text-slate-900">
+              Kurum hakkında
+            </h2>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {institution.aboutCards.map((card, i) => (
+                <div
+                  key={i}
+                  className="flex min-h-[7rem] flex-col rounded-xl border border-slate-100 bg-slate-50/90 p-4"
+                >
+                  {card.title.trim() ? (
+                    <h3 className="text-sm font-semibold text-slate-900">{card.title.trim()}</h3>
+                  ) : null}
+                  <p
+                    className={`whitespace-pre-line text-sm leading-relaxed text-slate-700 ${
+                      card.title.trim() ? "mt-2" : ""
+                    }`}
+                  >
+                    {card.body.trim() ? card.body.trim() : "—"}
+                  </p>
+                </div>
+              ))}
             </div>
-          </DetailSection>
+          </section>
 
-          <DetailSection title="Fiziksel imkanlar">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Stat label="Derslik sayısı" value={institution.classroomCount} />
-              <Stat label="Toplam kontenjan" value={institution.capacity} />
-              <Stat label="Sınıf mevcudu (ort.)" value={institution.classSize} />
-              <Stat label="Kütüphane kapasitesi" value={institution.libraryCapacity} />
-            </div>
-          </DetailSection>
+          <InstitutionProgramCardsSection cards={institution.programCards} />
 
           <DetailSection title="Eğitim destekleri">
             <ul className="space-y-2 text-sm">
@@ -240,15 +247,6 @@ export function InstitutionDetailClient() {
               Tüm yorumları gör
             </a>
           </DetailSection>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-700">
-            <p className="font-semibold text-slate-900">Programlar</p>
-            <ul className="mt-2 list-inside list-disc space-y-1">
-              {institution.programs.map((p) => (
-                <li key={p}>{p}</li>
-              ))}
-            </ul>
-          </div>
         </aside>
       </div>
 

@@ -8,6 +8,14 @@ import {
   getDiscountRibbonText,
   syncInstitutionPriceDisplayFields,
 } from "@/lib/discount";
+import {
+  longDescriptionFromAboutCards,
+  normalizeAboutCards,
+} from "@/lib/institutionAboutCards";
+import {
+  normalizeProgramCards,
+  programsArrayFromProgramCards,
+} from "@/lib/institutionProgramCards";
 import type {
   GradeLevel,
   Institution,
@@ -297,32 +305,63 @@ export function InstitutionEditorFields({
                         className="scroll-mt-28 rounded-xl border border-slate-100 bg-white p-4"
                       >
                         <h4 className="text-sm font-bold text-slate-900">
-                          Kurum sayfası (detay) — «Kurum kartını düzenle» uzun metin
+                          Kurum sayfası (detay) — 8 bilgi kartı
                         </h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Bu metin yalnızca kurum detay URL&apos;sinde &quot;Kurum hakkında&quot; bölümünde
-                          gösterilir.
+                          Detayda bölüm başlığı yok; kartlar 2 sütunlu grid olarak listelenir. Boş kartlar yer
+                          tutar.
                         </p>
-                        <label className="mb-1 mt-3 block text-xs font-semibold text-slate-700">
-                          Uzun açıklama
-                        </label>
-                        <textarea
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                          rows={8}
-                          value={draft.longDescription}
-                          onChange={(e) =>
-                            onPatch({ longDescription: e.target.value })
-                          }
-                        />
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          {normalizeAboutCards(draft.aboutCards).map((card, i) => (
+                            <div
+                              key={i}
+                              className="rounded-lg border border-slate-200 bg-slate-50/90 p-3"
+                            >
+                              <p className="mb-2 text-xs font-semibold text-slate-600">Kart {i + 1}</p>
+                              <label className="mb-1 block text-xs font-semibold text-slate-700">
+                                Başlık (isteğe bağlı)
+                              </label>
+                              <input
+                                className="mb-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                value={card.title}
+                                onChange={(e) => {
+                                  const list = normalizeAboutCards(draft.aboutCards);
+                                  list[i] = { ...list[i], title: e.target.value };
+                                  onPatch({
+                                    aboutCards: list,
+                                    longDescription: longDescriptionFromAboutCards(list),
+                                  });
+                                }}
+                              />
+                              <label className="mb-1 block text-xs font-semibold text-slate-700">
+                                Metin
+                              </label>
+                              <textarea
+                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                rows={3}
+                                value={card.body}
+                                onChange={(e) => {
+                                  const list = normalizeAboutCards(draft.aboutCards);
+                                  list[i] = { ...list[i], body: e.target.value };
+                                  onPatch({
+                                    aboutCards: list,
+                                    longDescription: longDescriptionFromAboutCards(list),
+                                  });
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       <div
                         id={`${sectionIdPrefix}-egitim-yapisi`}
                         className="scroll-mt-28 rounded-xl border border-slate-100 bg-slate-50/90 p-4"
                       >
-                        <h4 className="text-sm font-bold text-slate-900">
-                          Eğitim yapısı — kurum detay sayfası
-                        </h4>
+                        <h4 className="text-sm font-bold text-slate-900">Eğitim yapısı</h4>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Kurum detayında ayrı kart olarak gösterilmez; veri kaydı için.
+                        </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-3">
                           <div>
                             <label className="mb-1 block text-xs font-semibold text-slate-700">
@@ -382,9 +421,10 @@ export function InstitutionEditorFields({
                         id={`${sectionIdPrefix}-fiziksel-imkanlar`}
                         className="scroll-mt-28 rounded-xl border border-slate-100 bg-slate-50/90 p-4"
                       >
-                        <h4 className="text-sm font-bold text-slate-900">
-                          Fiziksel imkanlar — kurum detay sayfası
-                        </h4>
+                        <h4 className="text-sm font-bold text-slate-900">Fiziksel imkanlar</h4>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Kurum detayında ayrı kart olarak gösterilmez; veri kaydı için.
+                        </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                           <div>
                             <label className="mb-1 block text-xs font-semibold text-slate-700">
@@ -548,25 +588,47 @@ export function InstitutionEditorFields({
                       >
                         <h4 className="text-sm font-bold text-slate-900">Programlar ve görseller</h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Programlar detay sayfası yan sütununda listelenir. Görseller: kapak için ilk satır
-                          önemli; her satır bir görsel URL&apos;si.
+                          Programlar: 8 kart; başlık listede, «Modal metni» tıklanınca açılan pencerede
+                          görünür. Görseller: kapak için ilk satır önemli; her satır bir görsel URL&apos;si.
                         </p>
-                        <label className="mb-1 mt-3 block text-xs font-semibold text-slate-700">
-                          Programlar (her satır bir program)
-                        </label>
-                        <textarea
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                          rows={5}
-                          value={(draft.programs ?? []).join("\n")}
-                          onChange={(e) =>
-                            onPatch({
-                              programs: e.target.value
-                                .split("\n")
-                                .map((s) => s.trim())
-                                .filter(Boolean),
-                            })
-                          }
-                        />
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          {normalizeProgramCards(draft.programCards).map((card, i) => (
+                            <div key={i} className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+                              <p className="mb-2 text-xs font-semibold text-slate-600">Program {i + 1}</p>
+                              <label className="mb-1 block text-xs font-semibold text-slate-700">
+                                Kart başlığı
+                              </label>
+                              <input
+                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                value={card.title}
+                                onChange={(e) => {
+                                  const list = normalizeProgramCards(draft.programCards);
+                                  list[i] = { ...list[i], title: e.target.value };
+                                  onPatch({
+                                    programCards: list,
+                                    programs: programsArrayFromProgramCards(list),
+                                  });
+                                }}
+                              />
+                              <label className="mb-1 mt-2 block text-xs font-semibold text-slate-700">
+                                Modal metni
+                              </label>
+                              <textarea
+                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                rows={3}
+                                value={card.body}
+                                onChange={(e) => {
+                                  const list = normalizeProgramCards(draft.programCards);
+                                  list[i] = { ...list[i], body: e.target.value };
+                                  onPatch({
+                                    programCards: list,
+                                    programs: programsArrayFromProgramCards(list),
+                                  });
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
                         <label className="mb-1 mt-3 block text-xs font-semibold text-slate-700">
                           Görsel URL&apos;leri
                         </label>

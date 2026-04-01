@@ -17,6 +17,18 @@ export type InstitutionManagerPendingPayload = {
   tags: string[];
 };
 
+/** Kurum detayında «Kurum hakkında» alanı: sabit 8 kart (başlık + metin). */
+export interface InstitutionAboutCard {
+  title: string;
+  body: string;
+}
+
+/** Programlar: 8 kart; başlık listede, gövde modaldır. */
+export interface InstitutionProgramCard {
+  title: string;
+  body: string;
+}
+
 export interface Institution {
   id: string;
   name: string;
@@ -38,7 +50,12 @@ export interface Institution {
   /** WhatsApp için ülke kodlu rakam dizisi veya görüntülenebilir format */
   whatsapp: string;
   shortDescription: string;
+  /** Kart metinlerinden türetilir; arama ve `long_description` sütunu ile uyum için saklanır. */
   longDescription: string;
+  /** Detayda «Kurum hakkında» altında 8 kart; yönetici/admin panelinden düzenlenir. */
+  aboutCards: InstitutionAboutCard[];
+  /** Detayda «Programlar» altında 8 tıklanabilir kart (modal metni); panelden düzenlenir. */
+  programCards: InstitutionProgramCard[];
   /** Kullanılmıyor; kayıtta boş tutulur (gösterim min–max sayılardan). */
   price: string;
   /** Aralığın metin kopyası; sunucu/ kayıtta syncInstitutionPriceDisplayFields ile doldurulur. */
@@ -54,6 +71,7 @@ export interface Institution {
   teacherCount: number;
   /** Kadro açıklaması (detay sayfası; öğretmen adı listesi değil, özet metin) */
   teacherInfo: string;
+  /** Kart başlıklarından türetilir; arama / text[] sütunu uyumu. */
   programs: string[];
   tags: string[];
   /** [0] kapak görseli; galeri için ek URL'ler */

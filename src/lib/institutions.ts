@@ -19,8 +19,12 @@ export function filterInstitutions(
   filters: InstitutionFilters,
 ) {
   return institutions.filter((institution) => {
+    const aboutText = institution.aboutCards
+      .map((c) => `${c.title} ${c.body}`)
+      .join(" ");
+    const programText = institution.programCards.map((c) => `${c.title} ${c.body}`).join(" ");
     const text =
-      `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")} ${institution.minPrice} ${institution.maxPrice} ${institution.priceRange}`.toLowerCase();
+      `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.longDescription} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")} ${institution.minPrice} ${institution.maxPrice} ${institution.priceRange} ${aboutText} ${programText} ${institution.programs.join(" ")}`.toLowerCase();
     const queryMatch = filters.query ? text.includes(filters.query.toLowerCase()) : true;
     const cityMatch = filters.city ? institution.city === filters.city : true;
     const districtMatch = filters.district ? institution.district === filters.district : true;

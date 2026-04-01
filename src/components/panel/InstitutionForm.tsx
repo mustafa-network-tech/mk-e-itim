@@ -7,6 +7,16 @@ import {
   getDiscountedPriceFromMin,
   syncInstitutionPriceDisplayFields,
 } from "@/lib/discount";
+import {
+  createEmptyAboutCards,
+  longDescriptionFromAboutCards,
+  normalizeAboutCards,
+} from "@/lib/institutionAboutCards";
+import {
+  normalizeProgramCards,
+  programsArrayFromProgramCards,
+} from "@/lib/institutionProgramCards";
+import type { InstitutionAboutCard, InstitutionProgramCard } from "@/types";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
 import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
@@ -69,14 +79,16 @@ export function InstitutionForm({
   const [website, setWebsite] = useState(defaults.website);
   const [whatsapp, setWhatsapp] = useState("");
   const [shortDescription, setShortDescription] = useState("");
-  const [longDescription, setLongDescription] = useState("");
+  const [aboutCards, setAboutCards] = useState<InstitutionAboutCard[]>(() => createEmptyAboutCards());
   const [minPrice, setMinPrice] = useState(String(defaults.minPrice));
   const [maxPrice, setMaxPrice] = useState(String(defaults.maxPrice));
   const [rating, setRating] = useState(String(defaults.rating));
   const [reviewCount, setReviewCount] = useState(String(defaults.reviewCount));
   const [teacherCount, setTeacherCount] = useState(String(defaults.teacherCount));
   const [teacherInfo, setTeacherInfo] = useState(defaults.teacherInfo);
-  const [programsText, setProgramsText] = useState(defaults.programs.join("\n"));
+  const [programCards, setProgramCards] = useState<InstitutionProgramCard[]>(() =>
+    defaults.programCards.map((c) => ({ ...c })),
+  );
   const [imagesText, setImagesText] = useState(defaults.images.join("\n"));
   const [weeklyHours, setWeeklyHours] = useState(String(defaults.weeklyHours));
   const [totalHours, setTotalHours] = useState(String(defaults.totalHours));
@@ -120,14 +132,14 @@ export function InstitutionForm({
     setWebsite(defaults.website);
     setWhatsapp("");
     setShortDescription("");
-    setLongDescription("");
+    setAboutCards(createEmptyAboutCards());
     setMinPrice(String(defaults.minPrice));
     setMaxPrice(String(defaults.maxPrice));
     setRating(String(defaults.rating));
     setReviewCount(String(defaults.reviewCount));
     setTeacherCount(String(defaults.teacherCount));
     setTeacherInfo(defaults.teacherInfo);
-    setProgramsText(defaults.programs.join("\n"));
+    setProgramCards(defaults.programCards.map((c) => ({ ...c })));
     setImagesText(defaults.images.join("\n"));
     setWeeklyHours(String(defaults.weeklyHours));
     setTotalHours(String(defaults.totalHours));
@@ -191,10 +203,6 @@ export function InstitutionForm({
           return;
         }
 
-        const programs = programsText
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean);
         const images = imagesText
           .split("\n")
           .map((s) => s.trim())
@@ -207,6 +215,8 @@ export function InstitutionForm({
           numField(minPrice, defaults.minPrice),
           numField(maxPrice, defaults.maxPrice),
         );
+        const cardsNorm = normalizeAboutCards(aboutCards);
+        const progNorm = normalizeProgramCards(programCards);
 
         const created = await createInstitution({
           name: name.trim(),
@@ -223,9 +233,8 @@ export function InstitutionForm({
           whatsapp: whatsapp.trim(),
           shortDescription:
             shortDescription.trim() || "Kurum açıklaması kısa özet olarak güncellenebilir.",
-          longDescription:
-            longDescription.trim() ||
-            "Kurum hakkında detaylı açıklama admin panelinden düzenlenebilir.",
+          aboutCards: cardsNorm,
+          longDescription: longDescriptionFromAboutCards(cardsNorm),
           price: priceSync.price,
           priceRange: priceSync.priceRange,
           minPrice: priceSync.minPrice,
@@ -234,7 +243,8 @@ export function InstitutionForm({
           reviewCount: Math.max(0, Math.floor(numField(reviewCount, defaults.reviewCount))),
           teacherCount: Math.max(0, Math.floor(numField(teacherCount, defaults.teacherCount))),
           teacherInfo: teacherInfo.trim() || defaults.teacherInfo,
-          programs: programs.length > 0 ? programs : [...defaults.programs],
+          programCards: progNorm,
+          programs: programsArrayFromProgramCards(progNorm),
           tags: selectedTags,
           images: images.length > 0 ? images : [...defaults.images],
           weeklyHours: Math.max(0, numField(weeklyHours, defaults.weeklyHours)),
@@ -384,13 +394,38 @@ export function InstitutionForm({
           />
         </div>
         <div>
-          <label className={label}>Uzun açıklama (detay sayfası)</label>
-          <textarea
-            className={input}
-            rows={5}
-            value={longDescription}
-            onChange={(e) => setLongDescription(e.target.value)}
-          />
+          <p className={`${label} mb-2`}>Kurum hakkında — 8 bilgi kartı (detayda başlıksız grid)</p>
+          <p className="mb-3 text-xs text-slate-500">
+            Her kartta isteğe bağlı kısa başlık ve metin. Boş kartlar sitede yine görünür (içerik yoksa —).
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {aboutCards.map((card, i) => (
+              <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                <p className="mb-2 text-xs font-semibold text-slate-600">Kart {i + 1}</p>
+                <label className={label}>Başlık (isteğe bağlı)</label>
+                <input
+                  className={input}
+                  value={card.title}
+                  onChange={(e) => {
+                    const next = [...aboutCards];
+                    next[i] = { ...next[i], title: e.target.value };
+                    setAboutCards(next);
+                  }}
+                />
+                <label className={`${label} mt-2`}>Metin</label>
+                <textarea
+                  className={input}
+                  rows={3}
+                  value={card.body}
+                  onChange={(e) => {
+                    const next = [...aboutCards];
+                    next[i] = { ...next[i], body: e.target.value };
+                    setAboutCards(next);
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -437,15 +472,38 @@ export function InstitutionForm({
       </div>
 
       <div className="space-y-4">
-        <SectionTitle>Programlar</SectionTitle>
-        <p className="text-xs text-slate-500">Her satırda bir program adı.</p>
-        <textarea
-          className={input}
-          rows={4}
-          value={programsText}
-          onChange={(e) => setProgramsText(e.target.value)}
-          placeholder="TYT Matematik&#10;AYT Matematik"
-        />
+        <SectionTitle>Programlar (8 kart)</SectionTitle>
+        <p className="text-xs text-slate-500">
+          Kart başlığı listede görünür; tıklanınca açılan modaldaki metin «Modal metni» alanıdır.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {programCards.map((card, i) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+              <p className="mb-2 text-xs font-semibold text-slate-600">Program {i + 1}</p>
+              <label className={label}>Kart başlığı</label>
+              <input
+                className={input}
+                value={card.title}
+                onChange={(e) => {
+                  const next = [...programCards];
+                  next[i] = { ...next[i], title: e.target.value };
+                  setProgramCards(next);
+                }}
+              />
+              <label className={`${label} mt-2`}>Modal metni</label>
+              <textarea
+                className={input}
+                rows={3}
+                value={card.body}
+                onChange={(e) => {
+                  const next = [...programCards];
+                  next[i] = { ...next[i], body: e.target.value };
+                  setProgramCards(next);
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-4">

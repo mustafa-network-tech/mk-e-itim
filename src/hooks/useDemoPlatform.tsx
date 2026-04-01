@@ -27,6 +27,8 @@ import { instructors as seedInstructors } from "@/data/instructors";
 import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
 import type { SupabasePublicConfig } from "@/lib/supabase/runtimePublic";
 import { syncInstitutionPriceDisplayFields } from "@/lib/discount";
+import { longDescriptionFromAboutCards, normalizeAboutCards } from "@/lib/institutionAboutCards";
+import { normalizeProgramCards, programsArrayFromProgramCards } from "@/lib/institutionProgramCards";
 import {
   INSTITUTION_SELECT_WITH_RELS,
   institutionPartialToRow,
@@ -318,6 +320,22 @@ export function DemoPlatformProvider({
         const nx = payload.maxPrice ?? current.maxPrice;
         mergedPayload = { ...mergedPayload, ...syncInstitutionPriceDisplayFields(nm, nx) };
       }
+    }
+    if (payload.aboutCards !== undefined) {
+      const cards = normalizeAboutCards(payload.aboutCards);
+      mergedPayload = {
+        ...mergedPayload,
+        aboutCards: cards,
+        longDescription: longDescriptionFromAboutCards(cards),
+      };
+    }
+    if (payload.programCards !== undefined) {
+      const pc = normalizeProgramCards(payload.programCards);
+      mergedPayload = {
+        ...mergedPayload,
+        programCards: pc,
+        programs: programsArrayFromProgramCards(pc),
+      };
     }
     if (!useRemote) {
       setInstitutionList((prev) =>

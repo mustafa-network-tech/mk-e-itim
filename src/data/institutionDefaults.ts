@@ -1,3 +1,5 @@
+import { createEmptyAboutCards } from "@/lib/institutionAboutCards";
+import { createEmptyProgramCards, programsArrayFromProgramCards } from "@/lib/institutionProgramCards";
 import type { Institution } from "@/types";
 import { categoryDisplayFromExamNavIds } from "@/lib/examMenuNav";
 import {
@@ -6,6 +8,13 @@ import {
 } from "@/data/institutionTypesSeed";
 
 const DEFAULT_EXAM_NAV = ["LGS"] as const;
+
+const DEFAULT_PROGRAM_CARDS = (() => {
+  const c = createEmptyProgramCards();
+  c[0] = { title: "TYT", body: "" };
+  c[1] = { title: "AYT", body: "" };
+  return c;
+})();
 const DEFAULT_TYPE_LABELS = labelMapFromInstitutionTypes(INSTITUTION_TYPES_SEED);
 
 /** Yeni kurum oluştururken `name` ve `ownerUserId` dışındaki alanlar için başlangıç değerleri */
@@ -21,7 +30,9 @@ export const INSTITUTION_DEFAULTS: Omit<Institution, "id" | "createdAt" | "name"
   website: "https://www.example.com",
   whatsapp: "",
   shortDescription: "Kurum açıklaması kısa özet.",
-  longDescription: "Kurum hakkında detaylı açıklama metni burada yer alır.",
+  longDescription: "",
+  aboutCards: createEmptyAboutCards(),
+  programCards: DEFAULT_PROGRAM_CARDS,
   price: "",
   priceRange: "",
   minPrice: 100_000,
@@ -31,7 +42,7 @@ export const INSTITUTION_DEFAULTS: Omit<Institution, "id" | "createdAt" | "name"
   teacherCount: 8,
   teacherInfo:
     "Alanında deneyimli öğretmen kadrosu ile eğitim verilmektedir. Branş dağılımı ve deneyim için kurum ile iletişime geçebilirsiniz.",
-  programs: ["TYT", "AYT"],
+  programs: programsArrayFromProgramCards(DEFAULT_PROGRAM_CARDS),
   tags: [],
   images: [
     "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80",

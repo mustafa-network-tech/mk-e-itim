@@ -1,5 +1,7 @@
-import type { Institution, InstitutionManagerPendingPayload } from "@/types";
+import type { Institution, InstitutionAboutCard, InstitutionManagerPendingPayload } from "@/types";
 import { syncInstitutionPriceDisplayFields } from "@/lib/discount";
+import { longDescriptionFromAboutCards, normalizeAboutCards } from "@/lib/institutionAboutCards";
+import { normalizeProgramCards, programsArrayFromProgramCards } from "@/lib/institutionProgramCards";
 
 /** Supabase/PostgREST hata metnini kullanıcıya daha anlaşılır Türkçe ile zenginleştirir. */
 export function formatInstitutionSaveError(message: string): string {
@@ -24,6 +26,8 @@ export function formatInstitutionSaveError(message: string): string {
 /** Admin / onay akışında kurum satırına yazılacak alanlar (etiketler ayrı). */
 export function buildInstitutionPersistencePayload(d: Institution): Partial<Institution> {
   const priceFields = syncInstitutionPriceDisplayFields(d.minPrice, d.maxPrice);
+  const aboutCards = normalizeAboutCards(d.aboutCards);
+  const programCards = normalizeProgramCards(d.programCards);
   return {
     name: d.name,
     officialStatus: d.officialStatus,
@@ -35,14 +39,16 @@ export function buildInstitutionPersistencePayload(d: Institution): Partial<Inst
     website: d.website,
     whatsapp: d.whatsapp,
     shortDescription: d.shortDescription,
-    longDescription: d.longDescription,
+    aboutCards,
+    longDescription: longDescriptionFromAboutCards(aboutCards),
+    programCards,
+    programs: programsArrayFromProgramCards(programCards),
     examNavIds: d.examNavIds,
     ...priceFields,
     rating: d.rating,
     reviewCount: d.reviewCount,
     teacherCount: d.teacherCount,
     teacherInfo: d.teacherInfo,
-    programs: d.programs,
     images: d.images,
     weeklyHours: d.weeklyHours,
     totalHours: d.totalHours,
@@ -77,11 +83,26 @@ export function buildPendingPayloadFromDraft(d: Institution): InstitutionManager
 export function mergeInstitutionWithPending(inst: Institution): Institution {
   const p = inst.pendingManagerPayload;
   if (!p?.body) return inst;
+  const body = p.body;
+  const aboutCards =
+    body.aboutCards !== undefined ? normalizeAboutCards(body.aboutCards) : inst.aboutCards;
+  const programCards =
+    body.programCards !== undefined ? normalizeProgramCards(body.programCards) : inst.programCards;
   return {
     ...inst,
-    ...p.body,
+    ...body,
+    aboutCards,
+    longDescription:
+      body.aboutCards !== undefined
+        ? longDescriptionFromAboutCards(aboutCards)
+        : (body.longDescription ?? inst.longDescription),
+    programCards,
+    programs:
+      body.programCards !== undefined
+        ? programsArrayFromProgramCards(programCards)
+        : (body.programs ?? inst.programs),
     tags: p.tags ?? inst.tags,
-    gradeLevelIds: p.body.gradeLevelIds ?? inst.gradeLevelIds,
+    gradeLevelIds: body.gradeLevelIds ?? inst.gradeLevelIds,
   };
 }
 
@@ -98,6 +119,8 @@ const PERSISTENCE_BODY_KEYS: (keyof Institution)[] = [
   "whatsapp",
   "shortDescription",
   "longDescription",
+  "aboutCards",
+  "programCards",
   "examNavIds",
   "price",
   "priceRange",
@@ -142,7 +165,9 @@ const PENDING_FIELD_LABELS: Partial<Record<keyof Institution, string>> = {
   website: "Web sitesi",
   whatsapp: "WhatsApp",
   shortDescription: "Kısa açıklama",
-  longDescription: "Uzun açıklama",
+  longDescription: "Uzun açıklama (otomatik)",
+  aboutCards: "Kurum hakkında (8 kart)",
+  programCards: "Programlar (8 kart)",
   examNavIds: "Kurum türleri (menü)",
   price: "Fiyat metni (kullanılmıyor)",
   priceRange: "Fiyat aralığı (otomatik)",
@@ -180,6 +205,10 @@ function previewFieldValue(key: keyof Institution, v: unknown): string {
   if (v === null || v === undefined) return "—";
   if (Array.isArray(v)) {
     if (v.length === 0) return "—";
+    if (key === "aboutCards" || key === "programCards") {
+      const n = (v as InstitutionAboutCard[]).filter((c) => c.title.trim() || c.body.trim()).length;
+      return `${n}/8 kart`;
+    }
     if (key === "images" || key === "programs") return `${v.length} satır`;
     return v.map((x) => String(x)).join(", ");
   }

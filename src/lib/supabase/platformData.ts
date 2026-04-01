@@ -17,6 +17,8 @@ import {
   labelMapFromInstitutionTypes,
   sortInstitutionTypes,
 } from "@/data/institutionTypesSeed";
+import { aboutCardsFromDbRow } from "@/lib/institutionAboutCards";
+import { programCardsFromDbRow, programsArrayFromProgramCards } from "@/lib/institutionProgramCards";
 import { parsePendingPayloadFromDb } from "@/lib/institutionSavePayload";
 import type {
   GradeLevel,
@@ -80,6 +82,8 @@ export type InstitutionDbRow = {
   discount_end_date: string | null;
   pending_manager_payload?: unknown | null;
   pending_submitted_at?: string | null;
+  about_cards?: unknown;
+  program_cards?: unknown;
   institution_tags?: { tag_id: string }[] | null;
   institution_grade_levels?: { grade_level_id: string }[] | null;
 };
@@ -96,6 +100,9 @@ export function mapInstitutionRow(
       ? normalizeExamNavIds(fromDb)
       : legacyCategoryToExamNavIds(row.category ?? "");
   const category = categoryDisplayFromExamNavIds(examNavIds, typeLabelMap);
+  const aboutCards = aboutCardsFromDbRow(row.about_cards, row.long_description ?? "");
+  const programCards = programCardsFromDbRow(row.program_cards, row.programs ?? []);
+  const programs = programsArrayFromProgramCards(programCards);
   return {
     id: row.id,
     name: row.name,
@@ -110,7 +117,10 @@ export function mapInstitutionRow(
     website: row.website,
     whatsapp: row.whatsapp,
     shortDescription: row.short_description,
-    longDescription: row.long_description,
+    longDescription: row.long_description ?? "",
+    aboutCards,
+    programCards,
+    programs,
     price: row.price,
     priceRange: row.price_range,
     minPrice: row.min_price,
@@ -119,7 +129,6 @@ export function mapInstitutionRow(
     reviewCount: row.review_count,
     teacherCount: row.teacher_count,
     teacherInfo: row.teacher_info,
-    programs: row.programs ?? [],
     tags,
     images: row.images ?? [],
     weeklyHours: row.weekly_hours,
@@ -167,6 +176,8 @@ export function institutionToInsertRow(
     whatsapp: i.whatsapp,
     short_description: i.shortDescription,
     long_description: i.longDescription,
+    about_cards: i.aboutCards,
+    program_cards: i.programCards,
     price: i.price,
     price_range: i.priceRange,
     min_price: i.minPrice,
@@ -217,6 +228,8 @@ export function institutionPartialToRow(patch: Partial<Institution>): Record<str
     ["whatsapp", "whatsapp"],
     ["shortDescription", "short_description"],
     ["longDescription", "long_description"],
+    ["aboutCards", "about_cards"],
+    ["programCards", "program_cards"],
     ["price", "price"],
     ["priceRange", "price_range"],
     ["minPrice", "min_price"],

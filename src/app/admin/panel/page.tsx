@@ -222,14 +222,15 @@ export default function AdminPanelPage() {
                     kısa özet).
                   </li>
                   <li>
-                    <strong>Kurum kartını düzenle</strong> → Uzun metin, eğitim yapısı, fiziksel imkanlar,
-                    destekler, kadro, programlar, görseller, indirim, etiketler, sınıflar ve eğitmenler.
+                    <strong>Kurum kartını düzenle</strong> → 8 bilgi kartı, eğitim yapısı / fiziksel alanlar
+                    (detayda ayrı blok olarak gösterilmez), destekler, kadro, programlar, görseller, indirim,
+                    etiketler, sınıflar ve eğitmenler.
                   </li>
                 </ul>
                 <p className="mt-2 border-t border-sky-100/80 pt-2 text-slate-600">
                   Sayfa açıldığında yalnızca <strong>kurum listesi</strong> görünür. Yeni kayıt formu
                   kapalıdır; <strong>Yeni kurum formunu aç</strong> ile açılır. Mevcut kurumda tüm detay
-                  alanları (fiziksel imkanlar, programlar, konum vb.) seçip düzenledikten sonra{" "}
+                  alanları (programlar, konum vb.) seçip düzenledikten sonra{" "}
                   <strong>Kaydet</strong> kullanın — sizin için bu işlem <strong>anında geçerlidir</strong>{" "}
                   (kurum yöneticisindeki «onaya gönder» gibi ara adım yoktur).
                 </p>

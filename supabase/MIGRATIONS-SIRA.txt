@@ -24,6 +24,8 @@ Sıra | Dosya                                      | Kısa açıklama
  10  | 20260330120000_institution_types.sql       | institution_types tablosu (admin düzenlenebilir etiket/sıra), RLS, tohum veri
  11  | 20260330140000_institution_manager_pending_review.sql | Yönetici onay kuyruğu (pending payload), RLS (yayında doğrudan güncelleme kısıtı), taslak INSERT
  12  | 20260330150000_ensure_institutions_update_admin.sql | Admin UPDATE politikası (29120000 atlandıysa 0 satır hatasını giderir)
+ 13  | 20260330183000_institutions_about_cards.sql | institutions.about_cards jsonb (detayda 8 bilgi kartı)
+ 14  | 20260330190000_institutions_program_cards.sql | institutions.program_cards jsonb (Programlar 8 kart + modal metni)
 
 
 Notlar

@@ -10,8 +10,9 @@ export function InstitutionEditHint({ variant }: { variant: "admin" | "corporate
           görünür.
         </li>
         <li>
-          <strong className="text-slate-800">Kurum sayfası:</strong> aynı kaydın uzun açıklaması, tüm galeri
-          görselleri, adres ve harita, programlar, derslik/istatistik blokları, kadro metni, yorumlar bölümü.
+          <strong className="text-slate-800">Kurum sayfası:</strong> genel bilgiler, «Kurum hakkında» (8 kart),
+          «Programlar» (8 tıklanabilir kart, modal metni panelden), tüm galeri görselleri, adres ve harita,
+          eğitim destekleri, kadro ve rehberlik, yorumlar bölümü.
         </li>
       </ul>
       {variant === "corporate" ? (

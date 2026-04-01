@@ -80,6 +80,7 @@ export function InstitutionForm({
   const [whatsapp, setWhatsapp] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [aboutCards, setAboutCards] = useState<InstitutionAboutCard[]>(() => createEmptyAboutCards());
+  const [aboutInstitution, setAboutInstitution] = useState("");
   const [minPrice, setMinPrice] = useState(String(defaults.minPrice));
   const [maxPrice, setMaxPrice] = useState(String(defaults.maxPrice));
   const [rating, setRating] = useState(String(defaults.rating));
@@ -133,6 +134,7 @@ export function InstitutionForm({
     setWhatsapp("");
     setShortDescription("");
     setAboutCards(createEmptyAboutCards());
+    setAboutInstitution("");
     setMinPrice(String(defaults.minPrice));
     setMaxPrice(String(defaults.maxPrice));
     setRating(String(defaults.rating));
@@ -234,6 +236,7 @@ export function InstitutionForm({
           shortDescription:
             shortDescription.trim() || "Kurum açıklaması kısa özet olarak güncellenebilir.",
           aboutCards: cardsNorm,
+          aboutInstitution: aboutInstitution.trim(),
           longDescription: longDescriptionFromAboutCards(cardsNorm),
           price: priceSync.price,
           priceRange: priceSync.priceRange,
@@ -394,7 +397,7 @@ export function InstitutionForm({
           />
         </div>
         <div>
-          <p className={`${label} mb-2`}>Kurum hakkında — 8 bilgi kartı (detayda başlıksız grid)</p>
+          <p className={`${label} mb-2`}>Kurum genel bilgileri — 8 bilgi kartı (detayda bu başlık altında)</p>
           <p className="mb-3 text-xs text-slate-500">
             Her kartta isteğe bağlı kısa başlık ve metin. Boş kartlar sitede yine görünür (içerik yoksa —).
           </p>
@@ -426,6 +429,19 @@ export function InstitutionForm({
               </div>
             ))}
           </div>
+        </div>
+        <div>
+          <label className={label}>Kurum hakkında (detay sayfası)</label>
+          <p className="mb-2 text-xs text-slate-500">
+            «Kurum genel bilgileri» kartlarından sonra, serbest metin alanı. Boş bırakılabilir.
+          </p>
+          <textarea
+            className={input}
+            rows={5}
+            value={aboutInstitution}
+            onChange={(e) => setAboutInstitution(e.target.value)}
+            placeholder="Kurumunuzu anlatan metin…"
+          />
         </div>
       </div>
 

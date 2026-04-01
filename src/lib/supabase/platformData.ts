@@ -83,6 +83,7 @@ export type InstitutionDbRow = {
   pending_manager_payload?: unknown | null;
   pending_submitted_at?: string | null;
   about_cards?: unknown;
+  about_institution?: string | null;
   program_cards?: unknown;
   institution_tags?: { tag_id: string }[] | null;
   institution_grade_levels?: { grade_level_id: string }[] | null;
@@ -119,6 +120,7 @@ export function mapInstitutionRow(
     shortDescription: row.short_description,
     longDescription: row.long_description ?? "",
     aboutCards,
+    aboutInstitution: row.about_institution ?? "",
     programCards,
     programs,
     price: row.price,
@@ -177,6 +179,7 @@ export function institutionToInsertRow(
     short_description: i.shortDescription,
     long_description: i.longDescription,
     about_cards: i.aboutCards,
+    about_institution: i.aboutInstitution,
     program_cards: i.programCards,
     price: i.price,
     price_range: i.priceRange,
@@ -229,6 +232,7 @@ export function institutionPartialToRow(patch: Partial<Institution>): Record<str
     ["shortDescription", "short_description"],
     ["longDescription", "long_description"],
     ["aboutCards", "about_cards"],
+    ["aboutInstitution", "about_institution"],
     ["programCards", "program_cards"],
     ["price", "price"],
     ["priceRange", "price_range"],

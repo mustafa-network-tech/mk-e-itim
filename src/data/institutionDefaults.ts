@@ -32,6 +32,7 @@ export const INSTITUTION_DEFAULTS: Omit<Institution, "id" | "createdAt" | "name"
   shortDescription: "Kurum açıklaması kısa özet.",
   longDescription: "",
   aboutCards: createEmptyAboutCards(),
+  aboutInstitution: "",
   programCards: DEFAULT_PROGRAM_CARDS,
   price: "",
   priceRange: "",

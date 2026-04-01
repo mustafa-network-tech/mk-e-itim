@@ -17,7 +17,7 @@ export type InstitutionManagerPendingPayload = {
   tags: string[];
 };
 
-/** Kurum detayında «Kurum hakkında» alanı: sabit 8 kart (başlık + metin). */
+/** Kurum detayında «Kurum genel bilgileri» bölümü: sabit 8 kart (başlık + metin). */
 export interface InstitutionAboutCard {
   title: string;
   body: string;
@@ -52,8 +52,10 @@ export interface Institution {
   shortDescription: string;
   /** Kart metinlerinden türetilir; arama ve `long_description` sütunu ile uyum için saklanır. */
   longDescription: string;
-  /** Detayda «Kurum hakkında» altında 8 kart; yönetici/admin panelinden düzenlenir. */
+  /** Detayda «Kurum genel bilgileri» altında 8 kart; yönetici/admin panelinden düzenlenir. */
   aboutCards: InstitutionAboutCard[];
+  /** Detayda «Kurum hakkında» başlığı altında serbest metin; kurum panelinden doldurulur. */
+  aboutInstitution: string;
   /** Detayda «Programlar» altında 8 tıklanabilir kart (modal metni); panelden düzenlenir. */
   programCards: InstitutionProgramCard[];
   /** Kullanılmıyor; kayıtta boş tutulur (gösterim min–max sayılardan). */

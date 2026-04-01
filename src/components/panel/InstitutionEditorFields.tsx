@@ -305,11 +305,11 @@ export function InstitutionEditorFields({
                         className="scroll-mt-28 rounded-xl border border-slate-100 bg-white p-4"
                       >
                         <h4 className="text-sm font-bold text-slate-900">
-                          Kurum sayfası (detay) — 8 bilgi kartı
+                          Kurum genel bilgileri — 8 kart
                         </h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Detayda bölüm başlığı yok; kartlar 2 sütunlu grid olarak listelenir. Boş kartlar yer
-                          tutar.
+                          Detayda «Kurum genel bilgileri» başlığı altında 2 sütunlu grid olarak listelenir. Boş
+                          kartlar yer tutar.
                         </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           {normalizeAboutCards(draft.aboutCards).map((card, i) => (
@@ -352,6 +352,19 @@ export function InstitutionEditorFields({
                             </div>
                           ))}
                         </div>
+                        <label className="mb-1 mt-4 block text-xs font-semibold text-slate-700">
+                          Kurum hakkında (serbest metin)
+                        </label>
+                        <p className="mb-2 text-xs text-slate-500">
+                          Detayda «Kurum genel bilgileri» ile «Programlar» arasında gösterilir; boş bırakılabilir.
+                        </p>
+                        <textarea
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                          rows={5}
+                          value={draft.aboutInstitution ?? ""}
+                          onChange={(e) => onPatch({ aboutInstitution: e.target.value })}
+                          placeholder="Kurumunuzu anlatan metin…"
+                        />
                       </div>
 
                       <div

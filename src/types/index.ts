@@ -39,11 +39,13 @@ export interface Institution {
   whatsapp: string;
   shortDescription: string;
   longDescription: string;
-  /** Tek satırlık fiyat özeti (örn. aylık paket) */
+  /** Kullanılmıyor; kayıtta boş tutulur (gösterim min–max sayılardan). */
   price: string;
-  /** Aralık veya aralık metni */
+  /** Aralığın metin kopyası; sunucu/ kayıtta syncInstitutionPriceDisplayFields ile doldurulur. */
   priceRange: string;
+  /** Aralığın alt sınırı (₺, filtre + gösterim). */
   minPrice: number;
+  /** Aralığın üst sınırı (₺, filtre + gösterim). */
   maxPrice: number;
   /** Onaylı yorum yoksa kart/hero için gösterim */
   rating: number;
@@ -74,7 +76,7 @@ export interface Institution {
   ownerUserId: string;
   /** Hero / listelemede sınıf filtresi; boşsa kurum okul kademesi hedeflemiyor demektir (ör. yalnızca mezun programı). */
   gradeLevelIds: string[];
-  /** Kursiyera’ya özel kampanya — minPrice üzerinden otomatik hesap */
+  /** Kursiyera’ya özel kampanya — aralığın her iki ucuna aynı % uygulanır */
   discountActive: boolean;
   discountPercent: number;
   /** Boşsa sistem metni üretir */

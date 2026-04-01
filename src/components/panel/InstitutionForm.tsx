@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { INSTITUTION_DEFAULTS } from "@/data/institutionDefaults";
-import { formatTryAmount, getDiscountedPriceFromMin } from "@/lib/discount";
+import {
+  formatTryPriceRange,
+  getDiscountedPriceFromMin,
+  syncInstitutionPriceDisplayFields,
+} from "@/lib/discount";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
 import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
@@ -66,8 +70,6 @@ export function InstitutionForm({
   const [whatsapp, setWhatsapp] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [priceRange, setPriceRange] = useState(defaults.priceRange);
   const [minPrice, setMinPrice] = useState(String(defaults.minPrice));
   const [maxPrice, setMaxPrice] = useState(String(defaults.maxPrice));
   const [rating, setRating] = useState(String(defaults.rating));
@@ -119,8 +121,6 @@ export function InstitutionForm({
     setWhatsapp("");
     setShortDescription("");
     setLongDescription("");
-    setPrice("");
-    setPriceRange(defaults.priceRange);
     setMinPrice(String(defaults.minPrice));
     setMaxPrice(String(defaults.maxPrice));
     setRating(String(defaults.rating));
@@ -203,6 +203,11 @@ export function InstitutionForm({
         const resolvedAddress =
           address.trim() || `${neighborhood ? `${neighborhood}, ` : ""}${district} / ${city}`.trim();
 
+        const priceSync = syncInstitutionPriceDisplayFields(
+          numField(minPrice, defaults.minPrice),
+          numField(maxPrice, defaults.maxPrice),
+        );
+
         const created = await createInstitution({
           name: name.trim(),
           officialStatus: officialStatus.trim(),
@@ -221,10 +226,10 @@ export function InstitutionForm({
           longDescription:
             longDescription.trim() ||
             "Kurum hakkında detaylı açıklama admin panelinden düzenlenebilir.",
-          price: price.trim(),
-          priceRange: priceRange.trim() || defaults.priceRange,
-          minPrice: numField(minPrice, defaults.minPrice),
-          maxPrice: numField(maxPrice, defaults.maxPrice),
+          price: priceSync.price,
+          priceRange: priceSync.priceRange,
+          minPrice: priceSync.minPrice,
+          maxPrice: priceSync.maxPrice,
           rating: Math.min(5, Math.max(0, numField(rating, defaults.rating))),
           reviewCount: Math.max(0, Math.floor(numField(reviewCount, defaults.reviewCount))),
           teacherCount: Math.max(0, Math.floor(numField(teacherCount, defaults.teacherCount))),
@@ -390,40 +395,26 @@ export function InstitutionForm({
       </div>
 
       <div className="space-y-4">
-        <SectionTitle>Fiyat</SectionTitle>
+        <SectionTitle>Fiyat aralığı (₺)</SectionTitle>
+        <p className="text-xs text-slate-500">
+          Kart ve detay sayfasında yalnızca bu iki tutar aralığı gösterilir (örn. 100.000 ₺ – 120.000 ₺). Liste
+          filtreleri de bu değerlere göre çalışır.
+        </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className={label}>Fiyat özeti (tek satır)</label>
-            <input
-              className={input}
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Örn. Aylık paketler 4.200 TL'den başlar"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={label}>Fiyat aralığı metni</label>
-            <input
-              className={input}
-              value={priceRange}
-              onChange={(e) => setPriceRange(e.target.value)}
-              placeholder="Örn. ₺3.500 – ₺8.500 / ay"
-            />
-          </div>
           <div>
-            <label className={label}>Min. fiyat (sayı, filtre için)</label>
+            <label className={label}>En düşük (₺)</label>
             <input
               className={input}
-              inputMode="decimal"
+              inputMode="numeric"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
             />
           </div>
           <div>
-            <label className={label}>Maks. fiyat (sayı, filtre için)</label>
+            <label className={label}>En yüksek (₺)</label>
             <input
               className={input}
-              inputMode="decimal"
+              inputMode="numeric"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
             />
@@ -598,8 +589,8 @@ export function InstitutionForm({
       <div className="space-y-4">
         <SectionTitle>Kursiyera kampanyası (indirim)</SectionTitle>
         <p className="text-xs text-slate-500">
-          İndirim, <strong>min. fiyat</strong> (sayısal) üzerinden otomatik hesaplanır; ayrıca indirimli tutar
-          elle girilmez. Şerit metni boşsa sistem üretir.
+          İndirim, fiyat aralığının <strong>her iki ucuna</strong> aynı yüzde uygulanır; indirimli aralık otomatik
+          gösterilir. Şerit metni boşsa sistem üretir.
         </p>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
           <input
@@ -652,31 +643,38 @@ export function InstitutionForm({
             />
           </div>
         </div>
-        {discountActive && numField(discountPercent, 0) > 0 ? (
-          <div className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
-            <p className="font-semibold">Önizleme</p>
-            <p className="mt-1">
-              Şerit:{" "}
-              {discountText.trim() ||
-                `Kursiyera'ya özel %${Math.round(numField(discountPercent, 0))} indirim`}
-            </p>
-            <p>
-              Min. tutar:{" "}
-              <span className="line-through opacity-70">
-                {formatTryAmount(numField(minPrice, defaults.minPrice))}
-              </span>{" "}
-              →{" "}
-              <strong>
-                {formatTryAmount(
-                  getDiscountedPriceFromMin(
-                    numField(minPrice, defaults.minPrice),
-                    numField(discountPercent, 0),
-                  ),
-                )}
-              </strong>
-            </p>
-          </div>
-        ) : null}
+        {discountActive && numField(discountPercent, 0) > 0
+          ? (() => {
+              const s = syncInstitutionPriceDisplayFields(
+                numField(minPrice, defaults.minPrice),
+                numField(maxPrice, defaults.maxPrice),
+              );
+              const pct = numField(discountPercent, 0);
+              return (
+                <div className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
+                  <p className="font-semibold">Önizleme</p>
+                  <p className="mt-1">
+                    Şerit:{" "}
+                    {discountText.trim() ||
+                      `Kursiyera'ya özel %${Math.round(pct)} indirim`}
+                  </p>
+                  <p>
+                    Aralık:{" "}
+                    <span className="line-through opacity-70">
+                      {formatTryPriceRange(s.minPrice, s.maxPrice)}
+                    </span>{" "}
+                    →{" "}
+                    <strong>
+                      {formatTryPriceRange(
+                        getDiscountedPriceFromMin(s.minPrice, pct),
+                        getDiscountedPriceFromMin(s.maxPrice, pct),
+                      )}
+                    </strong>
+                  </p>
+                </div>
+              );
+            })()
+          : null}
       </div>
 
       <div className="space-y-4">

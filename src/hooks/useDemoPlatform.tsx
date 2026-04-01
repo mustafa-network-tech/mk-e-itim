@@ -26,6 +26,7 @@ import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMe
 import { instructors as seedInstructors } from "@/data/instructors";
 import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
 import type { SupabasePublicConfig } from "@/lib/supabase/runtimePublic";
+import { syncInstitutionPriceDisplayFields } from "@/lib/discount";
 import {
   INSTITUTION_SELECT_WITH_RELS,
   institutionPartialToRow,
@@ -310,6 +311,14 @@ export function DemoPlatformProvider({
         category: categoryDisplayFromExamNavIds(n, lm),
       };
     }
+    if (payload.minPrice !== undefined || payload.maxPrice !== undefined) {
+      const current = institutionList.find((i) => i.id === institutionId);
+      if (current) {
+        const nm = payload.minPrice ?? current.minPrice;
+        const nx = payload.maxPrice ?? current.maxPrice;
+        mergedPayload = { ...mergedPayload, ...syncInstitutionPriceDisplayFields(nm, nx) };
+      }
+    }
     if (!useRemote) {
       setInstitutionList((prev) =>
         prev.map((item) => (item.id === institutionId ? { ...item, ...mergedPayload } : item)),
@@ -410,13 +419,17 @@ export function DemoPlatformProvider({
         pendingSubmittedAt: null,
         pendingManagerPayload: null,
       };
-      setInstitutionList((prev) => [institution, ...prev]);
+      const institutionFinal: Institution = {
+        ...institution,
+        ...syncInstitutionPriceDisplayFields(institution.minPrice, institution.maxPrice),
+      };
+      setInstitutionList((prev) => [institutionFinal, ...prev]);
       setUserList((prev) =>
         prev.map((u) =>
-          u.id === institution.ownerUserId ? { ...u, institutionId: institution.id } : u,
+          u.id === institutionFinal.ownerUserId ? { ...u, institutionId: institutionFinal.id } : u,
         ),
       );
-      return { ok: true, institution };
+      return { ok: true, institution: institutionFinal };
     }
     const supabase = createBrowserSupabaseClientOrNull();
     if (!supabase) {
@@ -433,7 +446,11 @@ export function DemoPlatformProvider({
       pendingSubmittedAt: null,
       pendingManagerPayload: null,
     };
-    const insertPayload = institutionToInsertRow(merged);
+    const mergedFinal: Institution = {
+      ...merged,
+      ...syncInstitutionPriceDisplayFields(merged.minPrice, merged.maxPrice),
+    };
+    const insertPayload = institutionToInsertRow(mergedFinal);
     delete (insertPayload as { id?: string }).id;
     const { data, error } = await supabase
       .from("institutions")
@@ -446,8 +463,8 @@ export function DemoPlatformProvider({
     }
     const row = data as InstitutionDbRow;
     const institutionId = row.id;
-    const tagErr = await replaceInstitutionTags(supabase, institutionId, merged.tags);
-    const gErr = await replaceInstitutionGradeLevels(supabase, institutionId, merged.gradeLevelIds);
+    const tagErr = await replaceInstitutionTags(supabase, institutionId, mergedFinal.tags);
+    const gErr = await replaceInstitutionGradeLevels(supabase, institutionId, mergedFinal.gradeLevelIds);
     if (tagErr || gErr) {
       await refreshPlatform();
       return {

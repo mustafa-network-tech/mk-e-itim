@@ -6,7 +6,7 @@ export function InstitutionEditHint({ variant }: { variant: "admin" | "corporate
       <ul className="mt-2 list-inside list-disc space-y-1.5">
         <li>
           <strong className="text-slate-800">Liste / kart:</strong> kapak görseli (görsellerin ilki), kategori,
-          kurum adı, şehir/ilçe, kısa özet, puan, fiyat ve indirim şeridi, WhatsApp; etiketler kartta da kısa
+          kurum adı, şehir/ilçe, kısa özet, puan, fiyat aralığı (₺) ve indirim şeridi, WhatsApp; etiketler kartta da kısa
           görünür.
         </li>
         <li>

@@ -2,10 +2,11 @@
 
 import type { Institution } from "@/types";
 import {
-  formatTryAmount,
+  formatTryPriceRange,
   getDiscountRibbonText,
   getDiscountedPriceFromMin,
   isDiscountCurrentlyActive,
+  normalizeInstitutionPrices,
 } from "@/lib/discount";
 
 type Variant = "cardDark" | "detailLight";
@@ -37,34 +38,33 @@ export function InstitutionDiscountBadge({ institution }: { institution: Institu
 }
 
 export function InstitutionPriceBlock({ institution, variant }: { institution: Institution; variant: Variant }) {
-  const priceLine = institution.price.trim() ? institution.price : institution.priceRange;
   const active = isDiscountCurrentlyActive(institution);
-  const discounted = getDiscountedPriceFromMin(institution.minPrice, institution.discountPercent);
+  const { minPrice: lo, maxPrice: hi } = normalizeInstitutionPrices(institution.minPrice, institution.maxPrice);
+  const rangeLabel = formatTryPriceRange(lo, hi);
+  const p = institution.discountPercent;
+  const discLo = getDiscountedPriceFromMin(lo, p);
+  const discHi = getDiscountedPriceFromMin(hi, p);
+  const discountedRangeLabel = formatTryPriceRange(discLo, discHi);
 
   if (variant === "cardDark") {
     if (!active) {
       return (
         <p className="text-[0.9375rem] font-semibold leading-snug tracking-[-0.01em] text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.65)]">
-          {priceLine}
+          {rangeLabel}
         </p>
       );
     }
     return (
       <div className="space-y-1.5">
         <p className="text-[0.8125rem] font-medium text-white/75 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
-          Başlangıç tutarı (min.)
+          Fiyat aralığı
         </p>
         <p className="text-[0.9375rem] font-medium text-white/50 line-through decoration-white/40 [text-shadow:0_1px_6px_rgba(0,0,0,0.45)]">
-          {formatTryAmount(institution.minPrice)}
+          {rangeLabel}
         </p>
         <p className="text-[1.2rem] font-bold tracking-tight text-white [text-shadow:0_2px_14px_rgba(0,0,0,0.55)]">
-          {formatTryAmount(discounted)}
+          {discountedRangeLabel}
         </p>
-        {priceLine ? (
-          <p className="pt-0.5 text-[0.75rem] leading-snug text-white/70 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
-            {priceLine}
-          </p>
-        ) : null}
       </div>
     );
   }
@@ -73,17 +73,16 @@ export function InstitutionPriceBlock({ institution, variant }: { institution: I
   if (!active) {
     return (
       <div className="space-y-1">
-        <p className="text-lg font-semibold text-slate-900">{priceLine || institution.priceRange}</p>
-        <p className="text-sm text-slate-600">{institution.priceRange}</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Fiyat aralığı</p>
+        <p className="text-lg font-semibold text-slate-900">{rangeLabel}</p>
       </div>
     );
   }
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Başlangıç tutarı (min.)</p>
-      <p className="text-base text-slate-400 line-through">{formatTryAmount(institution.minPrice)}</p>
-      <p className="text-2xl font-bold tracking-tight text-slate-900">{formatTryAmount(discounted)}</p>
-      {priceLine ? <p className="text-sm text-slate-600">{priceLine}</p> : null}
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Fiyat aralığı</p>
+      <p className="text-base text-slate-400 line-through">{rangeLabel}</p>
+      <p className="text-2xl font-bold tracking-tight text-slate-900">{discountedRangeLabel}</p>
     </div>
   );
 }

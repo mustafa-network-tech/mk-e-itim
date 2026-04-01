@@ -29,31 +29,33 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden rounded-3xl bg-[#111111]">
-      <img
-        src={slide.image}
-        alt={slide.title}
-        className="h-[380px] w-full object-cover sm:h-[400px] md:h-[420px]"
-      />
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-black/[0.65] to-black/[0.35]"
-        aria-hidden
-      />
-      <div className="absolute inset-0 bg-[rgba(212,175,55,0.08)]" aria-hidden />
-      <div className="absolute inset-0 mx-auto flex max-w-7xl flex-col px-4 pb-7 pt-10 sm:px-6 md:pb-9 md:pt-12">
-        <div className="min-h-0 flex-1" aria-hidden />
-        <div className="max-w-2xl shrink-0">
-          <div className="mb-3 md:mb-4">
-            <KursiyeraWordmark variant="onDark" size="lg" />
+      <div className="relative min-h-[440px] md:min-h-[420px]">
+        <img
+          src={slide.image}
+          alt={slide.title}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-black/[0.65] to-black/[0.35]"
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-[rgba(212,175,55,0.08)]" aria-hidden />
+        <div className="relative z-10 mx-auto flex min-h-[440px] max-w-7xl flex-col px-4 pb-7 pt-10 sm:px-6 md:min-h-[420px] md:pb-9 md:pt-12">
+          <div className="min-h-0 flex-1" aria-hidden />
+          <div className="max-w-2xl shrink-0">
+            <div className="mb-3 md:mb-4">
+              <KursiyeraWordmark variant="onDark" size="lg" />
+            </div>
+            <h1 className="text-3xl font-bold leading-tight text-white md:text-4xl lg:text-[2.65rem] lg:leading-[1.12]">
+              {slide.title}
+            </h1>
+            <p className="mt-3 max-w-xl text-base text-white/[0.82] md:text-lg">
+              {slide.subtitle}
+            </p>
           </div>
-          <h1 className="text-3xl font-bold leading-tight text-white md:text-4xl lg:text-[2.65rem] lg:leading-[1.12]">
-            {slide.title}
-          </h1>
-          <p className="mt-3 max-w-xl text-base text-white/[0.82] md:text-lg">
-            {slide.subtitle}
-          </p>
-        </div>
-        <div className="mt-5 w-full shrink-0 md:mt-6">
-          <SearchBar />
+          <div className="mt-5 w-full shrink-0 md:mt-6">
+            <SearchBar />
+          </div>
         </div>
       </div>
     </section>

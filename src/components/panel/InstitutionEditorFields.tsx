@@ -3,9 +3,10 @@
 import type { ReactNode } from "react";
 import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
 import {
-  formatTryAmount,
+  formatTryPriceRange,
   getDiscountedPriceFromMin,
   getDiscountRibbonText,
+  syncInstitutionPriceDisplayFields,
 } from "@/lib/discount";
 import type {
   GradeLevel,
@@ -194,32 +195,15 @@ export function InstitutionEditorFields({
                           }
                         />
                         <p className="mb-1 mt-4 block text-xs font-semibold text-slate-700">
-                          Fiyat özeti (kart / liste)
+                          Fiyat aralığı (₺)
+                        </p>
+                        <p className="mb-2 text-xs text-slate-500">
+                          Kart ve detayda yalnızca bu aralık gösterilir; kayıtta metin alanları otomatik eşitlenir.
                         </p>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="sm:col-span-2">
-                            <label className="mb-1 block text-xs font-semibold text-slate-600">
-                              Tek satır fiyat metni
-                            </label>
-                            <input
-                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                              value={draft.price}
-                              onChange={(e) => onPatch({ price: e.target.value })}
-                            />
-                          </div>
-                          <div className="sm:col-span-2">
-                            <label className="mb-1 block text-xs font-semibold text-slate-600">
-                              Fiyat aralığı metni
-                            </label>
-                            <input
-                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                              value={draft.priceRange}
-                              onChange={(e) => onPatch({ priceRange: e.target.value })}
-                            />
-                          </div>
                           <div>
                             <label className="mb-1 block text-xs font-semibold text-slate-600">
-                              Min. fiyat (₺, indirim hesabı)
+                              En düşük (₺)
                             </label>
                             <input
                               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -227,16 +211,17 @@ export function InstitutionEditorFields({
                               min={0}
                               step={1}
                               value={draft.minPrice}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const minPrice = Number(e.target.value) || 0;
                                 onPatch({
-                                  minPrice: Number(e.target.value) || 0,
-                                })
-                              }
+                                  ...syncInstitutionPriceDisplayFields(minPrice, draft.maxPrice),
+                                });
+                              }}
                             />
                           </div>
                           <div>
                             <label className="mb-1 block text-xs font-semibold text-slate-600">
-                              Max. fiyat (₺)
+                              En yüksek (₺)
                             </label>
                             <input
                               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -244,11 +229,12 @@ export function InstitutionEditorFields({
                               min={0}
                               step={1}
                               value={draft.maxPrice}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const maxPrice = Number(e.target.value) || 0;
                                 onPatch({
-                                  maxPrice: Number(e.target.value) || 0,
-                                })
-                              }
+                                  ...syncInstitutionPriceDisplayFields(draft.minPrice, maxPrice),
+                                });
+                              }}
                             />
                           </div>
                           <div>
@@ -638,8 +624,7 @@ export function InstitutionEditorFields({
                           Kursiyera indirimi — «Kurum kartını düzenle» (kampanya)
                         </p>
                         <p className="mt-1 text-xs text-slate-600">
-                          İndirim <strong>min. fiyat</strong> üzerinden hesaplanır (kart ve detayda
-                          gösterilir).
+                          İndirim fiyat aralığının <strong>her iki ucuna</strong> aynı yüzde uygulanır.
                         </p>
                         <label className="mt-2 flex items-center gap-2 text-sm text-slate-800">
                           <input
@@ -711,23 +696,30 @@ export function InstitutionEditorFields({
                             />
                           </div>
                         </div>
-                        {draft.discountActive && draft.discountPercent > 0 ? (
-                          <p className="mt-2 text-xs text-slate-700">
-                            Şerit: <strong>{getDiscountRibbonText(draft)}</strong> · Min:{" "}
-                            <span className="line-through opacity-70">
-                              {formatTryAmount(draft.minPrice)}
-                            </span>{" "}
-                            →{" "}
-                            <strong>
-                              {formatTryAmount(
-                                getDiscountedPriceFromMin(
-                                  draft.minPrice,
-                                  draft.discountPercent,
-                                ),
-                              )}
-                            </strong>
-                          </p>
-                        ) : null}
+                        {draft.discountActive && draft.discountPercent > 0
+                          ? (() => {
+                              const s = syncInstitutionPriceDisplayFields(
+                                draft.minPrice,
+                                draft.maxPrice,
+                              );
+                              const p = draft.discountPercent;
+                              return (
+                                <p className="mt-2 text-xs text-slate-700">
+                                  Şerit: <strong>{getDiscountRibbonText(draft)}</strong> · Aralık:{" "}
+                                  <span className="line-through opacity-70">
+                                    {formatTryPriceRange(s.minPrice, s.maxPrice)}
+                                  </span>{" "}
+                                  →{" "}
+                                  <strong>
+                                    {formatTryPriceRange(
+                                      getDiscountedPriceFromMin(s.minPrice, p),
+                                      getDiscountedPriceFromMin(s.maxPrice, p),
+                                    )}
+                                  </strong>
+                                </p>
+                              );
+                            })()
+                          : null}
                       </div>
                       <div id={`${sectionIdPrefix}-etiket-sinif-egitmen`} className="scroll-mt-28">
                         <p className="mb-1 text-sm font-semibold">

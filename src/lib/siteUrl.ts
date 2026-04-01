@@ -1,4 +1,7 @@
-/** Canlıda mutlaka NEXT_PUBLIC_SITE_URL (https://alanadiniz.com) ayarlayın; meta, sitemap ve OAuth/şifre yönlendirmeleri bunu kullanır. */
+/**
+ * NEXT_PUBLIC_SITE_URL: canlıda sitenin domain’i (https + kök), örn. https://www.ornek.com.tr
+ * Sonunda / olmamalı. Boşsa Vercel URL veya localhost kullanılır; sitemap, robots, metadataBase buna bağlıdır.
+ */
 export function getSiteOrigin(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (explicit) return explicit.replace(/\/$/, "");

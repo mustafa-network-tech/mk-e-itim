@@ -26,6 +26,41 @@ export function getDiscountedPriceFromMin(minPrice: number, discountPercent: num
   return Math.round(minPrice - (minPrice * discountPercent) / 100);
 }
 
+/** Kart / detay / filtre için tutarlı alt–üst sınır. Tek taraf doluysa tek tutar; iki taraf dolu ve ters ise yer değiştirir. */
+export function normalizeInstitutionPrices(
+  minPrice: number,
+  maxPrice: number,
+): { minPrice: number; maxPrice: number } {
+  const a = Number.isFinite(minPrice) ? Math.max(0, minPrice) : 0;
+  const b = Number.isFinite(maxPrice) ? Math.max(0, maxPrice) : 0;
+  if (a <= 0 && b <= 0) return { minPrice: 0, maxPrice: 0 };
+  if (a <= 0) return { minPrice: b, maxPrice: b };
+  if (b <= 0) return { minPrice: a, maxPrice: a };
+  if (a > b) return { minPrice: b, maxPrice: a };
+  return { minPrice: a, maxPrice: b };
+}
+
+export function formatTryPriceRange(minPrice: number, maxPrice: number): string {
+  const { minPrice: lo, maxPrice: hi } = normalizeInstitutionPrices(minPrice, maxPrice);
+  if (lo <= 0 && hi <= 0) return "—";
+  if (lo === hi) return formatTryAmount(lo);
+  return `${formatTryAmount(lo)} – ${formatTryAmount(hi)}`;
+}
+
+/** DB’de price metni kullanılmıyor; priceRange aralık metnini sayılardan üretir. */
+export function syncInstitutionPriceDisplayFields(
+  minPrice: number,
+  maxPrice: number,
+): { minPrice: number; maxPrice: number; price: string; priceRange: string } {
+  const n = normalizeInstitutionPrices(minPrice, maxPrice);
+  return {
+    minPrice: n.minPrice,
+    maxPrice: n.maxPrice,
+    price: "",
+    priceRange: formatTryPriceRange(n.minPrice, n.maxPrice),
+  };
+}
+
 export function getDiscountRibbonText(institution: Institution): string {
   const t = institution.discountText?.trim();
   if (t) return t;

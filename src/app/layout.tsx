@@ -77,12 +77,12 @@ export default function RootLayout({
 }>) {
   const supabasePublic = getSupabasePublicForBrowser();
   return (
-    <html lang="tr" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-slate-50">
+    <html lang="tr" className={`${geistSans.variable} ${geistMono.variable} min-h-dvh antialiased`}>
+      <body className="flex min-h-dvh flex-col bg-slate-50">
         <Providers supabasePublic={supabasePublic}>
           <Header />
           <PoweredByBalloon />
-          <main className="flex-1">{children}</main>
+          <main className="min-w-0 flex-auto">{children}</main>
           <Footer />
           <EducationAdvisorLauncher />
         </Providers>

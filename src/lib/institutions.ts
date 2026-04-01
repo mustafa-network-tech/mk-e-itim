@@ -20,7 +20,7 @@ export function filterInstitutions(
 ) {
   return institutions.filter((institution) => {
     const text =
-      `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")}`.toLowerCase();
+      `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")} ${institution.minPrice} ${institution.maxPrice} ${institution.priceRange}`.toLowerCase();
     const queryMatch = filters.query ? text.includes(filters.query.toLowerCase()) : true;
     const cityMatch = filters.city ? institution.city === filters.city : true;
     const districtMatch = filters.district ? institution.district === filters.district : true;

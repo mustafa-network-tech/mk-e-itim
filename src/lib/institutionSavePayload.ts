@@ -1,4 +1,5 @@
 import type { Institution, InstitutionManagerPendingPayload } from "@/types";
+import { syncInstitutionPriceDisplayFields } from "@/lib/discount";
 
 /** Supabase/PostgREST hata metnini kullanıcıya daha anlaşılır Türkçe ile zenginleştirir. */
 export function formatInstitutionSaveError(message: string): string {
@@ -22,6 +23,7 @@ export function formatInstitutionSaveError(message: string): string {
 
 /** Admin / onay akışında kurum satırına yazılacak alanlar (etiketler ayrı). */
 export function buildInstitutionPersistencePayload(d: Institution): Partial<Institution> {
+  const priceFields = syncInstitutionPriceDisplayFields(d.minPrice, d.maxPrice);
   return {
     name: d.name,
     officialStatus: d.officialStatus,
@@ -35,10 +37,7 @@ export function buildInstitutionPersistencePayload(d: Institution): Partial<Inst
     shortDescription: d.shortDescription,
     longDescription: d.longDescription,
     examNavIds: d.examNavIds,
-    price: d.price,
-    priceRange: d.priceRange,
-    minPrice: d.minPrice,
-    maxPrice: d.maxPrice,
+    ...priceFields,
     rating: d.rating,
     reviewCount: d.reviewCount,
     teacherCount: d.teacherCount,
@@ -145,10 +144,10 @@ const PENDING_FIELD_LABELS: Partial<Record<keyof Institution, string>> = {
   shortDescription: "Kısa açıklama",
   longDescription: "Uzun açıklama",
   examNavIds: "Kurum türleri (menü)",
-  price: "Fiyat metni",
-  priceRange: "Fiyat aralığı etiketi",
-  minPrice: "Min. fiyat",
-  maxPrice: "Maks. fiyat",
+  price: "Fiyat metni (kullanılmıyor)",
+  priceRange: "Fiyat aralığı (otomatik)",
+  minPrice: "En düşük (₺)",
+  maxPrice: "En yüksek (₺)",
   rating: "Puan",
   reviewCount: "Yorum sayısı",
   teacherCount: "Öğretmen sayısı",

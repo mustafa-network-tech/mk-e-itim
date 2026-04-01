@@ -36,30 +36,12 @@ export function HeroSection() {
   const slide = useMemo(() => slides[slideIndex % slides.length], [slides, slideIndex]);
 
   const [titleIndex, setTitleIndex] = useState(0);
-  const [typed, setTyped] = useState("");
-
   const fullTitle = titles[titleIndex % titles.length] ?? titles[0];
 
   useEffect(() => {
     const timer = setInterval(() => setSlideIndex((prev) => (prev + 1) % slides.length), 4500);
     return () => clearInterval(timer);
   }, [slides.length]);
-
-  useEffect(() => {
-    setTyped("");
-    const full = fullTitle;
-    if (!full.length) return;
-    const charMs = Math.min(42, Math.max(22, Math.floor(1400 / Math.max(full.length, 12))));
-    let i = 0;
-    const tid = window.setInterval(() => {
-      i += 1;
-      setTyped(full.slice(0, i));
-      if (i >= full.length) {
-        window.clearInterval(tid);
-      }
-    }, charMs);
-    return () => window.clearInterval(tid);
-  }, [titleIndex, fullTitle]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -87,12 +69,11 @@ export function HeroSection() {
             <div className="mb-3 md:mb-4">
               <KursiyeraWordmark variant="onDark" size="lg" />
             </div>
-            <h1 className="min-h-[2.75rem] text-3xl font-bold leading-tight text-white md:min-h-[3.25rem] md:text-4xl lg:min-h-[3.5rem] lg:text-[2.65rem] lg:leading-[1.12]">
-              {typed}
-              <span
-                className="ml-0.5 inline-block h-[0.85em] w-0.5 animate-pulse bg-white/85 align-middle"
-                aria-hidden
-              />
+            <h1
+              key={titleIndex}
+              className="hero-rotating-title-blink min-h-[2.75rem] text-3xl font-bold leading-tight text-white md:min-h-[3.25rem] md:text-4xl lg:min-h-[3.5rem] lg:text-[2.65rem] lg:leading-[1.12]"
+            >
+              {fullTitle}
             </h1>
             <p className="mt-3 max-w-xl text-base text-white/[0.82] md:text-lg">{slide.subtitle}</p>
           </div>

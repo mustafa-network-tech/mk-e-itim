@@ -115,25 +115,3 @@ a {
     opacity: 1;
   }
 }
-
-/* Ana sayfa hero: dönüşümlü başlık yanıp sönme (daktilo yok) */
-@keyframes hero-rotating-title-blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.48;
-  }
-}
-
-.hero-rotating-title-blink {
-  animation: hero-rotating-title-blink 2.25s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-rotating-title-blink {
-    animation: none;
-    opacity: 1;
-  }
-}

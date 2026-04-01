@@ -1,4 +1,4 @@
--- Ana sayfa hero: 4 dönüşümlü başlık (uygulama 4 sn; başlık yanıp sönme, daktilo yok).
+-- Ana sayfa hero: 4 dönüşümlü başlık (uygulama 3,5 sn aralık; yanıp sönme / daktilo yok).
 
 create table if not exists public.hero_rotating_titles (
   slot smallint primary key check (slot >= 1 and slot <= 4),

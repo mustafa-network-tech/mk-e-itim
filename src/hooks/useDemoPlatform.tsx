@@ -76,7 +76,7 @@ interface DemoContextValue {
   gradeLevels: GradeLevel[];
   reviews: Review[];
   heroSlides: HeroSlide[];
-  /** Ana sayfa hero ana başlığı: 4 metin (sırayla, 4 sn; yanıp sönme animasyonu). */
+  /** Ana sayfa hero ana başlığı: 4 metin (sırayla, 3,5 sn; animasyon yok). */
   heroRotatingTitles: string[];
   saveHeroRotatingTitles: (titles: string[]) => Promise<PlatformSaveResult>;
   instructors: Instructor[];

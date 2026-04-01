@@ -7,7 +7,7 @@ import type { HeroSlide } from "@/types";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { SearchBar } from "@/components/search/SearchBar";
 
-const ROTATE_MS = 4000;
+const ROTATE_MS = 3500;
 
 const HERO_FALLBACK: HeroSlide[] = [
   {
@@ -71,7 +71,7 @@ export function HeroSection() {
             </div>
             <h1
               key={titleIndex}
-              className="hero-rotating-title-blink w-full min-h-[2.75rem] text-3xl font-bold leading-tight text-white md:min-h-[3.25rem] md:text-4xl lg:min-h-[3.5rem] lg:text-[2.65rem] lg:leading-[1.12]"
+              className="w-full min-h-[2.75rem] text-3xl font-bold leading-tight text-white md:min-h-[3.25rem] md:text-4xl lg:min-h-[3.5rem] lg:text-[2.65rem] lg:leading-[1.12]"
             >
               {fullTitle}
             </h1>

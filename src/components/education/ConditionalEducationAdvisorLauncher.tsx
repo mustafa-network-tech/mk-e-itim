@@ -6,6 +6,6 @@ import { EducationAdvisorLauncher } from "@/components/education/EducationAdviso
 /** Kurum detayında (`/institutions/[id]`) danışman FAB gösterilmez; sayfa yerel WhatsApp düğmesi kullanır. */
 export function ConditionalEducationAdvisorLauncher() {
   const pathname = usePathname() ?? "";
-  if (/^\/institutions\/[^/]+$/.test(pathname)) return null;
+  if (/^\/institutions\/[^/]+\/?$/.test(pathname)) return null;
   return <EducationAdvisorLauncher />;
 }

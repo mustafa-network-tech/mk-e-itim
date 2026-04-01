@@ -6,7 +6,11 @@ import { notFound, useParams } from "next/navigation";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { TagBadge } from "@/components/ui/TagBadge";
-import { getPublicRating, institutionWhatsAppHref } from "@/lib/institutions";
+import {
+  getPublicRating,
+  institutionCanOpenWhatsAppChat,
+  institutionWhatsAppHref,
+} from "@/lib/institutions";
 import {
   InstitutionDetailDiscountBand,
   InstitutionPriceBlock,
@@ -39,8 +43,7 @@ export function InstitutionDetailClient() {
   );
   const mapsHref = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const waHref = institutionWhatsAppHref(institution);
-  const waDigits = institution.whatsapp.replace(/\D/g, "");
-  const hasWhatsAppNumber = waDigits.length >= 10;
+  const hasWhatsAppNumber = institutionCanOpenWhatsAppChat(institution);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">

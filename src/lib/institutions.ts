@@ -68,11 +68,35 @@ export function filterInstitutions(
   });
 }
 
+/**
+ * wa.me için rakamlar: önce `whatsapp`, yeterli değilse `phone` (çoğu kurumda WhatsApp alanı boş).
+ * TR: 0 ile başlayan 11 hane → 90…; 5 ile başlayan 10 hane → 905…
+ */
+export function institutionWhatsAppDialDigits(institution: Institution): string {
+  const w = institution.whatsapp.replace(/\D/g, "");
+  const p = institution.phone.replace(/\D/g, "");
+  const raw = w.length >= 10 ? w : p.length >= 10 ? p : w.length > 0 ? w : p;
+  return normalizeTurkeyWhatsAppDialDigits(raw);
+}
+
+function normalizeTurkeyWhatsAppDialDigits(digits: string): string {
+  if (!digits) return "";
+  if (digits.startsWith("90") && digits.length >= 12) return digits;
+  if (digits.startsWith("0") && digits.length >= 11) return `90${digits.slice(1)}`;
+  if (digits.length === 10 && digits.startsWith("5")) return `90${digits}`;
+  return digits;
+}
+
+/** WhatsApp sohbeti açılabilir mi (en az 10 rakam, genelde cep). */
+export function institutionCanOpenWhatsAppChat(institution: Institution): boolean {
+  return institutionWhatsAppDialDigits(institution).replace(/\D/g, "").length >= 10;
+}
+
 export function institutionWhatsAppHref(institution: Institution, presetMessage?: string) {
-  const digits = institution.whatsapp.replace(/\D/g, "");
+  const digits = institutionWhatsAppDialDigits(institution);
   const text = presetMessage ?? `Merhaba, ${institution.name} hakkında bilgi almak istiyorum.`;
   const encoded = encodeURIComponent(text);
-  if (digits.length >= 10) {
+  if (digits.replace(/\D/g, "").length >= 10) {
     return `https://api.whatsapp.com/send?phone=${digits}&text=${encoded}`;
   }
   return `https://api.whatsapp.com/send?text=${encoded}`;

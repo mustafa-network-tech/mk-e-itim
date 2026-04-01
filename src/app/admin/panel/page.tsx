@@ -222,8 +222,7 @@ export default function AdminPanelPage() {
                     kısa özet).
                   </li>
                   <li>
-                    <strong>Kurum kartını düzenle</strong> → 8 bilgi kartı, eğitim yapısı / fiziksel alanlar
-                    (detayda ayrı blok olarak gösterilmez), destekler, kadro, programlar, görseller, indirim,
+                    <strong>Kurum kartını düzenle</strong> → 8 bilgi kartı, programlar, görseller, indirim,
                     etiketler, sınıflar ve eğitmenler.
                   </li>
                 </ul>

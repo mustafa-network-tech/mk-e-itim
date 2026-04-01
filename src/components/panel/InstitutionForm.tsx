@@ -85,28 +85,10 @@ export function InstitutionForm({
   const [maxPrice, setMaxPrice] = useState(String(defaults.maxPrice));
   const [rating, setRating] = useState(String(defaults.rating));
   const [reviewCount, setReviewCount] = useState(String(defaults.reviewCount));
-  const [teacherCount, setTeacherCount] = useState(String(defaults.teacherCount));
-  const [teacherInfo, setTeacherInfo] = useState(defaults.teacherInfo);
   const [programCards, setProgramCards] = useState<InstitutionProgramCard[]>(() =>
     defaults.programCards.map((c) => ({ ...c })),
   );
   const [imagesText, setImagesText] = useState(defaults.images.join("\n"));
-  const [weeklyHours, setWeeklyHours] = useState(String(defaults.weeklyHours));
-  const [totalHours, setTotalHours] = useState(String(defaults.totalHours));
-  const [oneToOneLessonCount, setOneToOneLessonCount] = useState(
-    String(defaults.oneToOneLessonCount),
-  );
-  const [classroomCount, setClassroomCount] = useState(String(defaults.classroomCount));
-  const [capacity, setCapacity] = useState(String(defaults.capacity));
-  const [classSize, setClassSize] = useState(String(defaults.classSize));
-  const [libraryCapacity, setLibraryCapacity] = useState(String(defaults.libraryCapacity));
-  const [examCount, setExamCount] = useState(String(defaults.examCount));
-  const [coachingRatio, setCoachingRatio] = useState(defaults.coachingRatio);
-  const [digitalPlatformInfo, setDigitalPlatformInfo] = useState(defaults.digitalPlatformInfo);
-  const [hasPublicationSupport, setHasPublicationSupport] = useState(
-    defaults.hasPublicationSupport,
-  );
-  const [hasDigitalPlatform, setHasDigitalPlatform] = useState(defaults.hasDigitalPlatform);
   const [featured, setFeatured] = useState(defaults.featured);
   const [topVisible, setTopVisible] = useState(defaults.topVisible ?? true);
   const [managerId, setManagerId] = useState("");
@@ -139,22 +121,8 @@ export function InstitutionForm({
     setMaxPrice(String(defaults.maxPrice));
     setRating(String(defaults.rating));
     setReviewCount(String(defaults.reviewCount));
-    setTeacherCount(String(defaults.teacherCount));
-    setTeacherInfo(defaults.teacherInfo);
     setProgramCards(defaults.programCards.map((c) => ({ ...c })));
     setImagesText(defaults.images.join("\n"));
-    setWeeklyHours(String(defaults.weeklyHours));
-    setTotalHours(String(defaults.totalHours));
-    setOneToOneLessonCount(String(defaults.oneToOneLessonCount));
-    setClassroomCount(String(defaults.classroomCount));
-    setCapacity(String(defaults.capacity));
-    setClassSize(String(defaults.classSize));
-    setLibraryCapacity(String(defaults.libraryCapacity));
-    setExamCount(String(defaults.examCount));
-    setCoachingRatio(defaults.coachingRatio);
-    setDigitalPlatformInfo(defaults.digitalPlatformInfo);
-    setHasPublicationSupport(defaults.hasPublicationSupport);
-    setHasDigitalPlatform(defaults.hasDigitalPlatform);
     setFeatured(defaults.featured);
     setTopVisible(defaults.topVisible ?? true);
     setManagerId("");
@@ -244,27 +212,10 @@ export function InstitutionForm({
           maxPrice: priceSync.maxPrice,
           rating: Math.min(5, Math.max(0, numField(rating, defaults.rating))),
           reviewCount: Math.max(0, Math.floor(numField(reviewCount, defaults.reviewCount))),
-          teacherCount: Math.max(0, Math.floor(numField(teacherCount, defaults.teacherCount))),
-          teacherInfo: teacherInfo.trim() || defaults.teacherInfo,
           programCards: progNorm,
           programs: programsArrayFromProgramCards(progNorm),
           tags: selectedTags,
           images: images.length > 0 ? images : [...defaults.images],
-          weeklyHours: Math.max(0, numField(weeklyHours, defaults.weeklyHours)),
-          totalHours: Math.max(0, numField(totalHours, defaults.totalHours)),
-          oneToOneLessonCount: Math.max(
-            0,
-            Math.floor(numField(oneToOneLessonCount, defaults.oneToOneLessonCount)),
-          ),
-          classroomCount: Math.max(0, Math.floor(numField(classroomCount, defaults.classroomCount))),
-          capacity: Math.max(0, Math.floor(numField(capacity, defaults.capacity))),
-          classSize: Math.max(0, Math.floor(numField(classSize, defaults.classSize))),
-          libraryCapacity: Math.max(0, Math.floor(numField(libraryCapacity, defaults.libraryCapacity))),
-          hasPublicationSupport,
-          examCount: Math.max(0, Math.floor(numField(examCount, defaults.examCount))),
-          hasDigitalPlatform,
-          digitalPlatformInfo: digitalPlatformInfo.trim(),
-          coachingRatio: coachingRatio.trim() || defaults.coachingRatio,
           featured,
           topVisible,
           gradeLevelIds: selectedGradeIds,
@@ -519,144 +470,6 @@ export function InstitutionForm({
               />
             </div>
           ))}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <SectionTitle>Kadro ve kapasite</SectionTitle>
-        <div>
-          <label className={label}>Öğretmen / kadro özeti</label>
-          <textarea
-            className={input}
-            rows={3}
-            value={teacherInfo}
-            onChange={(e) => setTeacherInfo(e.target.value)}
-          />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <label className={label}>Öğretmen sayısı</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={teacherCount}
-              onChange={(e) => setTeacherCount(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Haftalık saat</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={weeklyHours}
-              onChange={(e) => setWeeklyHours(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Toplam saat</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={totalHours}
-              onChange={(e) => setTotalHours(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Birebir ders sayısı</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={oneToOneLessonCount}
-              onChange={(e) => setOneToOneLessonCount(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Derslik sayısı</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={classroomCount}
-              onChange={(e) => setClassroomCount(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Toplam kapasite</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={capacity}
-              onChange={(e) => setCapacity(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Sınıf mevcudu</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={classSize}
-              onChange={(e) => setClassSize(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Kütüphane kapasitesi</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={libraryCapacity}
-              onChange={(e) => setLibraryCapacity(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Deneme / sınav sayısı</label>
-            <input
-              className={input}
-              inputMode="numeric"
-              value={examCount}
-              onChange={(e) => setExamCount(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={label}>Koçluk oranı metni</label>
-            <input
-              className={input}
-              value={coachingRatio}
-              onChange={(e) => setCoachingRatio(e.target.value)}
-              placeholder="1 / 14"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <SectionTitle>Dijital ve yayın</SectionTitle>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              className="rounded border-slate-300"
-              checked={hasPublicationSupport}
-              onChange={(e) => setHasPublicationSupport(e.target.checked)}
-            />
-            Yayın / materyal desteği
-          </label>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              className="rounded border-slate-300"
-              checked={hasDigitalPlatform}
-              onChange={(e) => setHasDigitalPlatform(e.target.checked)}
-            />
-            Dijital platform var
-          </label>
-        </div>
-        <div>
-          <label className={label}>Dijital platform açıklaması</label>
-          <textarea
-            className={input}
-            rows={2}
-            value={digitalPlatformInfo}
-            onChange={(e) => setDigitalPlatformInfo(e.target.value)}
-          />
         </div>
       </div>
 

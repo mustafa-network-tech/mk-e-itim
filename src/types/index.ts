@@ -70,26 +70,11 @@ export interface Institution {
   rating: number;
   /** Onaylı yorum yoksa gösterilecek toplam yorum sayısı (platform istatistiği) */
   reviewCount: number;
-  teacherCount: number;
-  /** Kadro açıklaması (detay sayfası; öğretmen adı listesi değil, özet metin) */
-  teacherInfo: string;
   /** Kart başlıklarından türetilir; arama / text[] sütunu uyumu. */
   programs: string[];
   tags: string[];
   /** [0] kapak görseli; galeri için ek URL'ler */
   images: string[];
-  weeklyHours: number;
-  totalHours: number;
-  oneToOneLessonCount: number;
-  classroomCount: number;
-  capacity: number;
-  classSize: number;
-  libraryCapacity: number;
-  hasPublicationSupport: boolean;
-  examCount: number;
-  hasDigitalPlatform: boolean;
-  digitalPlatformInfo: string;
-  coachingRatio: string;
   featured: boolean;
   topVisible?: boolean;
   createdAt: string;

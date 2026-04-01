@@ -12,8 +12,7 @@ export function InstitutionEditHint({ variant }: { variant: "admin" | "corporate
         <li>
           <strong className="text-slate-800">Kurum sayfası:</strong> kapak görseli (başlıksız), altında kurum adı ve
           indirim bandı; ardından başlıksız özet (konum, fiyat, etiketler, iletişim), «Kurum genel bilgileri» (8
-          kart), «Kurum hakkında» (serbest metin), «Programlar» (8 kart + modal), galeri, adres/harita, eğitim
-          destekleri, kadro, yorumlar.
+          kart), «Kurum hakkında» (serbest metin), «Programlar» (8 kart + modal), galeri, adres/harita, yorumlar.
         </li>
       </ul>
       {variant === "corporate" ? (

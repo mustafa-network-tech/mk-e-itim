@@ -201,33 +201,6 @@ export function InstitutionDetailClient() {
 
           <InstitutionProgramCardsSection cards={institution.programCards} />
 
-          <DetailSection title="Eğitim destekleri">
-            <ul className="space-y-2 text-sm">
-              <li>
-                <span className="font-medium text-slate-900">Yayın desteği: </span>
-                {institution.hasPublicationSupport ? "Var" : "Yok"}
-              </li>
-              <li>
-                <span className="font-medium text-slate-900">Deneme sınavı (yıllık plan): </span>
-                {institution.examCount}
-              </li>
-              <li>
-                <span className="font-medium text-slate-900">Dijital platform: </span>
-                {institution.hasDigitalPlatform
-                  ? institution.digitalPlatformInfo || "Evet"
-                  : "Belirtilmedi / yok"}
-              </li>
-            </ul>
-          </DetailSection>
-
-          <DetailSection title="Kadro ve rehberlik">
-            <p className="whitespace-pre-line leading-relaxed">{institution.teacherInfo}</p>
-            <p className="mt-4 text-sm">
-              <span className="font-medium text-slate-900">Koçluk oranı: </span>
-              {institution.coachingRatio}
-            </p>
-          </DetailSection>
-
           <DetailSection id="konum" title="Konum">
             <p className="text-sm leading-relaxed">{institution.address}</p>
             <p className="mt-2 text-sm text-slate-600">

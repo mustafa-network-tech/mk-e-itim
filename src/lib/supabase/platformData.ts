@@ -54,22 +54,8 @@ export type InstitutionDbRow = {
   max_price: number;
   rating: number;
   review_count: number;
-  teacher_count: number;
-  teacher_info: string;
   programs: string[] | null;
   images: string[] | null;
-  weekly_hours: number;
-  total_hours: number;
-  one_to_one_lesson_count: number;
-  classroom_count: number;
-  capacity: number;
-  class_size: number;
-  library_capacity: number;
-  has_publication_support: boolean;
-  exam_count: number;
-  has_digital_platform: boolean;
-  digital_platform_info: string;
-  coaching_ratio: string;
   featured: boolean;
   top_visible: boolean;
   listed: boolean;
@@ -129,22 +115,8 @@ export function mapInstitutionRow(
     maxPrice: row.max_price,
     rating: Number(row.rating),
     reviewCount: row.review_count,
-    teacherCount: row.teacher_count,
-    teacherInfo: row.teacher_info,
     tags,
     images: row.images ?? [],
-    weeklyHours: row.weekly_hours,
-    totalHours: row.total_hours,
-    oneToOneLessonCount: row.one_to_one_lesson_count,
-    classroomCount: row.classroom_count,
-    capacity: row.capacity,
-    classSize: row.class_size,
-    libraryCapacity: row.library_capacity,
-    hasPublicationSupport: row.has_publication_support,
-    examCount: row.exam_count,
-    hasDigitalPlatform: row.has_digital_platform,
-    digitalPlatformInfo: row.digital_platform_info,
-    coachingRatio: row.coaching_ratio,
     featured: row.featured,
     topVisible: row.top_visible,
     createdAt: typeof row.created_at === "string" ? row.created_at.slice(0, 10) : String(row.created_at),
@@ -187,22 +159,8 @@ export function institutionToInsertRow(
     max_price: i.maxPrice,
     rating: i.rating,
     review_count: i.reviewCount,
-    teacher_count: i.teacherCount,
-    teacher_info: i.teacherInfo,
     programs: i.programs,
     images: i.images,
-    weekly_hours: i.weeklyHours,
-    total_hours: i.totalHours,
-    one_to_one_lesson_count: i.oneToOneLessonCount,
-    classroom_count: i.classroomCount,
-    capacity: i.capacity,
-    class_size: i.classSize,
-    library_capacity: i.libraryCapacity,
-    has_publication_support: i.hasPublicationSupport,
-    exam_count: i.examCount,
-    has_digital_platform: i.hasDigitalPlatform,
-    digital_platform_info: i.digitalPlatformInfo,
-    coaching_ratio: i.coachingRatio,
     featured: i.featured,
     top_visible: i.topVisible ?? true,
     listed: i.listed ?? true,
@@ -240,22 +198,8 @@ export function institutionPartialToRow(patch: Partial<Institution>): Record<str
     ["maxPrice", "max_price"],
     ["rating", "rating"],
     ["reviewCount", "review_count"],
-    ["teacherCount", "teacher_count"],
-    ["teacherInfo", "teacher_info"],
     ["programs", "programs"],
     ["images", "images"],
-    ["weeklyHours", "weekly_hours"],
-    ["totalHours", "total_hours"],
-    ["oneToOneLessonCount", "one_to_one_lesson_count"],
-    ["classroomCount", "classroom_count"],
-    ["capacity", "capacity"],
-    ["classSize", "class_size"],
-    ["libraryCapacity", "library_capacity"],
-    ["hasPublicationSupport", "has_publication_support"],
-    ["examCount", "exam_count"],
-    ["hasDigitalPlatform", "has_digital_platform"],
-    ["digitalPlatformInfo", "digital_platform_info"],
-    ["coachingRatio", "coaching_ratio"],
     ["featured", "featured"],
     ["topVisible", "top_visible"],
     ["listed", "listed"],

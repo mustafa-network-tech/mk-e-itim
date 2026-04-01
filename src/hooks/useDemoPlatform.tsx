@@ -696,11 +696,6 @@ export function DemoPlatformProvider({
         branch,
       };
       setInstructorList((prev) => [...prev, newInstructor]);
-      setInstitutionList((prev) =>
-        prev.map((item) =>
-          item.id === institutionId ? { ...item, teacherCount: item.teacherCount + 1 } : item,
-        ),
-      );
       return;
     }
     const supabase = createBrowserSupabaseClientOrNull();
@@ -714,14 +709,6 @@ export function DemoPlatformProvider({
       console.error(error);
       return;
     }
-    const { count } = await supabase
-      .from("instructors")
-      .select("*", { count: "exact", head: true })
-      .eq("institution_id", institutionId);
-    await supabase
-      .from("institutions")
-      .update({ teacher_count: count ?? 0 })
-      .eq("id", institutionId);
     await refreshPlatform();
   };
 
@@ -730,36 +717,14 @@ export function DemoPlatformProvider({
       const target = instructorList.find((item) => item.id === instructorId);
       if (!target) return;
       setInstructorList((prev) => prev.filter((item) => item.id !== instructorId));
-      setInstitutionList((prev) =>
-        prev.map((item) =>
-          item.id === target.institutionId
-            ? { ...item, teacherCount: Math.max(item.teacherCount - 1, 0) }
-            : item,
-        ),
-      );
       return;
     }
     const supabase = createBrowserSupabaseClientOrNull();
     if (!supabase) return;
-    const { data: row } = await supabase
-      .from("instructors")
-      .select("institution_id")
-      .eq("id", instructorId)
-      .maybeSingle();
     const { error } = await supabase.from("instructors").delete().eq("id", instructorId);
     if (error) {
       console.error(error);
       return;
-    }
-    if (row?.institution_id) {
-      const { count } = await supabase
-        .from("instructors")
-        .select("*", { count: "exact", head: true })
-        .eq("institution_id", row.institution_id);
-      await supabase
-        .from("institutions")
-        .update({ teacher_count: count ?? 0 })
-        .eq("id", row.institution_id);
     }
     await refreshPlatform();
   };

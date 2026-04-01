@@ -27,6 +27,8 @@ Sıra | Dosya                                      | Kısa açıklama
  13  | 20260330183000_institutions_about_cards.sql | institutions.about_cards jsonb (detayda 8 bilgi kartı)
  14  | 20260330190000_institutions_program_cards.sql | institutions.program_cards jsonb (Programlar 8 kart + modal metni)
  15  | 20260330200000_institutions_about_institution.sql | institutions.about_institution (Kurum hakkında serbest metin)
+ 16  | 20260330210000_institutions_drop_support_staff_columns.sql | Eğitim destekleri + kadro sütunlarının kaldırılması
+ 17  | 20260330220000_institutions_drop_structure_capacity_columns.sql | Haftalık saat, derslik, kontenjan vb. sütunların kaldırılması
 
 
 Notlar

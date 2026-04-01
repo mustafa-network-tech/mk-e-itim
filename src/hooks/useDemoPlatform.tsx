@@ -12,6 +12,7 @@ import {
   tags,
   users,
 } from "@/data/mockData";
+import { DEFAULT_HERO_ROTATING_TITLES } from "@/data/heroRotatingDefaults";
 import { INSTITUTION_DEFAULTS, type InstitutionCreateInput } from "@/data/institutionDefaults";
 import {
   INSTITUTION_TYPES_SEED,
@@ -75,6 +76,9 @@ interface DemoContextValue {
   gradeLevels: GradeLevel[];
   reviews: Review[];
   heroSlides: HeroSlide[];
+  /** Ana sayfa hero ana başlığı: 4 metin (sırayla, 7 sn + daktilo). */
+  heroRotatingTitles: string[];
+  saveHeroRotatingTitles: (titles: string[]) => Promise<PlatformSaveResult>;
   instructors: Instructor[];
   /** Supabase verisi yüklenirken true */
   platformLoading: boolean;
@@ -95,7 +99,11 @@ interface DemoContextValue {
   toggleFeatured: (institutionId: string) => void | Promise<void>;
   deleteInstitution: (institutionId: string) => void | Promise<void>;
   updateReviewStatus: (reviewId: string, status: Review["status"]) => void | Promise<void>;
-  addHeroSlide: (payload: Omit<HeroSlide, "id">) => void | Promise<void>;
+  addHeroSlide: (payload: Omit<HeroSlide, "id">) => PlatformSaveResult | Promise<PlatformSaveResult>;
+  updateHeroSlide: (
+    slideId: string,
+    payload: Omit<HeroSlide, "id">,
+  ) => PlatformSaveResult | Promise<PlatformSaveResult>;
   removeHeroSlide: (slideId: string) => void | Promise<void>;
   addInstructor: (institutionId: string, name: string, branch: string) => void | Promise<void>;
   removeInstructor: (instructorId: string) => void | Promise<void>;
@@ -186,6 +194,9 @@ export function DemoPlatformProvider({
   );
   const [reviewList, setReviewList] = useState<Review[]>(() => (useRemote ? [] : reviews));
   const [slideList, setSlideList] = useState<HeroSlide[]>(() => (useRemote ? [] : heroSlides));
+  const [heroRotatingTitleList, setHeroRotatingTitleList] = useState<string[]>(() =>
+    useRemote ? [] : [...DEFAULT_HERO_ROTATING_TITLES],
+  );
   const [instructorList, setInstructorList] = useState<Instructor[]>(() =>
     useRemote ? [] : seedInstructors,
   );
@@ -215,6 +226,8 @@ export function DemoPlatformProvider({
     setGradeLevelList(snap.gradeLevels);
     setReviewList(snap.reviews);
     setSlideList(snap.heroSlides);
+    const h = snap.heroRotatingTitles ?? [];
+    setHeroRotatingTitleList([h[0] ?? "", h[1] ?? "", h[2] ?? "", h[3] ?? ""]);
     setInstructorList(snap.instructors);
     setStaticPages(snap.staticPages);
     setAdvisorQuestionList(
@@ -651,13 +664,13 @@ export function DemoPlatformProvider({
     await refreshPlatform();
   };
 
-  const addHeroSlide = async (slidePayload: Omit<HeroSlide, "id">) => {
+  const addHeroSlide = async (slidePayload: Omit<HeroSlide, "id">): Promise<PlatformSaveResult> => {
     if (!useRemote) {
       setSlideList((prev) => [{ ...slidePayload, id: `h-${Date.now()}` }, ...prev]);
-      return;
+      return { ok: true };
     }
     const supabase = createBrowserSupabaseClientOrNull();
-    if (!supabase) return;
+    if (!supabase) return { ok: false, message: "Bağlantı kurulamadı (Supabase)." };
     const { data: maxRow } = await supabase
       .from("hero_slides")
       .select("sort_order")
@@ -671,8 +684,40 @@ export function DemoPlatformProvider({
       image: slidePayload.image,
       sort_order: sortOrder,
     });
-    if (error) console.error(error);
+    if (error) {
+      console.error(error);
+      return { ok: false, message: error.message };
+    }
     await refreshPlatform();
+    return { ok: true };
+  };
+
+  const updateHeroSlide = async (
+    slideId: string,
+    payload: Omit<HeroSlide, "id">,
+  ): Promise<PlatformSaveResult> => {
+    if (!useRemote) {
+      setSlideList((prev) =>
+        prev.map((s) => (s.id === slideId ? { ...s, ...payload } : s)),
+      );
+      return { ok: true };
+    }
+    const supabase = createBrowserSupabaseClientOrNull();
+    if (!supabase) return { ok: false, message: "Bağlantı kurulamadı (Supabase)." };
+    const { error } = await supabase
+      .from("hero_slides")
+      .update({
+        title: payload.title,
+        subtitle: payload.subtitle,
+        image: payload.image,
+      })
+      .eq("id", slideId);
+    if (error) {
+      console.error(error);
+      return { ok: false, message: error.message };
+    }
+    await refreshPlatform();
+    return { ok: true };
   };
 
   const removeHeroSlide = async (slideId: string) => {
@@ -918,6 +963,27 @@ export function DemoPlatformProvider({
     await refreshPlatform();
   };
 
+  const saveHeroRotatingTitles = useCallback(
+    async (titles: string[]): Promise<PlatformSaveResult> => {
+      const four = [0, 1, 2, 3].map((i) => (typeof titles[i] === "string" ? titles[i] : ""));
+      if (!useRemote) {
+        setHeroRotatingTitleList([...four]);
+        return { ok: true };
+      }
+      const supabase = createBrowserSupabaseClientOrNull();
+      if (!supabase) return { ok: false, message: "Bağlantı kurulamadı (Supabase)." };
+      const rows = four.map((title, idx) => ({ slot: idx + 1, title }));
+      const { error } = await supabase.from("hero_rotating_titles").upsert(rows, { onConflict: "slot" });
+      if (error) {
+        console.error(error);
+        return { ok: false, message: error.message };
+      }
+      await refreshPlatform();
+      return { ok: true };
+    },
+    [useRemote, refreshPlatform],
+  );
+
   const updateAdvisorQuestion = async (id: string, prompt: string) => {
     const next = prompt.trim();
     if (!useRemote) {
@@ -943,6 +1009,8 @@ export function DemoPlatformProvider({
     gradeLevels: gradeLevelList,
     reviews: reviewList,
     heroSlides: slideList,
+    heroRotatingTitles: heroRotatingTitleList,
+    saveHeroRotatingTitles,
     instructors: instructorList,
     platformLoading,
     platformError,
@@ -960,6 +1028,7 @@ export function DemoPlatformProvider({
     deleteInstitution,
     updateReviewStatus,
     addHeroSlide,
+    updateHeroSlide,
     removeHeroSlide,
     addInstructor,
     removeInstructor,

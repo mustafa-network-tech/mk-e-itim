@@ -15,6 +15,7 @@ import {
 import {
   normalizeProgramCards,
   programsArrayFromProgramCards,
+  PROGRAM_MODAL_ITEM_COUNT,
 } from "@/lib/institutionProgramCards";
 import type {
   GradeLevel,
@@ -356,8 +357,8 @@ export function InstitutionEditorFields({
                       >
                         <h4 className="text-sm font-bold text-slate-900">Programlar ve görseller</h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Programlar: 8 kart; başlık listede, «Modal metni» tıklanınca açılan pencerede
-                          görünür. Görseller: kapak için ilk satır önemli; her satır bir görsel URL&apos;si.
+                          Programlar: 8 kart; başlık listede, modala 8 madde (şeffaf kutucuklar) olarak
+                          yansır. Görseller: kapak için ilk satır önemli; her satır bir görsel URL&apos;si.
                         </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           {normalizeProgramCards(draft.programCards).map((card, i) => (
@@ -378,22 +379,33 @@ export function InstitutionEditorFields({
                                   });
                                 }}
                               />
-                              <label className="mb-1 mt-2 block text-xs font-semibold text-slate-700">
-                                Modal metni
-                              </label>
-                              <textarea
-                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                                rows={3}
-                                value={card.body}
-                                onChange={(e) => {
-                                  const list = normalizeProgramCards(draft.programCards);
-                                  list[i] = { ...list[i], body: e.target.value };
-                                  onPatch({
-                                    programCards: list,
-                                    programs: programsArrayFromProgramCards(list),
-                                  });
-                                }}
-                              />
+                              <p className="mb-1 mt-3 text-xs font-semibold text-slate-700">
+                                Modal maddeleri (8)
+                              </p>
+                              <div className="space-y-2">
+                                {Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, (_, j) => (
+                                  <div key={j} className="flex items-center gap-2">
+                                    <span className="w-5 shrink-0 text-center text-xs text-slate-400">
+                                      {j + 1}
+                                    </span>
+                                    <input
+                                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                      value={card.modalItems[j] ?? ""}
+                                      placeholder={`Madde ${j + 1}`}
+                                      onChange={(e) => {
+                                        const list = normalizeProgramCards(draft.programCards);
+                                        const items = [...list[i].modalItems];
+                                        items[j] = e.target.value;
+                                        list[i] = { ...list[i], modalItems: items };
+                                        onPatch({
+                                          programCards: list,
+                                          programs: programsArrayFromProgramCards(list),
+                                        });
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           ))}
                         </div>

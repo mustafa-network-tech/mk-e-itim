@@ -15,6 +15,7 @@ import {
 import {
   normalizeProgramCards,
   programsArrayFromProgramCards,
+  PROGRAM_MODAL_ITEM_COUNT,
 } from "@/lib/institutionProgramCards";
 import type { InstitutionAboutCard, InstitutionProgramCard } from "@/types";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
@@ -86,7 +87,7 @@ export function InstitutionForm({
   const [rating, setRating] = useState(String(defaults.rating));
   const [reviewCount, setReviewCount] = useState(String(defaults.reviewCount));
   const [programCards, setProgramCards] = useState<InstitutionProgramCard[]>(() =>
-    defaults.programCards.map((c) => ({ ...c })),
+    defaults.programCards.map((c) => ({ ...c, modalItems: [...c.modalItems] })),
   );
   const [imagesText, setImagesText] = useState(defaults.images.join("\n"));
   const [featured, setFeatured] = useState(defaults.featured);
@@ -441,7 +442,8 @@ export function InstitutionForm({
       <div className="space-y-4">
         <SectionTitle>Programlar (8 kart)</SectionTitle>
         <p className="text-xs text-slate-500">
-          Kart başlığı listede görünür; tıklanınca açılan modaldaki metin «Modal metni» alanıdır.
+          Kart başlığı listede görünür; programa tıklanınca modala 8 madde (şeffaf kutucuklar) olarak
+          yansır.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           {programCards.map((card, i) => (
@@ -457,17 +459,26 @@ export function InstitutionForm({
                   setProgramCards(next);
                 }}
               />
-              <label className={`${label} mt-2`}>Modal metni</label>
-              <textarea
-                className={input}
-                rows={3}
-                value={card.body}
-                onChange={(e) => {
-                  const next = [...programCards];
-                  next[i] = { ...next[i], body: e.target.value };
-                  setProgramCards(next);
-                }}
-              />
+              <p className={`${label} mt-3`}>Modal maddeleri (8 satır)</p>
+              <div className="mt-1 space-y-2">
+                {Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, (_, j) => (
+                  <div key={j} className="flex items-center gap-2">
+                    <span className="w-5 shrink-0 text-center text-xs text-slate-400">{j + 1}</span>
+                    <input
+                      className={input}
+                      value={card.modalItems[j] ?? ""}
+                      placeholder={`Madde ${j + 1}`}
+                      onChange={(e) => {
+                        const next = [...programCards];
+                        const items = [...next[i].modalItems];
+                        items[j] = e.target.value;
+                        next[i] = { ...next[i], modalItems: items };
+                        setProgramCards(next);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>

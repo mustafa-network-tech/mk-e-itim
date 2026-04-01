@@ -23,10 +23,13 @@ export interface InstitutionAboutCard {
   body: string;
 }
 
-/** Programlar: 8 kart; başlık listede, gövde modaldır. */
+/** Programlar: 8 kart; başlık listede; modaldaki 8 madde `modalItems`. `body` eski kayıtlar için (satır → madde). */
 export interface InstitutionProgramCard {
   title: string;
+  /** Eski kayıt uyumu; yeni düzenlemede modalItems önceliklidir. */
   body: string;
+  /** Modalda 8 madde (şeffaf kutu + madde işareti). */
+  modalItems: string[];
 }
 
 export interface Institution {

@@ -22,7 +22,9 @@ export function filterInstitutions(
     const aboutText = institution.aboutCards
       .map((c) => `${c.title} ${c.body}`)
       .join(" ");
-    const programText = institution.programCards.map((c) => `${c.title} ${c.body}`).join(" ");
+    const programText = institution.programCards
+      .map((c) => `${c.title} ${c.body} ${(c.modalItems ?? []).join(" ")}`)
+      .join(" ");
     const text =
       `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.longDescription} ${institution.aboutInstitution} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")} ${institution.minPrice} ${institution.maxPrice} ${institution.priceRange} ${aboutText} ${programText} ${institution.programs.join(" ")}`.toLowerCase();
     const queryMatch = filters.query ? text.includes(filters.query.toLowerCase()) : true;

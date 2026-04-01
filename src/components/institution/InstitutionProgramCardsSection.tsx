@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { InstitutionProgramCard } from "@/types";
-import { normalizeProgramCards } from "@/lib/institutionProgramCards";
+import { normalizeProgramCards, PROGRAM_MODAL_ITEM_COUNT } from "@/lib/institutionProgramCards";
 
 export function InstitutionProgramCardsSection({ cards }: { cards: InstitutionProgramCard[] }) {
   const list = normalizeProgramCards(cards);
@@ -56,11 +56,24 @@ export function InstitutionProgramCardsSection({ cards }: { cards: InstitutionPr
             </button>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
-              {current?.body.trim()
-                ? current.body.trim()
-                : "Bu program için detay metni henüz eklenmemiş."}
-            </p>
+            <ul className="space-y-2">
+              {Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, (_, idx) => {
+                const line = (current?.modalItems[idx] ?? "").trim();
+                return (
+                  <li
+                    key={idx}
+                    className="flex gap-2.5 rounded-xl border border-slate-200/90 bg-slate-50/70 px-3 py-2.5 text-sm leading-relaxed text-slate-800 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6)] backdrop-blur-[2px]"
+                  >
+                    <span className="mt-0.5 shrink-0 select-none text-slate-500" aria-hidden>
+                      •
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      {line ? line : <span className="text-slate-400">Bu madde boş.</span>}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
       </div>,

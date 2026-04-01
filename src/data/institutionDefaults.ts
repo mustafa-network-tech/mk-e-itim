@@ -1,5 +1,9 @@
 import { createEmptyAboutCards } from "@/lib/institutionAboutCards";
-import { createEmptyProgramCards, programsArrayFromProgramCards } from "@/lib/institutionProgramCards";
+import {
+  createEmptyModalItems,
+  createEmptyProgramCards,
+  programsArrayFromProgramCards,
+} from "@/lib/institutionProgramCards";
 import type { Institution } from "@/types";
 import { categoryDisplayFromExamNavIds } from "@/lib/examMenuNav";
 import {
@@ -11,8 +15,8 @@ const DEFAULT_EXAM_NAV = ["LGS"] as const;
 
 const DEFAULT_PROGRAM_CARDS = (() => {
   const c = createEmptyProgramCards();
-  c[0] = { title: "TYT", body: "" };
-  c[1] = { title: "AYT", body: "" };
+  c[0] = { title: "TYT", body: "", modalItems: createEmptyModalItems() };
+  c[1] = { title: "AYT", body: "", modalItems: createEmptyModalItems() };
   return c;
 })();
 const DEFAULT_TYPE_LABELS = labelMapFromInstitutionTypes(INSTITUTION_TYPES_SEED);

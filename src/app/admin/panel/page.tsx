@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { InstitutionEditorFields } from "@/components/panel/InstitutionEditorFields";
 import { InstitutionForm } from "@/components/panel/InstitutionForm";
 import { AdminSection, AdminSidebar, StatsCard } from "@/components/panel/Sidebars";
-import { useDemoPlatform } from "@/hooks/useDemoPlatform";
+import { useDemoPlatform, type PlatformSaveResult } from "@/hooks/useDemoPlatform";
 import { usePanelGate } from "@/hooks/usePanelGate";
 import {
   buildInstitutionPersistencePayload,
@@ -15,9 +15,10 @@ import {
 import { getPublicRating } from "@/lib/institutions";
 import { PageNav } from "@/components/ui/PageNav";
 import { InstitutionEditHint } from "@/components/panel/InstitutionEditHint";
+import { HeroImageUrlField } from "@/components/panel/HeroImageUrlField";
 import { INSTITUTION_TYPES_SEED, sortInstitutionTypes } from "@/data/institutionTypesSeed";
 import type { AdvisorStepKey } from "@/types/advisor";
-import type { Institution } from "@/types";
+import type { HeroSlide, Institution } from "@/types";
 
 const ADVISOR_STEP_HINT: Record<AdvisorStepKey, string> = {
   city: "Kullanıcı şehir yazar; listede yoksa uyarı verilir.",
@@ -26,6 +27,98 @@ const ADVISOR_STEP_HINT: Record<AdvisorStepKey, string> = {
   subject: "Ders etiketleri + «Atla»; isteğe bağlı filtre.",
   price: "Üç sabit fiyat aralığı; serbest giriş yok.",
 };
+
+function AdminHeroSlideEditor({
+  slide,
+  updateHeroSlide,
+  removeHeroSlide,
+}: {
+  slide: HeroSlide;
+  updateHeroSlide: (
+    id: string,
+    p: Omit<HeroSlide, "id">,
+  ) => Promise<PlatformSaveResult> | PlatformSaveResult;
+  removeHeroSlide: (id: string) => void | Promise<void>;
+}) {
+  const [title, setTitle] = useState(slide.title);
+  const [subtitle, setSubtitle] = useState(slide.subtitle);
+  const [image, setImage] = useState(slide.image);
+  const [saving, setSaving] = useState(false);
+  const [rowMessage, setRowMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTitle(slide.title);
+    setSubtitle(slide.subtitle);
+    setImage(slide.image);
+  }, [slide.id, slide.title, slide.subtitle, slide.image]);
+
+  const handleSave = async () => {
+    const t = title.trim();
+    const st = subtitle.trim();
+    const im = image.trim();
+    if (!t || !st || !im) {
+      setRowMessage("Başlık, alt başlık ve görsel zorunludur.");
+      return;
+    }
+    setSaving(true);
+    setRowMessage(null);
+    const r = await Promise.resolve(updateHeroSlide(slide.id, { title: t, subtitle: st, image: im }));
+    setSaving(false);
+    setRowMessage(r.ok ? "Kaydedildi." : r.message);
+  };
+
+  return (
+    <div className="space-y-2 rounded-lg border border-slate-200 p-3 text-sm">
+      <input
+        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        placeholder="Başlık"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <input
+        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        placeholder="Alt başlık"
+        value={subtitle}
+        onChange={(e) => setSubtitle(e.target.value)}
+      />
+      <div>
+        <p className="mb-1 text-xs font-semibold text-slate-700">Görsel</p>
+        <HeroImageUrlField
+          fieldId={`admin-hero-slide-${slide.id}`}
+          value={image}
+          onChange={(v) => {
+            setRowMessage(null);
+            setImage(v);
+          }}
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => void handleSave()}
+          className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+        >
+          {saving ? "Kaydediliyor…" : "Kaydet"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void removeHeroSlide(slide.id)}
+          className="rounded-md bg-rose-100 px-2 py-1.5 text-xs font-medium text-rose-700"
+        >
+          Sil
+        </button>
+      </div>
+      {rowMessage ? (
+        <p
+          className={`text-xs ${rowMessage === "Kaydedildi." ? "text-emerald-700" : "text-rose-700"}`}
+        >
+          {rowMessage}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export default function AdminPanelPage() {
   const { user: panelUser, loading: panelLoading, allowed: panelAllowed } = usePanelGate(["admin"]);
@@ -36,6 +129,8 @@ export default function AdminPanelPage() {
     tags,
     gradeLevels,
     heroSlides,
+    heroRotatingTitles,
+    saveHeroRotatingTitles,
     instructors,
     createTag,
     createManager,
@@ -45,6 +140,7 @@ export default function AdminPanelPage() {
     deleteInstitution,
     updateReviewStatus,
     addHeroSlide,
+    updateHeroSlide,
     removeHeroSlide,
     addInstructor,
     removeInstructor,
@@ -66,6 +162,11 @@ export default function AdminPanelPage() {
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroImage, setHeroImage] = useState("");
+  const [heroFormBusy, setHeroFormBusy] = useState(false);
+  const [heroFormMessage, setHeroFormMessage] = useState<string | null>(null);
+  const [heroRotatingDraft, setHeroRotatingDraft] = useState<string[]>(["", "", "", ""]);
+  const [heroRotatingBusy, setHeroRotatingBusy] = useState(false);
+  const [heroRotatingMsg, setHeroRotatingMsg] = useState<string | null>(null);
   const [selectedInstitutionId, setSelectedInstitutionId] = useState<string>("");
   const [showNewInstitutionForm, setShowNewInstitutionForm] = useState(false);
   const [newInstructorName, setNewInstructorName] = useState("");
@@ -109,6 +210,15 @@ export default function AdminPanelPage() {
     }
     setInstitutionTypeDrafts(next);
   }, [institutionTypes]);
+
+  useEffect(() => {
+    setHeroRotatingDraft([
+      heroRotatingTitles[0] ?? "",
+      heroRotatingTitles[1] ?? "",
+      heroRotatingTitles[2] ?? "",
+      heroRotatingTitles[3] ?? "",
+    ]);
+  }, [heroRotatingTitles]);
 
   useEffect(() => {
     if (selectedInstitutionId !== prevSelectedInstitutionIdRef.current) {
@@ -1053,66 +1163,155 @@ export default function AdminPanelPage() {
         {activeSection === "hero-featured" && (
           <div className="space-y-4">
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h3 className="mb-2 text-lg font-bold">Hero ana başlığı (4 metin)</h3>
+              <p className="mb-3 text-sm text-slate-600">
+                Ana sayfadaki büyük başlık bu dört metni sırayla gösterir; her biri yaklaşık{" "}
+                <strong>7 saniye</strong> kalır ve hafif <strong>daktilo</strong> efektiyle yazılır. Arka plan
+                görselleri ve alt metin aşağıdaki slaytlardan gelir.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <label key={i} className="block text-xs font-semibold text-slate-700">
+                    Başlık {i + 1}
+                    <input
+                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900"
+                      value={heroRotatingDraft[i] ?? ""}
+                      onChange={(e) => {
+                        setHeroRotatingMsg(null);
+                        setHeroRotatingDraft((prev) => {
+                          const next = [...prev];
+                          next[i] = e.target.value;
+                          return next;
+                        });
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
+              <button
+                type="button"
+                disabled={heroRotatingBusy}
+                className="mt-3 w-fit rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                onClick={() => {
+                  void (async () => {
+                    setHeroRotatingBusy(true);
+                    setHeroRotatingMsg(null);
+                    const r = await saveHeroRotatingTitles(heroRotatingDraft);
+                    setHeroRotatingBusy(false);
+                    if (r.ok) {
+                      setHeroRotatingMsg("Dönüşümlü başlıklar kaydedildi.");
+                    } else {
+                      setHeroRotatingMsg(r.message);
+                    }
+                  })();
+                }}
+              >
+                {heroRotatingBusy ? "Kaydediliyor…" : "Başlıkları kaydet"}
+              </button>
+              {heroRotatingMsg ? (
+                <p
+                  className={`mt-2 text-xs ${
+                    heroRotatingMsg.includes("kaydedildi") ? "text-emerald-700" : "text-rose-700"
+                  }`}
+                >
+                  {heroRotatingMsg}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <h3 className="mb-2 text-lg font-bold">Hero / Öne Çıkanlar</h3>
               <p className="mb-3 text-sm text-slate-600">
-                Bu bölümde sadece admin hero görsellerini yönetir ve kurumları öne çıkarır.
+                Bu bölümde sadece admin hero görsellerini yönetir ve kurumları öne çıkarır. Görseli{" "}
+                <strong>Cihazdan yükle</strong> ile ekleyebilir veya adres satırına URL yapıştırabilirsiniz.
+                Yeni slayt için alanları doldurup <strong>Kaydet</strong> ile kaydedin; mevcut slaytları
+                aşağıdan düzenleyip yine <strong>Kaydet</strong> kullanın.
               </p>
               <div className="grid gap-2">
                 <input
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                   placeholder="Hero başlığı"
                   value={heroTitle}
-                  onChange={(e) => setHeroTitle(e.target.value)}
+                  onChange={(e) => {
+                    setHeroFormMessage(null);
+                    setHeroTitle(e.target.value);
+                  }}
                 />
                 <input
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                   placeholder="Hero alt başlığı"
                   value={heroSubtitle}
-                  onChange={(e) => setHeroSubtitle(e.target.value)}
+                  onChange={(e) => {
+                    setHeroFormMessage(null);
+                    setHeroSubtitle(e.target.value);
+                  }}
                 />
-                <input
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  placeholder="Görsel URL"
-                  value={heroImage}
-                  onChange={(e) => setHeroImage(e.target.value)}
-                />
+                <div>
+                  <p className="mb-1 text-xs font-semibold text-slate-700">Görsel</p>
+                  <HeroImageUrlField
+                    fieldId="admin-hero-new"
+                    value={heroImage}
+                    onChange={(v) => {
+                      setHeroFormMessage(null);
+                      setHeroImage(v);
+                    }}
+                  />
+                </div>
                 <button
                   type="button"
+                  disabled={heroFormBusy}
                   onClick={() => {
-                    if (!heroTitle.trim() || !heroSubtitle.trim() || !heroImage.trim()) return;
-                    addHeroSlide({
-                      title: heroTitle,
-                      subtitle: heroSubtitle,
-                      image: heroImage,
-                    });
-                    setHeroTitle("");
-                    setHeroSubtitle("");
-                    setHeroImage("");
+                    void (async () => {
+                      const t = heroTitle.trim();
+                      const st = heroSubtitle.trim();
+                      const im = heroImage.trim();
+                      if (!t || !st || !im) {
+                        setHeroFormMessage("Başlık, alt başlık ve görsel zorunludur.");
+                        return;
+                      }
+                      setHeroFormBusy(true);
+                      setHeroFormMessage(null);
+                      const r = await addHeroSlide({ title: t, subtitle: st, image: im });
+                      setHeroFormBusy(false);
+                      if (r.ok) {
+                        setHeroTitle("");
+                        setHeroSubtitle("");
+                        setHeroImage("");
+                        setHeroFormMessage("Slayt kaydedildi.");
+                      } else {
+                        setHeroFormMessage(r.message);
+                      }
+                    })();
                   }}
-                  className="w-fit rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+                  className="w-fit rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
                 >
-                  Hero Slide Ekle
+                  {heroFormBusy ? "Kaydediliyor…" : "Kaydet"}
                 </button>
+                {heroFormMessage ? (
+                  <p
+                    className={`text-xs ${
+                      heroFormMessage === "Slayt kaydedildi." ? "text-emerald-700" : "text-rose-700"
+                    }`}
+                  >
+                    {heroFormMessage}
+                  </p>
+                ) : null}
               </div>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <h4 className="mb-3 font-bold">Mevcut Hero Slaytları</h4>
-              <div className="space-y-2">
+              <p className="mb-3 text-xs text-slate-500">
+                Metinleri değiştirip <strong>Kaydet</strong> ile güncelleyin.
+              </p>
+              <div className="space-y-3">
                 {heroSlides.map((slide) => (
-                  <div
+                  <AdminHeroSlideEditor
                     key={slide.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-2 text-sm"
-                  >
-                    <p>{slide.title}</p>
-                    <button
-                      type="button"
-                      onClick={() => removeHeroSlide(slide.id)}
-                      className="rounded-md bg-rose-100 px-2 py-1 text-rose-700"
-                    >
-                      Sil
-                    </button>
-                  </div>
+                    slide={slide}
+                    updateHeroSlide={updateHeroSlide}
+                    removeHeroSlide={removeHeroSlide}
+                  />
                 ))}
               </div>
             </div>

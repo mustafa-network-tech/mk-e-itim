@@ -133,6 +133,20 @@ export function mapInstitutionRow(
   };
 }
 
+/** `hero_rotating_titles` satırları → her zaman 4 elemanlı dizi (slot 1–4). */
+export function heroRotatingTitlesFromRows(
+  rows: { slot: number; title: string }[] | null | undefined,
+): string[] {
+  const out: string[] = ["", "", "", ""];
+  for (const r of rows ?? []) {
+    const s = Number(r.slot);
+    if (s >= 1 && s <= 4 && typeof r.title === "string") {
+      out[s - 1] = r.title;
+    }
+  }
+  return out;
+}
+
 export function institutionToInsertRow(
   i: Omit<Institution, "id" | "tags" | "gradeLevelIds"> & { id?: string },
 ): Record<string, unknown> {
@@ -236,6 +250,8 @@ export type PlatformSnapshot = {
   instructors: Instructor[];
   staticPages: { about: string; privacy: string; contact: string };
   advisorQuestions: AdvisorQuestion[];
+  /** Ana sayfa hero ana başlığı: 4 metin (slot sırası). */
+  heroRotatingTitles: string[];
 };
 
 export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
@@ -254,6 +270,7 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
     instrRes,
     staticRes,
     advisorRes,
+    heroRotatingRes,
     profilesRes,
   ] = await Promise.all([
     supabase
@@ -268,6 +285,7 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
     supabase.from("instructors").select("*"),
     supabase.from("static_pages").select("slug, body"),
     supabase.from("advisor_questions").select("*").order("sort_order", { ascending: true }),
+    supabase.from("hero_rotating_titles").select("slot, title").order("slot", { ascending: true }),
     supabase.from("profiles").select("id, full_name, role, institution_id").order("full_name"),
   ]);
 
@@ -280,6 +298,7 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
   if (instrRes.error) errors.push(instrRes.error.message);
   if (staticRes.error) errors.push(staticRes.error.message);
   if (advisorRes.error) errors.push(advisorRes.error.message);
+  if (heroRotatingRes.error) errors.push(heroRotatingRes.error.message);
   if (profilesRes.error) {
     /* Anon veya profiles yetkisi yoksa boş liste */
   }
@@ -357,6 +376,10 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
     institutionId: p.institution_id ?? undefined,
   }));
 
+  const heroRotatingTitles = heroRotatingTitlesFromRows(
+    heroRotatingRes.data as { slot: number; title: string }[] | null,
+  );
+
   return {
     snapshot: {
       users,
@@ -369,6 +392,7 @@ export async function loadPlatformSnapshot(supabase: SupabaseClient): Promise<{
       instructors,
       staticPages,
       advisorQuestions,
+      heroRotatingTitles,
     },
     errors,
   };

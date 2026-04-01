@@ -357,7 +357,7 @@ export function InstitutionEditorFields({
                       >
                         <h4 className="text-sm font-bold text-slate-900">Programlar ve görseller</h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Programlar: 8 kart; başlık listede, modala 8 madde (şeffaf kutucuklar) olarak
+                          Programlar: 8 kart; başlık listede, modala 8 şeffaf kutu (başlık + alt metin)
                           yansır. Görseller: kapak için ilk satır önemli; her satır bir görsel URL&apos;si.
                         </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -380,22 +380,46 @@ export function InstitutionEditorFields({
                                 }}
                               />
                               <p className="mb-1 mt-3 text-xs font-semibold text-slate-700">
-                                Modal maddeleri (8)
+                                Modal kutuları (8)
                               </p>
-                              <div className="space-y-2">
+                              <div className="space-y-3">
                                 {Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, (_, j) => (
-                                  <div key={j} className="flex items-center gap-2">
-                                    <span className="w-5 shrink-0 text-center text-xs text-slate-400">
-                                      {j + 1}
-                                    </span>
+                                  <div
+                                    key={j}
+                                    className="rounded-lg border border-slate-200/80 bg-white/90 px-2 py-2 sm:px-3"
+                                  >
+                                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                      Kutu {j + 1}
+                                    </p>
+                                    <label className="mb-1 block text-xs font-semibold text-slate-700">
+                                      Başlık
+                                    </label>
                                     <input
                                       className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                                      value={card.modalItems[j] ?? ""}
-                                      placeholder={`Madde ${j + 1}`}
+                                      value={card.modalItems[j]?.title ?? ""}
+                                      placeholder={`Başlık ${j + 1}`}
                                       onChange={(e) => {
                                         const list = normalizeProgramCards(draft.programCards);
-                                        const items = [...list[i].modalItems];
-                                        items[j] = e.target.value;
+                                        const items = list[i].modalItems.map((m) => ({ ...m }));
+                                        items[j] = { ...items[j], title: e.target.value };
+                                        list[i] = { ...list[i], modalItems: items };
+                                        onPatch({
+                                          programCards: list,
+                                          programs: programsArrayFromProgramCards(list),
+                                        });
+                                      }}
+                                    />
+                                    <label className="mb-1 mt-2 block text-xs font-semibold text-slate-700">
+                                      Alt metin
+                                    </label>
+                                    <input
+                                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                      value={card.modalItems[j]?.subtitle ?? ""}
+                                      placeholder="Kısa açıklama"
+                                      onChange={(e) => {
+                                        const list = normalizeProgramCards(draft.programCards);
+                                        const items = list[i].modalItems.map((m) => ({ ...m }));
+                                        items[j] = { ...items[j], subtitle: e.target.value };
                                         list[i] = { ...list[i], modalItems: items };
                                         onPatch({
                                           programCards: list,

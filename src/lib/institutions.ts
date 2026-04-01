@@ -23,7 +23,10 @@ export function filterInstitutions(
       .map((c) => `${c.title} ${c.body}`)
       .join(" ");
     const programText = institution.programCards
-      .map((c) => `${c.title} ${c.body} ${(c.modalItems ?? []).join(" ")}`)
+      .map(
+        (c) =>
+          `${c.title} ${c.body} ${(c.modalItems ?? []).map((m) => `${m.title} ${m.subtitle}`).join(" ")}`,
+      )
       .join(" ");
     const text =
       `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.longDescription} ${institution.aboutInstitution} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")} ${institution.minPrice} ${institution.maxPrice} ${institution.priceRange} ${aboutText} ${programText} ${institution.programs.join(" ")}`.toLowerCase();

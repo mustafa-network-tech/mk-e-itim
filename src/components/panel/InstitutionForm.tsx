@@ -87,7 +87,10 @@ export function InstitutionForm({
   const [rating, setRating] = useState(String(defaults.rating));
   const [reviewCount, setReviewCount] = useState(String(defaults.reviewCount));
   const [programCards, setProgramCards] = useState<InstitutionProgramCard[]>(() =>
-    defaults.programCards.map((c) => ({ ...c, modalItems: [...c.modalItems] })),
+    defaults.programCards.map((c) => ({
+      ...c,
+      modalItems: c.modalItems.map((m) => ({ ...m })),
+    })),
   );
   const [imagesText, setImagesText] = useState(defaults.images.join("\n"));
   const [featured, setFeatured] = useState(defaults.featured);
@@ -122,7 +125,12 @@ export function InstitutionForm({
     setMaxPrice(String(defaults.maxPrice));
     setRating(String(defaults.rating));
     setReviewCount(String(defaults.reviewCount));
-    setProgramCards(defaults.programCards.map((c) => ({ ...c })));
+    setProgramCards(
+      defaults.programCards.map((c) => ({
+        ...c,
+        modalItems: c.modalItems.map((m) => ({ ...m })),
+      })),
+    );
     setImagesText(defaults.images.join("\n"));
     setFeatured(defaults.featured);
     setTopVisible(defaults.topVisible ?? true);
@@ -442,8 +450,8 @@ export function InstitutionForm({
       <div className="space-y-4">
         <SectionTitle>Programlar (8 kart)</SectionTitle>
         <p className="text-xs text-slate-500">
-          Kart başlığı listede görünür; programa tıklanınca modala 8 madde (şeffaf kutucuklar) olarak
-          yansır.
+          Kart başlığı listede görünür; programa tıklanınca modala 8 şeffaf kutu (her birinde başlık + alt
+          metin) yansır.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           {programCards.map((card, i) => (
@@ -459,19 +467,38 @@ export function InstitutionForm({
                   setProgramCards(next);
                 }}
               />
-              <p className={`${label} mt-3`}>Modal maddeleri (8 satır)</p>
-              <div className="mt-1 space-y-2">
+              <p className={`${label} mt-3`}>Modal kutuları (8 adet)</p>
+              <div className="mt-1 space-y-3">
                 {Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, (_, j) => (
-                  <div key={j} className="flex items-center gap-2">
-                    <span className="w-5 shrink-0 text-center text-xs text-slate-400">{j + 1}</span>
+                  <div
+                    key={j}
+                    className="rounded-lg border border-slate-200/80 bg-white/90 px-2 py-2 sm:px-3"
+                  >
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Kutu {j + 1}
+                    </p>
+                    <label className={label}>Başlık</label>
                     <input
                       className={input}
-                      value={card.modalItems[j] ?? ""}
-                      placeholder={`Madde ${j + 1}`}
+                      value={card.modalItems[j]?.title ?? ""}
+                      placeholder={`Başlık ${j + 1}`}
                       onChange={(e) => {
                         const next = [...programCards];
-                        const items = [...next[i].modalItems];
-                        items[j] = e.target.value;
+                        const items = next[i].modalItems.map((m) => ({ ...m }));
+                        items[j] = { ...items[j], title: e.target.value };
+                        next[i] = { ...next[i], modalItems: items };
+                        setProgramCards(next);
+                      }}
+                    />
+                    <label className={`${label} mt-2`}>Alt metin</label>
+                    <input
+                      className={input}
+                      value={card.modalItems[j]?.subtitle ?? ""}
+                      placeholder="Kısa açıklama"
+                      onChange={(e) => {
+                        const next = [...programCards];
+                        const items = next[i].modalItems.map((m) => ({ ...m }));
+                        items[j] = { ...items[j], subtitle: e.target.value };
                         next[i] = { ...next[i], modalItems: items };
                         setProgramCards(next);
                       }}

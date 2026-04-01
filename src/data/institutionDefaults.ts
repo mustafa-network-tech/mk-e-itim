@@ -15,8 +15,16 @@ const DEFAULT_EXAM_NAV = ["LGS"] as const;
 
 const DEFAULT_PROGRAM_CARDS = (() => {
   const c = createEmptyProgramCards();
-  c[0] = { title: "TYT", body: "", modalItems: createEmptyModalItems() };
-  c[1] = { title: "AYT", body: "", modalItems: createEmptyModalItems() };
+  c[0] = {
+    title: "TYT",
+    body: "",
+    modalItems: createEmptyModalItems(),
+  };
+  c[1] = {
+    title: "AYT",
+    body: "",
+    modalItems: createEmptyModalItems(),
+  };
   return c;
 })();
 const DEFAULT_TYPE_LABELS = labelMapFromInstitutionTypes(INSTITUTION_TYPES_SEED);

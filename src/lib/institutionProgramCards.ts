@@ -1,10 +1,10 @@
-import type { InstitutionProgramCard } from "@/types";
+import type { InstitutionProgramCard, InstitutionProgramModalItem } from "@/types";
 
 export const INSTITUTION_PROGRAM_CARD_COUNT = 8;
 export const PROGRAM_MODAL_ITEM_COUNT = 8;
 
-export function createEmptyModalItems(): string[] {
-  return Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, () => "");
+export function createEmptyModalItems(): InstitutionProgramModalItem[] {
+  return Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, () => ({ title: "", subtitle: "" }));
 }
 
 export function createEmptyProgramCards(): InstitutionProgramCard[] {
@@ -15,18 +15,43 @@ export function createEmptyProgramCards(): InstitutionProgramCard[] {
   }));
 }
 
-function parseModalItemsFromUnknown(raw: unknown): string[] | null {
+function parseOneModalItem(raw: unknown): InstitutionProgramModalItem {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const o = raw as Record<string, unknown>;
+    const title = typeof o.title === "string" ? o.title : "";
+    const subtitle =
+      typeof o.subtitle === "string"
+        ? o.subtitle
+        : typeof o.body === "string"
+          ? o.body
+          : "";
+    return { title, subtitle };
+  }
+  if (typeof raw === "string") {
+    return { title: raw, subtitle: "" };
+  }
+  return { title: "", subtitle: "" };
+}
+
+function parseModalItemsFromUnknown(raw: unknown): InstitutionProgramModalItem[] | null {
   if (!Array.isArray(raw)) return null;
-  const out = raw.map((v) => (typeof v === "string" ? v : "")).slice(0, PROGRAM_MODAL_ITEM_COUNT);
-  while (out.length < PROGRAM_MODAL_ITEM_COUNT) out.push("");
+  const out = raw.map(parseOneModalItem).slice(0, PROGRAM_MODAL_ITEM_COUNT);
+  while (out.length < PROGRAM_MODAL_ITEM_COUNT) {
+    out.push({ title: "", subtitle: "" });
+  }
   return out;
 }
 
-function bodyFromItems(items: string[]): string {
+function bodyFromItems(items: InstitutionProgramModalItem[]): string {
   return items
-    .map((s) => s.trim())
+    .map((it) => {
+      const t = it.title.trim();
+      const s = it.subtitle.trim();
+      if (t && s) return `${t}\n${s}`;
+      return t || s;
+    })
     .filter(Boolean)
-    .join("\n");
+    .join("\n\n");
 }
 
 export function normalizeProgramCards(input: unknown): InstitutionProgramCard[] {
@@ -46,7 +71,7 @@ export function normalizeProgramCards(input: unknown): InstitutionProgramCard[] 
         .map((s) => s.trim())
         .filter(Boolean);
       for (let j = 0; j < Math.min(lines.length, PROGRAM_MODAL_ITEM_COUNT); j++) {
-        modalItems[j] = lines[j];
+        modalItems[j] = { title: lines[j], subtitle: "" };
       }
     }
     const body = bodyFromItems(modalItems) || bodyRaw;
@@ -62,7 +87,14 @@ export function programCardsFromDbRow(
 ): InstitutionProgramCard[] {
   if (programCardsRaw != null) {
     const parsed = normalizeProgramCards(programCardsRaw);
-    if (parsed.some((c) => c.title.trim() || c.body.trim() || c.modalItems.some((m) => m.trim()))) {
+    if (
+      parsed.some(
+        (c) =>
+          c.title.trim() ||
+          c.body.trim() ||
+          c.modalItems.some((m) => m.title.trim() || m.subtitle.trim()),
+      )
+    ) {
       return parsed;
     }
   }

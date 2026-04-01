@@ -41,7 +41,7 @@ export function InstitutionProgramCardsSection({ cards }: { cards: InstitutionPr
           role="dialog"
           aria-modal="true"
           aria-labelledby="program-modal-title"
-          className="relative z-[81] flex max-h-[min(88vh,640px)] w-full max-w-lg flex-col rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl"
+          className="relative z-[81] flex max-h-[min(88vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl"
         >
           <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3">
             <h3 id="program-modal-title" className="pr-2 text-base font-semibold text-slate-900">
@@ -56,20 +56,29 @@ export function InstitutionProgramCardsSection({ cards }: { cards: InstitutionPr
             </button>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, (_, idx) => {
-                const line = (current?.modalItems[idx] ?? "").trim();
+                const item = current?.modalItems[idx] ?? { title: "", subtitle: "" };
+                const t = item.title.trim();
+                const s = item.subtitle.trim();
+                const isEmpty = !t && !s;
                 return (
                   <li
                     key={idx}
-                    className="flex gap-2.5 rounded-xl border border-slate-200/90 bg-slate-50/70 px-3 py-2.5 text-sm leading-relaxed text-slate-800 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6)] backdrop-blur-[2px]"
+                    className="rounded-xl border border-slate-200/90 bg-slate-50/65 px-3.5 py-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.65)] backdrop-blur-[2px]"
                   >
-                    <span className="mt-0.5 shrink-0 select-none text-slate-500" aria-hidden>
-                      •
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      {line ? line : <span className="text-slate-400">Bu madde boş.</span>}
-                    </span>
+                    {isEmpty ? (
+                      <p className="text-sm text-slate-400">Bu kutu boş.</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {t ? (
+                          <p className="text-sm font-semibold leading-snug text-slate-900">{t}</p>
+                        ) : null}
+                        {s ? (
+                          <p className="text-sm leading-relaxed text-slate-600">{s}</p>
+                        ) : null}
+                      </div>
+                    )}
                   </li>
                 );
               })}

@@ -63,12 +63,17 @@ export function HeroSection() {
           aria-hidden
         />
         <div className="absolute inset-0 bg-[rgba(212,175,55,0.08)]" aria-hidden />
+        {/* Marka: fotoğraf üzerinde sol üst */}
+        <div className="absolute left-4 top-8 z-20 sm:left-6 sm:top-10 md:top-12">
+          <KursiyeraWordmark
+            variant="onDark"
+            size="lg"
+            className="drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]"
+          />
+        </div>
         <div className="relative z-10 mx-auto flex min-h-[440px] max-w-7xl flex-col px-4 pb-7 pt-10 sm:px-6 md:min-h-[420px] md:pb-9 md:pt-12">
           <div className="min-h-0 flex-1" aria-hidden />
           <div className="mx-auto flex w-full max-w-3xl shrink-0 flex-col items-center px-2 text-center">
-            <div className="mb-3 flex justify-center md:mb-4">
-              <KursiyeraWordmark variant="onDark" size="lg" />
-            </div>
             <h1
               key={titleIndex}
               className="w-full min-h-[2.75rem] text-3xl font-bold leading-tight text-white md:min-h-[3.25rem] md:text-4xl lg:min-h-[3.5rem] lg:text-[2.65rem] lg:leading-[1.12]"

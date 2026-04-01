@@ -7,7 +7,7 @@ import { getSiteOrigin } from "@/lib/siteUrl";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PoweredByBalloon } from "@/components/layout/PoweredByBalloon";
-import { EducationAdvisorLauncher } from "@/components/education/EducationAdvisorLauncher";
+import { ConditionalEducationAdvisorLauncher } from "@/components/education/ConditionalEducationAdvisorLauncher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -84,7 +84,7 @@ export default function RootLayout({
           <PoweredByBalloon />
           <main className="min-w-0 flex-auto">{children}</main>
           <Footer />
-          <EducationAdvisorLauncher />
+          <ConditionalEducationAdvisorLauncher />
         </Providers>
       </body>
     </html>

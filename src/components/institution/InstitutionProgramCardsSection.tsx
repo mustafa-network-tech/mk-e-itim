@@ -5,7 +5,14 @@ import { createPortal } from "react-dom";
 import type { InstitutionProgramCard } from "@/types";
 import { normalizeProgramCards, PROGRAM_MODAL_ITEM_COUNT } from "@/lib/institutionProgramCards";
 
-export function InstitutionProgramCardsSection({ cards }: { cards: InstitutionProgramCard[] }) {
+export function InstitutionProgramCardsSection({
+  cards,
+  teklifWhatsAppHrefForProgram,
+}: {
+  cards: InstitutionProgramCard[];
+  /** Kurumda geçerli WhatsApp numarası varken: program adına göre teklif mesajlı wa.me linki. */
+  teklifWhatsAppHrefForProgram?: (programTitle: string) => string;
+}) {
   const list = normalizeProgramCards(cards);
   const [open, setOpen] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -25,6 +32,8 @@ export function InstitutionProgramCardsSection({ cards }: { cards: InstitutionPr
 
   const current = open !== null ? list[open] : null;
   const modalTitle = current?.title.trim() || (open !== null ? `Program ${open + 1}` : "");
+  const teklifHref =
+    current && teklifWhatsAppHrefForProgram ? teklifWhatsAppHrefForProgram(modalTitle) : null;
 
   const modal =
     mounted &&
@@ -84,6 +93,20 @@ export function InstitutionProgramCardsSection({ cards }: { cards: InstitutionPr
               })}
             </ul>
           </div>
+          {teklifHref ? (
+            <div className="shrink-0 border-t border-slate-100 px-4 py-3">
+              <div className="flex justify-end">
+                <a
+                  href={teklifHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#20bd5a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2"
+                >
+                  Teklif Al
+                </a>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>,
       document.body,

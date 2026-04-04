@@ -10,6 +10,7 @@ import {
 } from "@/lib/discount";
 import {
   longDescriptionFromAboutCards,
+  INSTITUTION_ABOUT_CARD_TITLES,
   normalizeAboutCards,
 } from "@/lib/institutionAboutCards";
 import {
@@ -292,8 +293,8 @@ export function InstitutionEditorFields({
                           Kurum genel bilgileri — 8 kart
                         </h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Detayda «Kurum genel bilgileri» başlığı altında 2 sütunlu grid olarak listelenir. Boş
-                          kartlar yer tutar.
+                          Detayda «Kurum genel bilgileri» altında 2 sütunlu grid. Başlıklar sabit; yalnızca alt metin
+                          düzenlenir. Boş metin — gösterilir.
                         </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           {normalizeAboutCards(draft.aboutCards).map((card, i) => (
@@ -301,24 +302,11 @@ export function InstitutionEditorFields({
                               key={i}
                               className="rounded-lg border border-slate-200 bg-slate-50/90 p-3"
                             >
-                              <p className="mb-2 text-xs font-semibold text-slate-600">Kart {i + 1}</p>
+                              <p className="mb-2 text-sm font-semibold leading-snug text-slate-900">
+                                {INSTITUTION_ABOUT_CARD_TITLES[i]}
+                              </p>
                               <label className="mb-1 block text-xs font-semibold text-slate-700">
-                                Başlık (isteğe bağlı)
-                              </label>
-                              <input
-                                className="mb-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                                value={card.title}
-                                onChange={(e) => {
-                                  const list = normalizeAboutCards(draft.aboutCards);
-                                  list[i] = { ...list[i], title: e.target.value };
-                                  onPatch({
-                                    aboutCards: list,
-                                    longDescription: longDescriptionFromAboutCards(list),
-                                  });
-                                }}
-                              />
-                              <label className="mb-1 block text-xs font-semibold text-slate-700">
-                                Metin
+                                Alt metin
                               </label>
                               <textarea
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"

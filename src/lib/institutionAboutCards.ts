@@ -2,8 +2,20 @@ import type { InstitutionAboutCard } from "@/types";
 
 export const INSTITUTION_ABOUT_CARD_COUNT = 8;
 
+/** Kurum genel bilgileri: sabit başlıklar; yalnızca `body` düzenlenir. */
+export const INSTITUTION_ABOUT_CARD_TITLES: readonly string[] = [
+  "Kuruluş Yılı",
+  "Toplam Derslik Sayısı",
+  "Tek Seans Öğrenci Kapasitesi",
+  "Kütüphane Kapasitesi",
+  "Sınıf Mevcutları",
+  "Bir Rehber (Koç Öğretmene Düşen Öğrenci Sayısı)",
+  "Öğretmen Kadrosunun Ortalama Deneyimi",
+  "Aktif Kurs Programları",
+];
+
 export function createEmptyAboutCards(): InstitutionAboutCard[] {
-  return Array.from({ length: INSTITUTION_ABOUT_CARD_COUNT }, () => ({ title: "", body: "" }));
+  return INSTITUTION_ABOUT_CARD_TITLES.map((title) => ({ title, body: "" }));
 }
 
 export function normalizeAboutCards(input: unknown): InstitutionAboutCard[] {
@@ -11,8 +23,9 @@ export function normalizeAboutCards(input: unknown): InstitutionAboutCard[] {
   const out: InstitutionAboutCard[] = [];
   for (let i = 0; i < INSTITUTION_ABOUT_CARD_COUNT; i++) {
     const x = arr[i] as { title?: unknown; body?: unknown } | undefined;
+    const title = INSTITUTION_ABOUT_CARD_TITLES[i] ?? "";
     out.push({
-      title: typeof x?.title === "string" ? x.title : "",
+      title,
       body: typeof x?.body === "string" ? x.body : "",
     });
   }
@@ -31,7 +44,7 @@ export function aboutCardsFromDbRow(
   }
   const cards = createEmptyAboutCards();
   const ld = longDescriptionFallback.trim();
-  if (ld) cards[0] = { title: "", body: ld };
+  if (ld) cards[0] = { ...cards[0], body: ld };
   return cards;
 }
 
@@ -41,8 +54,8 @@ export function longDescriptionFromAboutCards(cards: InstitutionAboutCard[]): st
     .map((c) => {
       const t = c.title.trim();
       const b = c.body.trim();
-      if (t && b) return `${t}\n${b}`;
-      return t || b;
+      if (!b) return "";
+      return t ? `${t}\n${b}` : b;
     })
     .filter(Boolean)
     .join("\n\n");

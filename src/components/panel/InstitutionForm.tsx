@@ -9,6 +9,7 @@ import {
 } from "@/lib/discount";
 import {
   createEmptyAboutCards,
+  INSTITUTION_ABOUT_CARD_TITLES,
   longDescriptionFromAboutCards,
   normalizeAboutCards,
 } from "@/lib/institutionAboutCards";
@@ -359,29 +360,21 @@ export function InstitutionForm({
         <div>
           <p className={`${label} mb-2`}>Kurum genel bilgileri — 8 bilgi kartı (detayda bu başlık altında)</p>
           <p className="mb-3 text-xs text-slate-500">
-            Her kartta isteğe bağlı kısa başlık ve metin. Boş kartlar sitede yine görünür (içerik yoksa —).
+            Kart başlıkları sabittir; yalnızca alt metni düzenleyebilirsiniz. Boş metinler sitede — olarak görünür.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             {aboutCards.map((card, i) => (
               <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                <p className="mb-2 text-xs font-semibold text-slate-600">Kart {i + 1}</p>
-                <label className={label}>Başlık (isteğe bağlı)</label>
-                <input
-                  className={input}
-                  value={card.title}
-                  onChange={(e) => {
-                    const next = [...aboutCards];
-                    next[i] = { ...next[i], title: e.target.value };
-                    setAboutCards(next);
-                  }}
-                />
-                <label className={`${label} mt-2`}>Metin</label>
+                <p className="mb-2 text-sm font-semibold leading-snug text-slate-900">
+                  {INSTITUTION_ABOUT_CARD_TITLES[i]}
+                </p>
+                <label className={label}>Alt metin</label>
                 <textarea
                   className={input}
                   rows={3}
                   value={card.body}
                   onChange={(e) => {
-                    const next = [...aboutCards];
+                    const next = normalizeAboutCards(aboutCards);
                     next[i] = { ...next[i], body: e.target.value };
                     setAboutCards(next);
                   }}

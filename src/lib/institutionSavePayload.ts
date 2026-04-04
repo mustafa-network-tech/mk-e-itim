@@ -166,7 +166,11 @@ function previewFieldValue(key: keyof Institution, v: unknown): string {
   if (v === null || v === undefined) return "—";
   if (Array.isArray(v)) {
     if (v.length === 0) return "—";
-    if (key === "aboutCards" || key === "programCards") {
+    if (key === "aboutCards") {
+      const n = (v as InstitutionAboutCard[]).filter((c) => c.body.trim()).length;
+      return `${n}/8 metin dolu`;
+    }
+    if (key === "programCards") {
       const n = (v as InstitutionAboutCard[]).filter((c) => c.title.trim() || c.body.trim()).length;
       return `${n}/8 kart`;
     }

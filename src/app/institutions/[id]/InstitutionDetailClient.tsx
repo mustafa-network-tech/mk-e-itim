@@ -11,6 +11,7 @@ import {
   institutionCanOpenWhatsAppChat,
   institutionWhatsAppHref,
 } from "@/lib/institutions";
+import { normalizeAboutCards } from "@/lib/institutionAboutCards";
 import {
   InstitutionDetailDiscountBand,
   InstitutionPriceBlock,
@@ -166,19 +167,13 @@ export function InstitutionDetailClient() {
               Kurum genel bilgileri
             </h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {institution.aboutCards.map((card, i) => (
+              {normalizeAboutCards(institution.aboutCards).map((card, i) => (
                 <div
                   key={i}
                   className="flex min-h-[7rem] flex-col rounded-xl border border-slate-100 bg-slate-50/90 p-4"
                 >
-                  {card.title.trim() ? (
-                    <h3 className="text-sm font-semibold text-slate-900">{card.title.trim()}</h3>
-                  ) : null}
-                  <p
-                    className={`whitespace-pre-line text-sm leading-relaxed text-slate-700 ${
-                      card.title.trim() ? "mt-2" : ""
-                    }`}
-                  >
+                  <h3 className="text-sm font-semibold text-slate-900">{card.title.trim()}</h3>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
                     {card.body.trim() ? card.body.trim() : "—"}
                   </p>
                 </div>

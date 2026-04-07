@@ -142,7 +142,7 @@ const PENDING_FIELD_LABELS: Partial<Record<keyof Institution, string>> = {
   longDescription: "Uzun açıklama (otomatik)",
   aboutCards: "Kurum genel bilgileri (8 kart)",
   aboutInstitution: "Kurum hakkında (metin)",
-  programCards: "Programlar (8 kart)",
+  programCards: "Programlar (2–8 kart)",
   examNavIds: "Kurum türleri (menü)",
   price: "Fiyat metni (kullanılmıyor)",
   priceRange: "Fiyat aralığı (otomatik)",
@@ -171,8 +171,8 @@ function previewFieldValue(key: keyof Institution, v: unknown): string {
       return `${n}/8 metin dolu`;
     }
     if (key === "programCards") {
-      const n = (v as InstitutionAboutCard[]).filter((c) => c.title.trim() || c.body.trim()).length;
-      return `${n}/8 kart`;
+      const n = normalizeProgramCards(v).length;
+      return `${n} program (2–8)`;
     }
     if (key === "images" || key === "programs") return `${v.length} satır`;
     return v.map((x) => String(x)).join(", ");

@@ -1,18 +1,35 @@
 import type { InstitutionProgramCard, InstitutionProgramModalItem } from "@/types";
 
-export const INSTITUTION_PROGRAM_CARD_COUNT = 8;
+/** Her program kartının modaldaki satır sayısı (şeffaf kutular). */
 export const PROGRAM_MODAL_ITEM_COUNT = 8;
+
+/** Kurum başına program kartı: en az bu kadar (varsayılan). */
+export const INSTITUTION_PROGRAM_CARD_MIN = 2;
+/** Kurum başına program kartı: en fazla. */
+export const INSTITUTION_PROGRAM_CARD_MAX = 8;
+
+/** @deprecated INSTITUTION_PROGRAM_CARD_MAX kullanın. */
+export const INSTITUTION_PROGRAM_CARD_COUNT = INSTITUTION_PROGRAM_CARD_MAX;
 
 export function createEmptyModalItems(): InstitutionProgramModalItem[] {
   return Array.from({ length: PROGRAM_MODAL_ITEM_COUNT }, () => ({ title: "", subtitle: "" }));
 }
 
-export function createEmptyProgramCards(): InstitutionProgramCard[] {
-  return Array.from({ length: INSTITUTION_PROGRAM_CARD_COUNT }, () => ({
+export function createEmptyProgramCardRow(): InstitutionProgramCard {
+  return {
     title: "",
     body: "",
     modalItems: createEmptyModalItems(),
-  }));
+  };
+}
+
+export function createEmptyProgramCards(): InstitutionProgramCard[] {
+  return [createEmptyProgramCardRow(), createEmptyProgramCardRow()];
+}
+
+function isProgramCardWhollyEmpty(c: InstitutionProgramCard): boolean {
+  if (c.title.trim() || c.body.trim()) return false;
+  return !c.modalItems.some((m) => m.title.trim() || m.subtitle.trim());
 }
 
 function parseOneModalItem(raw: unknown): InstitutionProgramModalItem {
@@ -54,33 +71,41 @@ function bodyFromItems(items: InstitutionProgramModalItem[]): string {
     .join("\n\n");
 }
 
+function parseOneProgramCard(x: unknown): InstitutionProgramCard {
+  const raw = x as { title?: unknown; body?: unknown; modalItems?: unknown } | undefined;
+  const title = typeof raw?.title === "string" ? raw.title : "";
+  const bodyRaw = typeof raw?.body === "string" ? raw.body : "";
+  let modalItems = parseModalItemsFromUnknown(raw?.modalItems);
+  if (!modalItems) {
+    modalItems = createEmptyModalItems();
+    const lines = bodyRaw
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (let j = 0; j < Math.min(lines.length, PROGRAM_MODAL_ITEM_COUNT); j++) {
+      modalItems[j] = { title: lines[j], subtitle: "" };
+    }
+  }
+  const body = bodyFromItems(modalItems) || bodyRaw;
+  return { title, body, modalItems };
+}
+
 export function normalizeProgramCards(input: unknown): InstitutionProgramCard[] {
   const arr = Array.isArray(input) ? input : [];
-  const out: InstitutionProgramCard[] = [];
-  for (let i = 0; i < INSTITUTION_PROGRAM_CARD_COUNT; i++) {
-    const x = arr[i] as
-      | { title?: unknown; body?: unknown; modalItems?: unknown }
-      | undefined;
-    const title = typeof x?.title === "string" ? x.title : "";
-    const bodyRaw = typeof x?.body === "string" ? x.body : "";
-    let modalItems = parseModalItemsFromUnknown(x?.modalItems);
-    if (!modalItems) {
-      modalItems = createEmptyModalItems();
-      const lines = bodyRaw
-        .split(/\r?\n/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-      for (let j = 0; j < Math.min(lines.length, PROGRAM_MODAL_ITEM_COUNT); j++) {
-        modalItems[j] = { title: lines[j], subtitle: "" };
-      }
-    }
-    const body = bodyFromItems(modalItems) || bodyRaw;
-    out.push({ title, body, modalItems });
+  let out = arr.slice(0, INSTITUTION_PROGRAM_CARD_MAX).map((x) => parseOneProgramCard(x));
+  while (
+    out.length > INSTITUTION_PROGRAM_CARD_MIN &&
+    isProgramCardWhollyEmpty(out[out.length - 1]!)
+  ) {
+    out.pop();
+  }
+  while (out.length < INSTITUTION_PROGRAM_CARD_MIN) {
+    out.push(createEmptyProgramCardRow());
   }
   return out;
 }
 
-/** Eski `programs` text[] → ilk satırlar kart başlığı olarak. */
+/** Eski `programs` text[] → satır başlıkları kart olarak (en fazla MAX). */
 export function programCardsFromDbRow(
   programCardsRaw: unknown,
   programsFallback: string[],
@@ -98,12 +123,16 @@ export function programCardsFromDbRow(
       return parsed;
     }
   }
-  const out = createEmptyProgramCards();
   const lines = programsFallback.map((s) => s.trim()).filter(Boolean);
-  for (let i = 0; i < Math.min(lines.length, INSTITUTION_PROGRAM_CARD_COUNT); i++) {
-    out[i] = { title: lines[i], body: "", modalItems: createEmptyModalItems() };
+  if (lines.length === 0) {
+    return normalizeProgramCards([]);
   }
-  return out;
+  const fromLines = lines.slice(0, INSTITUTION_PROGRAM_CARD_MAX).map((title) => ({
+    title,
+    body: "",
+    modalItems: createEmptyModalItems(),
+  }));
+  return normalizeProgramCards(fromLines);
 }
 
 /** `programs` text[] sütunu — kart başlıklarından (boş olmayan). */

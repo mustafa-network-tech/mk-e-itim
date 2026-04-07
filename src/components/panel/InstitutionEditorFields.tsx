@@ -15,6 +15,9 @@ import {
   normalizeAboutCards,
 } from "@/lib/institutionAboutCards";
 import {
+  createEmptyProgramCardRow,
+  INSTITUTION_PROGRAM_CARD_MAX,
+  INSTITUTION_PROGRAM_CARD_MIN,
   normalizeProgramCards,
   programsArrayFromProgramCards,
   PROGRAM_MODAL_ITEM_COUNT,
@@ -346,13 +349,33 @@ export function InstitutionEditorFields({
                       >
                         <h4 className="text-sm font-bold text-slate-900">Programlar ve görseller</h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Programlar: 8 kart; başlık listede, modala 8 şeffaf kutu (başlık + alt metin)
-                          yansır. Görseller: kapak için ilk satır önemli; her satır bir görsel URL&apos;si.
+                          Programlar: en az 2, en fazla 8 kart; başlık listede ve WhatsApp teklifinde kullanılır.
+                          Modala 8 şeffaf kutu yansır. Görseller: kapak için ilk satır önemli.
                         </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           {normalizeProgramCards(draft.programCards).map((card, i) => (
                             <div key={i} className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
-                              <p className="mb-2 text-xs font-semibold text-slate-600">Program {i + 1}</p>
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <p className="text-xs font-semibold text-slate-600">Program {i + 1}</p>
+                                {normalizeProgramCards(draft.programCards).length >
+                                INSTITUTION_PROGRAM_CARD_MIN ? (
+                                  <button
+                                    type="button"
+                                    className="rounded-md border border-rose-200 bg-white px-2 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50"
+                                    onClick={() => {
+                                      const list = normalizeProgramCards(draft.programCards);
+                                      list.splice(i, 1);
+                                      const next = normalizeProgramCards(list);
+                                      onPatch({
+                                        programCards: next,
+                                        programs: programsArrayFromProgramCards(next),
+                                      });
+                                    }}
+                                  >
+                                    Kaldır
+                                  </button>
+                                ) : null}
+                              </div>
                               <label className="mb-1 block text-xs font-semibold text-slate-700">
                                 Kart başlığı
                               </label>
@@ -422,6 +445,27 @@ export function InstitutionEditorFields({
                             </div>
                           ))}
                         </div>
+                        <button
+                          type="button"
+                          disabled={
+                            normalizeProgramCards(draft.programCards).length >=
+                            INSTITUTION_PROGRAM_CARD_MAX
+                          }
+                          onClick={() => {
+                            const list = normalizeProgramCards(draft.programCards);
+                            if (list.length >= INSTITUTION_PROGRAM_CARD_MAX) return;
+                            const next = [...list, createEmptyProgramCardRow()];
+                            onPatch({
+                              programCards: next,
+                              programs: programsArrayFromProgramCards(next),
+                            });
+                          }}
+                          className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-900 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Program ekle (
+                          {normalizeProgramCards(draft.programCards).length}/
+                          {INSTITUTION_PROGRAM_CARD_MAX})
+                        </button>
                         <label className="mb-1 mt-3 block text-xs font-semibold text-slate-700">
                           Kurum fotoğrafları
                         </label>

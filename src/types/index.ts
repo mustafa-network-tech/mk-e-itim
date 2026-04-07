@@ -29,7 +29,7 @@ export interface InstitutionProgramModalItem {
   subtitle: string;
 }
 
-/** Programlar: 8 kart; başlık listede; modaldaki 8 kutu `modalItems` (başlık + alt metin). `body` eski kayıtlar için. */
+/** Programlar: 2–8 kart; başlık listede ve WhatsApp teklif metninde; modaldaki kutular `modalItems`. `body` eski kayıt uyumu. */
 export interface InstitutionProgramCard {
   title: string;
   /** Eski kayıt uyumu; yeni düzenlemede modalItems önceliklidir. */
@@ -64,7 +64,7 @@ export interface Institution {
   aboutCards: InstitutionAboutCard[];
   /** Detayda «Kurum hakkında» başlığı altında serbest metin; kurum panelinden doldurulur. */
   aboutInstitution: string;
-  /** Detayda «Programlar» altında 8 tıklanabilir kart (modal metni); panelden düzenlenir. */
+  /** Detayda «Programlar» altında 2–8 tıklanabilir kart (modal metni); panelden eklenir/kaldırılır. */
   programCards: InstitutionProgramCard[];
   /** Kullanılmıyor; kayıtta boş tutulur (gösterim min–max sayılardan). */
   price: string;

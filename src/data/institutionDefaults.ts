@@ -1,10 +1,6 @@
 import { createEmptyAboutCards } from "@/lib/institutionAboutCards";
-import {
-  createEmptyModalItems,
-  createEmptyProgramCards,
-  programsArrayFromProgramCards,
-} from "@/lib/institutionProgramCards";
-import type { Institution } from "@/types";
+import { createEmptyModalItems, programsArrayFromProgramCards } from "@/lib/institutionProgramCards";
+import type { Institution, InstitutionProgramCard } from "@/types";
 import { categoryDisplayFromExamNavIds } from "@/lib/examMenuNav";
 import {
   INSTITUTION_TYPES_SEED,
@@ -13,20 +9,10 @@ import {
 
 const DEFAULT_EXAM_NAV = ["LGS"] as const;
 
-const DEFAULT_PROGRAM_CARDS = (() => {
-  const c = createEmptyProgramCards();
-  c[0] = {
-    title: "TYT",
-    body: "",
-    modalItems: createEmptyModalItems(),
-  };
-  c[1] = {
-    title: "AYT",
-    body: "",
-    modalItems: createEmptyModalItems(),
-  };
-  return c;
-})();
+const DEFAULT_PROGRAM_CARDS: InstitutionProgramCard[] = [
+  { title: "TYT", body: "", modalItems: createEmptyModalItems() },
+  { title: "AYT", body: "", modalItems: createEmptyModalItems() },
+];
 const DEFAULT_TYPE_LABELS = labelMapFromInstitutionTypes(INSTITUTION_TYPES_SEED);
 
 /** Yeni kurum oluştururken `name` ve `ownerUserId` dışındaki alanlar için başlangıç değerleri */

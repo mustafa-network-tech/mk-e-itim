@@ -92,9 +92,21 @@ export function institutionCanOpenWhatsAppChat(institution: Institution): boolea
   return institutionWhatsAppDialDigits(institution).replace(/\D/g, "").length >= 10;
 }
 
+/** Kurum «Teklif Al» / WhatsApp varsayılan metni (detay, liste kartı). */
+export const INSTITUTION_WHATSAPP_TEKLIF_MESSAGE =
+  "Merhaba, Kursiyera üzerinden size ulaşıyorum. Bilgi alabilir miyim?";
+
+/** Program modalı «Teklif Al»: siteden ulaşıldığı + kurum ve program bağlamı. */
+export function institutionProgramTeklifWhatsAppMessage(
+  institution: Institution,
+  programTitle: string,
+): string {
+  return `Merhaba, Kursiyera üzerinden size ulaşıyorum. ${institution.name} — "${programTitle}" programı hakkında bilgi alabilir miyim?`;
+}
+
 export function institutionWhatsAppHref(institution: Institution, presetMessage?: string) {
   const digits = institutionWhatsAppDialDigits(institution);
-  const text = presetMessage ?? `Merhaba, ${institution.name} hakkında bilgi almak istiyorum.`;
+  const text = presetMessage ?? INSTITUTION_WHATSAPP_TEKLIF_MESSAGE;
   const encoded = encodeURIComponent(text);
   if (digits.replace(/\D/g, "").length >= 10) {
     return `https://api.whatsapp.com/send?phone=${digits}&text=${encoded}`;

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Institution, Review } from "@/types";
 import { getPublicRating, institutionCoverImage, institutionWhatsAppHref } from "@/lib/institutions";
-import { isDiscountCurrentlyActive, KURSIYERA_TEKLIF_WHATSAPP_MESSAGE } from "@/lib/discount";
+import { isDiscountCurrentlyActive } from "@/lib/discount";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { InstitutionDiscountBadge, InstitutionPriceBlock } from "@/components/institution/InstitutionPriceBlock";
 
@@ -15,7 +15,7 @@ export function InstitutionCard({ institution, reviews }: InstitutionCardProps) 
   const { average, count } = getPublicRating(institution, reviews);
   const cover = institutionCoverImage(institution);
   const categoryLabel = institution.category;
-  const waHref = institutionWhatsAppHref(institution, KURSIYERA_TEKLIF_WHATSAPP_MESSAGE);
+  const waHref = institutionWhatsAppHref(institution);
   const hasDiscountBadge = isDiscountCurrentlyActive(institution);
 
   return (

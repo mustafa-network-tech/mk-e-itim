@@ -1,8 +1,7 @@
 import type { Institution } from "@/types";
 
-/** Kursiyera teklif / bilgi mesajı (WhatsApp ön doldurma) */
-export const KURSIYERA_TEKLIF_WHATSAPP_MESSAGE =
-  "Merhaba, Kursiyera üzerinden bu kurum hakkında bilgi ve teklif almak istiyorum.";
+/** @deprecated İsim uyumu için; metin `institutions.ts` ile aynı. */
+export { INSTITUTION_WHATSAPP_TEKLIF_MESSAGE as KURSIYERA_TEKLIF_WHATSAPP_MESSAGE } from "@/lib/institutions";
 
 function todayISO(): string {
   const d = new Date();

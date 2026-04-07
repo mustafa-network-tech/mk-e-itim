@@ -22,6 +22,7 @@ import type { InstitutionAboutCard, InstitutionProgramCard } from "@/types";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
 import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
+import { InstitutionImagesField } from "@/components/panel/InstitutionImagesField";
 import { INSTITUTION_TYPES_SEED } from "@/data/institutionTypesSeed";
 
 const input =
@@ -428,15 +429,15 @@ export function InstitutionForm({
 
       <div className="space-y-4">
         <SectionTitle>Görseller</SectionTitle>
-        <p className="text-xs text-slate-500">
-          Her satıra bir görsel URL’si. İlk satır kapak görseli olarak kullanılır.
-        </p>
-        <textarea
-          className={input}
-          rows={4}
-          value={imagesText}
-          onChange={(e) => setImagesText(e.target.value)}
-          placeholder="https://..."
+        <InstitutionImagesField
+          institutionId={null}
+          images={imagesText
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean)}
+          onChange={(urls) => setImagesText(urls.join("\n"))}
+          fieldId="institution-form-images"
+          textareaRows={4}
         />
       </div>
 

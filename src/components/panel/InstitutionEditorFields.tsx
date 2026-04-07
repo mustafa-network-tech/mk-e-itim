@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
+import { InstitutionImagesField } from "@/components/panel/InstitutionImagesField";
 import {
   formatTryPriceRange,
   getDiscountedPriceFromMin,
@@ -422,20 +423,14 @@ export function InstitutionEditorFields({
                           ))}
                         </div>
                         <label className="mb-1 mt-3 block text-xs font-semibold text-slate-700">
-                          Görsel URL&apos;leri
+                          Kurum fotoğrafları
                         </label>
-                        <textarea
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                          rows={4}
-                          value={(draft.images ?? []).join("\n")}
-                          onChange={(e) =>
-                            onPatch({
-                              images: e.target.value
-                                .split("\n")
-                                .map((s) => s.trim())
-                                .filter(Boolean),
-                            })
-                          }
+                        <InstitutionImagesField
+                          institutionId={draft.id}
+                          images={draft.images ?? []}
+                          onChange={(urls) => onPatch({ images: urls })}
+                          fieldId={`${fieldIdPrefix}-institution-images`}
+                          textareaRows={4}
                         />
                       </div>
 

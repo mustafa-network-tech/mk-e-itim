@@ -31,6 +31,7 @@ Sıra | Dosya                                      | Kısa açıklama
  17  | 20260330220000_institutions_drop_structure_capacity_columns.sql | Haftalık saat, derslik, kontenjan vb. sütunların kaldırılması
  18  | 20260330230000_storage_hero_images_bucket.sql | storage: hero-images bucket + RLS (public okuma, admin yazma)
  19  | 20260330240000_hero_rotating_titles.sql | Ana sayfa hero: 4 dönüşümlü başlık metni
+ 20  | 20260330250000_storage_institution_images_bucket.sql | storage: institution-images (kurum galerisi; admin + kurum yöneticisi yazma)
 
 
 Notlar

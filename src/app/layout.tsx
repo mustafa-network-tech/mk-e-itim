@@ -6,7 +6,6 @@ import { getSupabasePublicForBrowser } from "@/lib/supabase/runtimePublic";
 import { getSiteOrigin } from "@/lib/siteUrl";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { PoweredByBalloon } from "@/components/layout/PoweredByBalloon";
 import { ConditionalEducationAdvisorLauncher } from "@/components/education/ConditionalEducationAdvisorLauncher";
 
 const geistSans = Geist({
@@ -81,7 +80,6 @@ export default function RootLayout({
       <body className="flex min-h-dvh flex-col bg-slate-50">
         <Providers supabasePublic={supabasePublic}>
           <Header />
-          <PoweredByBalloon />
           <main className="min-w-0 flex-auto">{children}</main>
           <Footer />
           <ConditionalEducationAdvisorLauncher />

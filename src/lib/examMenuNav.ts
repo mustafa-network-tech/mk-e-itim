@@ -8,10 +8,10 @@ export const EXAM_NAV_DIGER = "DIGER";
 export const DRIVING_OFFERING_EXAM_IDS = ["EHLİYET", "SRC", "OPERATORLUK"] as const;
 
 /**
- * Genel sitede üst menüde tek listeleme bağlantısı bu koda gider (`?exam=`).
- * SRC / operatörlük üst menüde ayrı satır değil; kurum kartı ve panelde aynı kurum içi «bölüm» olarak seçilir.
+ * Üst menüde ayrı filtre satırı gösterilmeyen kodlar (`?exam=`).
+ * SRC ve operatörlük yalnızca kurum kartı / panelde aynı kurum içi seçim olarak kalır.
  */
-export const SITE_HEADER_LISTINGS_EXAM_ID = "EHLİYET" as const;
+export const EXAM_IDS_EXCLUDED_FROM_SITE_HEADER = ["SRC", "OPERATORLUK"] as const;
 
 /** Ana kategoriler + SRC / operatörlük + DİĞER; URL ?exam= ile aynı kodlar. İş makinesi = OPERATORLUK ile birleşik. */
 export const EXAM_NAV_PRIMARY_VALUES = [
@@ -68,6 +68,14 @@ export function normalizeExamNavIds(ids: readonly string[]): ExamNavValue[] {
     if (isExamNavValue(t)) set.add(t);
   }
   return EXAM_NAV_ALL_VALUES.filter((v) => set.has(v));
+}
+
+/** Eğitim `exam` kodlarını atıp yalnızca sürücü uzmanlıklarını bırakır; boşsa en az Ehliyet. */
+export function examNavIdsForDrivingSchoolSegment(ids: readonly string[]): string[] {
+  const allow = new Set<string>(DRIVING_OFFERING_EXAM_IDS as unknown as string[]);
+  const onlyDriving = ids.filter((id) => allow.has(id));
+  const n = normalizeExamNavIds(onlyDriving);
+  return n.length > 0 ? n : normalizeExamNavIds(["EHLİYET"]);
 }
 
 /** Kart / kategori metni; `labelMap` admin panelinden gelen görünen adları kullanır. */

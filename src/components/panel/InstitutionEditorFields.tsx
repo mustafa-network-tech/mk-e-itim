@@ -26,6 +26,7 @@ import {
 } from "@/lib/institutionProgramCards";
 import {
   DRIVING_OFFERING_EXAM_IDS,
+  examNavIdsForDrivingSchoolSegment,
   institutionCategoryFromExam,
   normalizeExamNavIds,
 } from "@/lib/examMenuNav";
@@ -234,7 +235,10 @@ export function InstitutionEditorFields({
                                         sortInstitutionTypes(examTypesForForms),
                                       );
                                       if (opt.id === "driving_school") {
-                                        const ids = normalizeExamNavIds([...draft.examNavIds, "EHLİYET"]);
+                                        const ids = examNavIdsForDrivingSchoolSegment([
+                                          ...draft.examNavIds,
+                                          "EHLİYET",
+                                        ]);
                                         const ac = createEmptyAboutCards("driving_school");
                                         onPatch({
                                           institutionSegment: "driving_school",
@@ -281,7 +285,18 @@ export function InstitutionEditorFields({
                             ? "Ehliyet, SRC ve operatörlük burada seçilir; kartta rozet olarak görünür. LGS / YKS gibi eğitim türleri sürücü kursunda kullanılmaz."
                             : "Kurum türleri: LGS, YKS, … üst menü ve listeleme filtresiyle aynıdır. En az biri zorunludur; çoklu seçimde kurum ilgili her menüde görünür. Kart metni otomatik üretilir."}
                         </p>
-                        <div className="mt-3">
+                        <div
+                          className={
+                            draft.institutionSegment === "driving_school"
+                              ? "mt-3 rounded-xl border-2 border-emerald-200 bg-emerald-50/50 p-4"
+                              : "mt-3"
+                          }
+                        >
+                          {draft.institutionSegment === "driving_school" ? (
+                            <p className="mb-3 text-xs font-semibold text-emerald-900">
+                              Sürücü kursu — sunduklarınız (LGS / YKS listesi burada yok)
+                            </p>
+                          ) : null}
                           <ExamNavMultiSelect
                             types={sortInstitutionTypes(examTypesForForms).filter((t) =>
                               draft.institutionSegment === "driving_school"
@@ -297,11 +312,15 @@ export function InstitutionEditorFields({
                               const lm = labelMapFromInstitutionTypes(
                                 sortInstitutionTypes(examTypesForForms),
                               );
+                              const examNext =
+                                draft.institutionSegment === "driving_school"
+                                  ? examNavIdsForDrivingSchoolSegment(next)
+                                  : next;
                               onPatch({
-                                examNavIds: next,
+                                examNavIds: examNext,
                                 category: institutionCategoryFromExam(
                                   draft.institutionSegment,
-                                  next,
+                                  examNext,
                                   lm,
                                 ),
                               });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { INSTITUTION_DEFAULTS } from "@/data/institutionDefaults";
 import {
   formatTryPriceRange,
@@ -15,6 +15,7 @@ import {
 } from "@/lib/institutionAboutCards";
 import {
   createEmptyProgramCardRow,
+  createEmptyProgramCards,
   INSTITUTION_PROGRAM_CARD_MAX,
   INSTITUTION_PROGRAM_CARD_MIN,
   normalizeProgramCards,
@@ -25,6 +26,7 @@ import type { InstitutionAboutCard, InstitutionProgramCard, InstitutionSegment }
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import {
   DRIVING_OFFERING_EXAM_IDS,
+  examNavIdsForDrivingSchoolSegment,
   institutionCategoryFromExam,
   normalizeExamNavIds,
 } from "@/lib/examMenuNav";
@@ -126,6 +128,11 @@ export function InstitutionForm({
   const [discountText, setDiscountText] = useState(defaults.discountText);
   const [discountStartDate, setDiscountStartDate] = useState(defaults.discountStartDate);
   const [discountEndDate, setDiscountEndDate] = useState(defaults.discountEndDate);
+
+  useEffect(() => {
+    if (institutionSegment !== "driving_school") return;
+    setExamNavIds((prev) => examNavIdsForDrivingSchoolSegment(prev));
+  }, [institutionSegment]);
 
   const resetForm = () => {
     setName("");
@@ -305,8 +312,14 @@ export function InstitutionForm({
               type="button"
               onClick={() => {
                 setInstitutionSegment("driving_school");
-                setExamNavIds((prev) => normalizeExamNavIds([...prev, "EHLİYET"]));
+                setExamNavIds(examNavIdsForDrivingSchoolSegment(["EHLİYET"]));
                 setAboutCards(createEmptyAboutCards("driving_school"));
+                setProgramCards(
+                  createEmptyProgramCards().map((c) => ({
+                    ...c,
+                    modalItems: c.modalItems.map((m) => ({ ...m })),
+                  })),
+                );
                 setSelectedTags([]);
                 setSelectedGradeIds([]);
               }}
@@ -337,23 +350,43 @@ export function InstitutionForm({
               className={input}
               value={officialStatus}
               onChange={(e) => setOfficialStatus(e.target.value)}
-              placeholder="Örn. Özel Öğretim Kursu · MEB izin belge no …"
+              placeholder={
+                institutionSegment === "driving_school"
+                  ? "Örn. MEB onaylı sürücü kursu · TŞOF üyesi …"
+                  : "Örn. Özel Öğretim Kursu · MEB izin belge no …"
+              }
             />
           </div>
-          <div className="sm:col-span-2">
-            <label className={label}>
-              {institutionSegment === "driving_school"
-                ? "Ehliyet, SRC ve operatörlük (sürücü kursu içinde sunduklarınız)"
-                : "Kurum türleri (kartta birleşik gösterilir)"}
-            </label>
-            <ExamNavMultiSelect
-              types={examTypesForSelect}
-              variant={institutionSegment === "driving_school" ? "drivingOfferings" : "default"}
-              idPrefix="new-inst-exam"
-              value={examNavIds}
-              onChange={setExamNavIds}
-            />
-          </div>
+          {institutionSegment === "driving_school" ? (
+            <div className="sm:col-span-2 rounded-xl border-2 border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
+              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-emerald-900">Sürücü kursu</p>
+              <p className="mb-3 text-xs text-emerald-800/90">
+                Bu kayıt eğitim kurumu (LGS, YKS vb.) değildir. Aşağıda yalnızca sunduğunuz ehliyet, SRC ve
+                operatörlük seçenekleri yer alır.
+              </p>
+              <label className={label}>
+                Sunduklarınız (en az biri; kartta rozet olarak görünür)
+              </label>
+              <ExamNavMultiSelect
+                types={examTypesForSelect}
+                variant="drivingOfferings"
+                idPrefix="new-inst-exam"
+                value={examNavIds}
+                onChange={(next) => setExamNavIds(examNavIdsForDrivingSchoolSegment(next))}
+              />
+            </div>
+          ) : (
+            <div className="sm:col-span-2">
+              <label className={label}>Kurum türleri (kartta birleşik gösterilir)</label>
+              <ExamNavMultiSelect
+                types={examTypesForSelect}
+                variant="default"
+                idPrefix="new-inst-exam"
+                value={examNavIds}
+                onChange={setExamNavIds}
+              />
+            </div>
+          )}
         </div>
       </div>
 

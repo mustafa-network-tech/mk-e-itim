@@ -5,19 +5,25 @@ import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { INSTITUTION_TYPES_SEED, sortInstitutionTypes } from "@/data/institutionTypesSeed";
-import { SITE_HEADER_LISTINGS_EXAM_ID } from "@/lib/examMenuNav";
+import { EXAM_IDS_EXCLUDED_FROM_SITE_HEADER } from "@/lib/examMenuNav";
 
-function headerEhliyetActive(
+const HEADER_NAV_EXCLUDED_IDS = new Set<string>(EXAM_IDS_EXCLUDED_FROM_SITE_HEADER);
+
+function navExamActive(
   pathname: string,
   searchParams: ReturnType<typeof useSearchParams>,
+  examValue: string,
 ): boolean {
   if (pathname !== "/listings") return false;
   const raw = searchParams.get("exam");
+  if (examValue === "") {
+    return raw == null || raw === "";
+  }
   if (raw == null) return false;
   try {
-    return decodeURIComponent(raw) === SITE_HEADER_LISTINGS_EXAM_ID;
+    return decodeURIComponent(raw) === examValue;
   } catch {
-    return raw === SITE_HEADER_LISTINGS_EXAM_ID;
+    return raw === examValue;
   }
 }
 
@@ -51,25 +57,29 @@ export function HeaderNav() {
   const searchParams = useSearchParams();
   const { institutionTypes } = useDemoPlatform();
 
-  const ehliyetLabel = useMemo(() => {
+  const navItems = useMemo(() => {
     const list =
       institutionTypes.length > 0
         ? sortInstitutionTypes(institutionTypes)
         : sortInstitutionTypes(INSTITUTION_TYPES_SEED);
-    const row = list.find((t) => t.id === SITE_HEADER_LISTINGS_EXAM_ID);
-    return row?.label ?? "Ehliyet";
+    const filtered = list.filter((t) => !HEADER_NAV_EXCLUDED_IDS.has(t.id));
+    return [{ label: "Tümü", value: "" as const }, ...filtered.map((t) => ({ label: t.label, value: t.id }))];
   }, [institutionTypes]);
-
-  const ehliyetHref = `/listings?exam=${encodeURIComponent(SITE_HEADER_LISTINGS_EXAM_ID)}`;
 
   return (
     <nav
       className="order-3 flex min-w-0 w-full max-w-full basis-full flex-wrap items-center justify-center gap-x-2 gap-y-1.5 sm:gap-x-3 md:order-2 md:w-auto md:basis-auto md:max-w-none md:flex-1 md:justify-end md:gap-x-4 lg:gap-x-5"
-      aria-label="Ehliyet kursları — listeleme"
+      aria-label="Kurum türleri — listeleme filtresi (SRC ve operatörlük üst menüde yok)"
     >
-      <NavItem href={ehliyetHref} active={headerEhliyetActive(pathname, searchParams)}>
-        {ehliyetLabel}
-      </NavItem>
+      {navItems.map(({ label, value }) => (
+        <NavItem
+          key={value || "all"}
+          href={value ? `/listings?exam=${encodeURIComponent(value)}` : "/listings"}
+          active={navExamActive(pathname, searchParams, value)}
+        >
+          {label}
+        </NavItem>
+      ))}
     </nav>
   );
 }

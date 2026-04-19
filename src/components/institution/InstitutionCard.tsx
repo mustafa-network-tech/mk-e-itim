@@ -1,7 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Institution, Review } from "@/types";
-import { getPublicRating, institutionCoverImage, institutionWhatsAppHref } from "@/lib/institutions";
+import {
+  getPublicRating,
+  institutionCoverImage,
+  institutionWhatsAppHref,
+  isDrivingSchoolInstitution,
+} from "@/lib/institutions";
 import { isDiscountCurrentlyActive } from "@/lib/discount";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { InstitutionDiscountBadge, InstitutionPriceBlock } from "@/components/institution/InstitutionPriceBlock";
@@ -17,9 +22,16 @@ export function InstitutionCard({ institution, reviews }: InstitutionCardProps) 
   const categoryLabel = institution.category;
   const waHref = institutionWhatsAppHref(institution);
   const hasDiscountBadge = isDiscountCurrentlyActive(institution);
+  const driving = isDrivingSchoolInstitution(institution);
 
   return (
-    <article className="group relative flex min-h-[360px] flex-col overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#0c0c0e] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.45),0_4px_12px_-4px_rgba(0,0,0,0.2)] transition duration-300 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.015] hover:border-white/[0.12] hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.55),0_8px_20px_-6px_rgba(0,0,0,0.35)] md:min-h-[380px]">
+    <article
+      className={`group relative flex min-h-[360px] flex-col overflow-hidden rounded-[24px] border shadow-[0_12px_40px_-12px_rgba(0,0,0,0.45),0_4px_12px_-4px_rgba(0,0,0,0.2)] transition duration-300 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.015] hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.55),0_8px_20px_-6px_rgba(0,0,0,0.35)] md:min-h-[380px] ${
+        driving
+          ? "border-emerald-400/25 bg-[#071a14] hover:border-emerald-300/35"
+          : "border-white/[0.08] bg-[#0c0c0e] hover:border-white/[0.12]"
+      }`}
+    >
       <Link
         href={`/institutions/${institution.id}`}
         className="relative z-10 flex min-h-0 flex-1 flex-col px-6 pb-4 pt-6 md:px-7 md:pt-7"
@@ -40,7 +52,9 @@ export function InstitutionCard({ institution, reviews }: InstitutionCardProps) 
         {/* Okunabilirlik: daha koyu katmanlar (görsel hâlâ seçilebilir) */}
         <div className="pointer-events-none absolute inset-0 bg-black/50" aria-hidden />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/72"
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-b ${
+            driving ? "from-emerald-950/55 via-black/40 to-black/75" : "from-black/55 via-black/35 to-black/72"
+          }`}
           aria-hidden
         />
         <div
@@ -53,11 +67,23 @@ export function InstitutionCard({ institution, reviews }: InstitutionCardProps) 
         <div
           className={`relative z-10 flex min-h-[280px] flex-1 flex-col md:min-h-[300px] ${hasDiscountBadge ? "pt-10 sm:pt-11" : ""}`}
         >
-          <p className="text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.14em] text-white/80 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)]">
-            {categoryLabel}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {driving ? (
+              <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider text-emerald-100 [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">
+                Sürücü kursu
+              </span>
+            ) : null}
+            <p className="text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.14em] text-white/80 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)]">
+              {categoryLabel}
+            </p>
+          </div>
+          {driving ? (
+            <p className="mt-2 text-[0.6875rem] font-medium leading-snug text-emerald-100/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
+              Ehliyet · Direksiyon · Sınav hazırlık
+            </p>
+          ) : null}
 
-          <h3 className="mt-4 line-clamp-2 text-[1.375rem] font-bold leading-[1.2] tracking-[-0.02em] text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.75)] md:text-2xl md:leading-tight">
+          <h3 className="mt-3 line-clamp-2 text-[1.375rem] font-bold leading-[1.2] tracking-[-0.02em] text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.75)] md:text-2xl md:leading-tight">
             {institution.name}
           </h3>
           {institution.officialStatus.trim() ? (
@@ -94,7 +120,9 @@ export function InstitutionCard({ institution, reviews }: InstitutionCardProps) 
           href={waHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600/95 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
+          className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition ${
+            driving ? "bg-teal-600/95 hover:bg-teal-500" : "bg-emerald-600/95 hover:bg-emerald-500"
+          }`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />

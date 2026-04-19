@@ -17,6 +17,7 @@ const DEFAULT_TYPE_LABELS = labelMapFromInstitutionTypes(INSTITUTION_TYPES_SEED)
 
 /** Yeni kurum oluştururken `name` ve `ownerUserId` dışındaki alanlar için başlangıç değerleri */
 export const INSTITUTION_DEFAULTS: Omit<Institution, "id" | "createdAt" | "name" | "ownerUserId"> = {
+  institutionSegment: "education",
   officialStatus: "",
   examNavIds: [...DEFAULT_EXAM_NAV],
   category: categoryDisplayFromExamNavIds([...DEFAULT_EXAM_NAV], DEFAULT_TYPE_LABELS),

@@ -1,5 +1,8 @@
 export type UserRole = "admin" | "institution_manager";
 
+/** Kurum dikeyi: genel eğitim vs ehliyet / sürücü kursu (kart ve detay tasarımı). */
+export type InstitutionSegment = "education" | "driving_school";
+
 export interface User {
   id: string;
   role: UserRole;
@@ -39,6 +42,8 @@ export interface InstitutionProgramCard {
 
 export interface Institution {
   id: string;
+  /** `driving_school` ise sürücü kursu kartı ve detay teması kullanılır. */
+  institutionSegment: InstitutionSegment;
   name: string;
   /** Kart ve detayda ismin hemen altında, daha ince: resmi ünvan / tabela statüsü */
   officialStatus: string;

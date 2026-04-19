@@ -11,6 +11,7 @@ import {
   institutionCanOpenWhatsAppChat,
   institutionProgramTeklifWhatsAppMessage,
   institutionWhatsAppHref,
+  isDrivingSchoolInstitution,
 } from "@/lib/institutions";
 import { normalizeAboutCards } from "@/lib/institutionAboutCards";
 import {
@@ -46,12 +47,19 @@ export function InstitutionDetailClient() {
   const mapsHref = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const waHref = institutionWhatsAppHref(institution);
   const hasWhatsAppNumber = institutionCanOpenWhatsAppChat(institution);
+  const driving = isDrivingSchoolInstitution(institution);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
       <PageNav />
 
-      <header className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-sm">
+      <header
+        className={`overflow-hidden rounded-3xl border shadow-sm ${
+          driving
+            ? "border-emerald-200/90 bg-gradient-to-b from-emerald-50/90 to-white"
+            : "border-slate-200/90 bg-white"
+        }`}
+      >
         <div className="relative aspect-[21/9] min-h-[220px] w-full bg-slate-200 md:aspect-[3/1]">
           {institution.images[0] ? (
             <Image
@@ -67,8 +75,23 @@ export function InstitutionDetailClient() {
 
         <InstitutionDetailDiscountBand institution={institution} />
 
-        <div className="border-t border-slate-100 px-6 py-5 md:px-8">
-          <p className="text-sm font-medium text-amber-800">{institution.category}</p>
+        <div className={`border-t px-6 py-5 md:px-8 ${driving ? "border-emerald-100" : "border-slate-100"}`}>
+          <div className="flex flex-wrap items-center gap-2">
+            {driving ? (
+              <span className="rounded-full border border-emerald-300/80 bg-emerald-100/90 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-emerald-900">
+                Sürücü kursu
+              </span>
+            ) : null}
+            <p className={`text-sm font-medium ${driving ? "text-emerald-900" : "text-amber-800"}`}>
+              {institution.category}
+            </p>
+          </div>
+          {driving ? (
+            <p className="mt-2 text-sm text-emerald-800/90">
+              Direksiyon eğitimi, ehliyet sınavı hazırlığı ve teorik dersler — ihtiyacınıza göre paketler
+              aşağıda.
+            </p>
+          ) : null}
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">{institution.name}</h1>
           {institution.officialStatus.trim() ? (
             <p className="mt-2 max-w-3xl text-sm leading-snug text-slate-600 md:text-[0.9375rem]">
@@ -165,7 +188,7 @@ export function InstitutionDetailClient() {
             aria-labelledby="kurum-genel-bilgileri-heading"
           >
             <h2 id="kurum-genel-bilgileri-heading" className="text-lg font-semibold tracking-tight text-slate-900">
-              Kurum genel bilgileri
+              {driving ? "Kurs ve donanım bilgileri" : "Kurum genel bilgileri"}
             </h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {normalizeAboutCards(institution.aboutCards).map((card, i) => (
@@ -188,7 +211,7 @@ export function InstitutionDetailClient() {
             aria-labelledby="kurum-hakkinda-heading"
           >
             <h2 id="kurum-hakkinda-heading" className="text-lg font-semibold tracking-tight text-slate-900">
-              Kurum hakkında
+              {driving ? "Sürücü kursu hakkında" : "Kurum hakkında"}
             </h2>
             <div className="mt-4 text-sm leading-relaxed text-slate-700">
               {institution.aboutInstitution.trim() ? (
@@ -200,6 +223,7 @@ export function InstitutionDetailClient() {
           </section>
 
           <InstitutionProgramCardsSection
+            variant={driving ? "driving_school" : "education"}
             cards={institution.programCards}
             teklifWhatsAppHrefForProgram={
               hasWhatsAppNumber

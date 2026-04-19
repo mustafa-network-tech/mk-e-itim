@@ -731,6 +731,7 @@ export default function AdminPanelPage() {
                     addInstructor={addInstructor}
                     removeInstructor={removeInstructor}
                     showListingVisibility
+                    allowInstitutionSegmentEdit
                   >
                       <div className="sticky bottom-2 z-10 flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white/95 pt-4 backdrop-blur-sm">
                         <button

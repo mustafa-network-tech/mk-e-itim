@@ -1,5 +1,13 @@
 import { institutionMatchesExamNav } from "@/lib/examMenuNav";
-import { Institution, InstitutionFilters, Review } from "@/types";
+import { Institution, InstitutionFilters, InstitutionSegment, Review } from "@/types";
+
+export function normalizeInstitutionSegment(raw: unknown): InstitutionSegment {
+  return raw === "driving_school" ? "driving_school" : "education";
+}
+
+export function isDrivingSchoolInstitution(i: Institution): boolean {
+  return i.institutionSegment === "driving_school";
+}
 
 /** Listeleme ve filtrelerde: onaylı yorum varsa ondan; yoksa kurumun sakladığı özet puan */
 export function getPublicRating(institution: Institution, reviews: Review[]) {
@@ -28,8 +36,12 @@ export function filterInstitutions(
           `${c.title} ${c.body} ${(c.modalItems ?? []).map((m) => `${m.title} ${m.subtitle}`).join(" ")}`,
       )
       .join(" ");
+    const segmentHint =
+      institution.institutionSegment === "driving_school"
+        ? "sürücü ehliyet direksiyon kurs"
+        : "";
     const text =
-      `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.longDescription} ${institution.aboutInstitution} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")} ${institution.minPrice} ${institution.maxPrice} ${institution.priceRange} ${aboutText} ${programText} ${institution.programs.join(" ")}`.toLowerCase();
+      `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.longDescription} ${institution.aboutInstitution} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")} ${institution.minPrice} ${institution.maxPrice} ${institution.priceRange} ${aboutText} ${programText} ${institution.programs.join(" ")} ${segmentHint}`.toLowerCase();
     const queryMatch = filters.query ? text.includes(filters.query.toLowerCase()) : true;
     const cityMatch = filters.city ? institution.city === filters.city : true;
     const districtMatch = filters.district ? institution.district === filters.district : true;

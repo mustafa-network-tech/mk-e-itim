@@ -24,6 +24,7 @@ import {
   parsePendingPayloadFromDb,
 } from "@/lib/institutionSavePayload";
 import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
+import { normalizeInstitutionSegment } from "@/lib/institutions";
 import { instructors as seedInstructors } from "@/data/instructors";
 import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
 import type { SupabasePublicConfig } from "@/lib/supabase/runtimePublic";
@@ -350,6 +351,30 @@ export function DemoPlatformProvider({
         programs: programsArrayFromProgramCards(pc),
       };
     }
+    if (payload.institutionSegment !== undefined) {
+      mergedPayload.institutionSegment = normalizeInstitutionSegment(payload.institutionSegment);
+    }
+    {
+      const current = institutionList.find((i) => i.id === institutionId);
+      const effectiveSegment = normalizeInstitutionSegment(
+        mergedPayload.institutionSegment ?? current?.institutionSegment ?? "education",
+      );
+      if (effectiveSegment === "driving_school") {
+        const baseIds = mergedPayload.examNavIds ?? current?.examNavIds ?? [];
+        const n = normalizeExamNavIds(baseIds);
+        if (!n.includes("EHLİYET")) {
+          const n2 = normalizeExamNavIds([...n, "EHLİYET"]);
+          mergedPayload = {
+            ...mergedPayload,
+            examNavIds: n2,
+            category: categoryDisplayFromExamNavIds(
+              n2,
+              labelMapFromInstitutionTypes(sortInstitutionTypes(institutionTypeList)),
+            ),
+          };
+        }
+      }
+    }
     if (!useRemote) {
       setInstitutionList((prev) =>
         prev.map((item) => (item.id === institutionId ? { ...item, ...mergedPayload } : item)),
@@ -433,7 +458,13 @@ export function DemoPlatformProvider({
   const createInstitution = async (
     payload: InstitutionCreateInput,
   ): Promise<CreateInstitutionResult> => {
-    const examNavIds = normalizeExamNavIds(payload.examNavIds ?? INSTITUTION_DEFAULTS.examNavIds);
+    const segment = normalizeInstitutionSegment(
+      payload.institutionSegment ?? INSTITUTION_DEFAULTS.institutionSegment,
+    );
+    let examNavIds = normalizeExamNavIds(payload.examNavIds ?? INSTITUTION_DEFAULTS.examNavIds);
+    if (segment === "driving_school" && !examNavIds.includes("EHLİYET")) {
+      examNavIds = normalizeExamNavIds([...examNavIds, "EHLİYET"]);
+    }
     if (examNavIds.length === 0) {
       return { ok: false, message: "En az bir kurum türü (LGS, YKS, …) seçilmelidir." };
     }
@@ -442,6 +473,7 @@ export function DemoPlatformProvider({
       const institution: Institution = {
         ...INSTITUTION_DEFAULTS,
         ...payload,
+        institutionSegment: segment,
         examNavIds,
         category: categoryDisplayFromExamNavIds(examNavIds, typeLabelMap),
         id: `inst-${Date.now()}`,
@@ -469,6 +501,7 @@ export function DemoPlatformProvider({
     const merged: Institution = {
       ...INSTITUTION_DEFAULTS,
       ...payload,
+      institutionSegment: segment,
       examNavIds,
       category: categoryDisplayFromExamNavIds(examNavIds, typeLabelMap),
       id: "",

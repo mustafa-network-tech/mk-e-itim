@@ -1,12 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
 import { InstitutionImagesField } from "@/components/panel/InstitutionImagesField";
 import {
   formatTryPriceRange,
   getDiscountedPriceFromMin,
   getDiscountRibbonText,
+  parseTryPriceInput,
   syncInstitutionPriceDisplayFields,
 } from "@/lib/discount";
 import {
@@ -22,9 +23,11 @@ import {
   programsArrayFromProgramCards,
   PROGRAM_MODAL_ITEM_COUNT,
 } from "@/lib/institutionProgramCards";
+import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
 import type {
   GradeLevel,
   Institution,
+  InstitutionSegment,
   InstitutionTypeDef,
   Instructor,
   Tag,
@@ -50,6 +53,8 @@ export type InstitutionEditorFieldsProps = {
   addInstructor: (institutionId: string, name: string, branch: string) => void | Promise<void>;
   removeInstructor: (instructorId: string) => void | Promise<void>;
   showListingVisibility: boolean;
+  /** Yalnızca admin: eğitim kurumu ↔ sürücü kursu seçimi (kurumsal panelde salt okunur). */
+  allowInstitutionSegmentEdit?: boolean;
   children?: ReactNode;
 };
 
@@ -73,8 +78,23 @@ export function InstitutionEditorFields({
   addInstructor,
   removeInstructor,
   showListingVisibility,
+  allowInstitutionSegmentEdit = false,
   children,
 }: InstitutionEditorFieldsProps) {
+  const [minPriceStr, setMinPriceStr] = useState(() => String(draft.minPrice));
+  const [maxPriceStr, setMaxPriceStr] = useState(() => String(draft.maxPrice));
+
+  useEffect(() => {
+    setMinPriceStr(String(draft.minPrice));
+    setMaxPriceStr(String(draft.maxPrice));
+  }, [draft.id, draft.minPrice, draft.maxPrice]);
+
+  const commitPriceRange = () => {
+    const minP = parseTryPriceInput(minPriceStr);
+    const maxP = parseTryPriceInput(maxPriceStr);
+    onPatch({ ...syncInstitutionPriceDisplayFields(minP, maxP) });
+  };
+
   return (
     <div className="space-y-6">
 <div
@@ -184,6 +204,57 @@ export function InstitutionEditorFields({
                         <h4 className="text-sm font-bold text-slate-900">
                           Liste ve kartta görünenler — kurumsal «Kart bilgileri»
                         </h4>
+                        {allowInstitutionSegmentEdit ? (
+                          <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+                            <p className="text-xs font-semibold text-slate-800">Kurum türü</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Sürücü kursu seçildiğinde kart ve detay sayfası ehliyet / direksiyon temasına
+                              geçer; «Ehliyet» kurum türü otomatik eklenir.
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {(
+                                [
+                                  { id: "education" as const, label: "Eğitim kurumu" },
+                                  { id: "driving_school" as const, label: "Sürücü kursu (ehliyet)" },
+                                ] satisfies { id: InstitutionSegment; label: string }[]
+                              ).map((opt) => {
+                                const active = draft.institutionSegment === opt.id;
+                                return (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() => {
+                                      if (opt.id === "driving_school") {
+                                        const ids = normalizeExamNavIds([...draft.examNavIds, "EHLİYET"]);
+                                        onPatch({
+                                          institutionSegment: "driving_school",
+                                          examNavIds: ids,
+                                          category: categoryDisplayFromExamNavIds(ids),
+                                        });
+                                      } else {
+                                        onPatch({ institutionSegment: "education" });
+                                      }
+                                    }}
+                                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                                      active
+                                        ? "border-indigo-500 bg-indigo-50 text-indigo-950"
+                                        : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300"
+                                    }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mt-2 rounded-lg border border-slate-100 bg-white/80 px-3 py-2 text-xs text-slate-600">
+                            <span className="font-semibold text-slate-800">Kurum türü: </span>
+                            {draft.institutionSegment === "driving_school"
+                              ? "Sürücü kursu (ehliyet / direksiyon)"
+                              : "Eğitim kurumu"}
+                          </p>
+                        )}
                         <p className="mt-1 text-xs text-slate-500">
                           Kurum türleri: LGS, YKS, … üst menü ve listeleme filtresiyle aynıdır. En az biri
                           zorunludur; çoklu seçimde kurum ilgili her menüde görünür. Kart metni otomatik
@@ -213,6 +284,8 @@ export function InstitutionEditorFields({
                         </p>
                         <p className="mb-2 text-xs text-slate-500">
                           Kart ve detayda yalnızca bu aralık gösterilir; kayıtta metin alanları otomatik eşitlenir.
+                          Tutarları yazarken alanı boşaltıp yeniden girebilirsiniz (50.000 veya 50000); değişiklik
+                          alanı terk ettiğinizde veya Enter&apos;da kayda geçer.
                         </p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div>
@@ -220,17 +293,17 @@ export function InstitutionEditorFields({
                               En düşük (₺)
                             </label>
                             <input
-                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                              type="number"
-                              min={0}
-                              step={1}
-                              value={draft.minPrice}
-                              onChange={(e) => {
-                                const minPrice = Number(e.target.value) || 0;
-                                onPatch({
-                                  ...syncInstitutionPriceDisplayFields(minPrice, draft.maxPrice),
-                                });
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm tabular-nums"
+                              type="text"
+                              inputMode="numeric"
+                              autoComplete="off"
+                              value={minPriceStr}
+                              onChange={(e) => setMinPriceStr(e.target.value)}
+                              onBlur={() => commitPriceRange()}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                               }}
+                              placeholder="Örn. 20000 veya 20.000"
                             />
                           </div>
                           <div>
@@ -238,17 +311,17 @@ export function InstitutionEditorFields({
                               En yüksek (₺)
                             </label>
                             <input
-                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                              type="number"
-                              min={0}
-                              step={1}
-                              value={draft.maxPrice}
-                              onChange={(e) => {
-                                const maxPrice = Number(e.target.value) || 0;
-                                onPatch({
-                                  ...syncInstitutionPriceDisplayFields(draft.minPrice, maxPrice),
-                                });
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm tabular-nums"
+                              type="text"
+                              inputMode="numeric"
+                              autoComplete="off"
+                              value={maxPriceStr}
+                              onChange={(e) => setMaxPriceStr(e.target.value)}
+                              onBlur={() => commitPriceRange()}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                               }}
+                              placeholder="Örn. 50000 veya 50.000"
                             />
                           </div>
                           <div>

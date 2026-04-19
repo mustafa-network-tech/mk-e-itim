@@ -2,18 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { InstitutionProgramCard } from "@/types";
+import type { InstitutionProgramCard, InstitutionSegment } from "@/types";
 import { normalizeProgramCards, PROGRAM_MODAL_ITEM_COUNT } from "@/lib/institutionProgramCards";
 
 export function InstitutionProgramCardsSection({
+  variant = "education",
   cards,
   teklifWhatsAppHrefForProgram,
 }: {
+  /** Sürücü kursu: başlık ve vurgu renkleri ehliyet temasına göre. */
+  variant?: InstitutionSegment;
   cards: InstitutionProgramCard[];
   /** Kurumda geçerli WhatsApp numarası varken: program adına göre teklif mesajlı wa.me linki. */
   teklifWhatsAppHrefForProgram?: (programTitle: string) => string;
 }) {
   const list = normalizeProgramCards(cards);
+  const driving = variant === "driving_school";
   const [open, setOpen] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -116,12 +120,21 @@ export function InstitutionProgramCardsSection({
     <>
       <section
         id="programlar"
-        className="scroll-mt-28 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm sm:p-6"
+        className={`scroll-mt-28 rounded-2xl border p-5 shadow-sm sm:p-6 ${
+          driving
+            ? "border-emerald-200/90 bg-gradient-to-b from-emerald-50/40 to-white"
+            : "border-slate-200/90 bg-white"
+        }`}
         aria-labelledby="programlar-heading"
       >
         <h2 id="programlar-heading" className="text-lg font-semibold tracking-tight text-slate-900">
-          Programlar
+          {driving ? "Ehliyet paketleri ve modüller" : "Programlar"}
         </h2>
+        {driving ? (
+          <p className="mt-1 text-sm text-emerald-900/80">
+            Örnek: teorik ders, direksiyon saatleri, bayan eğitmen, sınav desteği — kutuları kurumunuz doldurur.
+          </p>
+        ) : null}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {list.map((c, i) => {
             const label = c.title.trim() || `Program ${i + 1}`;
@@ -130,12 +143,22 @@ export function InstitutionProgramCardsSection({
                 key={i}
                 type="button"
                 onClick={() => setOpen(i)}
-                className="group flex min-h-[4.5rem] flex-col items-start justify-center rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                className={`group flex min-h-[4.5rem] flex-col items-start justify-center rounded-xl border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  driving
+                    ? "border-emerald-200/90 bg-white/90 hover:border-teal-400 hover:bg-teal-50/60 focus-visible:ring-teal-500"
+                    : "border-slate-200 bg-slate-50/90 hover:border-indigo-300 hover:bg-indigo-50/50 focus-visible:ring-indigo-400"
+                }`}
               >
-                <span className="text-sm font-semibold text-slate-900 group-hover:text-indigo-950">
+                <span
+                  className={`text-sm font-semibold ${
+                    driving ? "text-emerald-950 group-hover:text-teal-950" : "text-slate-900 group-hover:text-indigo-950"
+                  }`}
+                >
                   {label}
                 </span>
-                <span className="mt-1 text-xs text-slate-500">Detayları görmek için tıklayın</span>
+                <span className={`mt-1 text-xs ${driving ? "text-emerald-800/80" : "text-slate-500"}`}>
+                  {driving ? "Modül detayları için tıklayın" : "Detayları görmek için tıklayın"}
+                </span>
               </button>
             );
           })}

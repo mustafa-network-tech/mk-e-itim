@@ -21,7 +21,7 @@ import {
   programsArrayFromProgramCards,
   PROGRAM_MODAL_ITEM_COUNT,
 } from "@/lib/institutionProgramCards";
-import type { InstitutionAboutCard, InstitutionProgramCard } from "@/types";
+import type { InstitutionAboutCard, InstitutionProgramCard, InstitutionSegment } from "@/types";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
 import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
@@ -76,6 +76,7 @@ export function InstitutionForm({
 
   const [name, setName] = useState("");
   const [officialStatus, setOfficialStatus] = useState("");
+  const [institutionSegment, setInstitutionSegment] = useState<InstitutionSegment>("education");
   const [examNavIds, setExamNavIds] = useState<string[]>(() => [...defaults.examNavIds]);
   const [city, setCity] = useState(defaults.city);
   const [district, setDistrict] = useState(defaults.district);
@@ -115,6 +116,7 @@ export function InstitutionForm({
   const resetForm = () => {
     setName("");
     setOfficialStatus("");
+    setInstitutionSegment("education");
     setExamNavIds([...defaults.examNavIds]);
     setCity(defaults.city);
     setDistrict(defaults.district);
@@ -204,6 +206,7 @@ export function InstitutionForm({
 
         const created = await createInstitution({
           name: name.trim(),
+          institutionSegment,
           officialStatus: officialStatus.trim(),
           ownerUserId: ownerId,
           examNavIds: navIds,
@@ -258,6 +261,41 @@ export function InstitutionForm({
 
       <div className="space-y-4">
         <SectionTitle>Temel bilgiler</SectionTitle>
+        <div className="rounded-xl border border-slate-200 bg-slate-50/90 p-3">
+          <p className={label}>Kurum türü</p>
+          <p className="mb-2 text-xs text-slate-500">
+            Sürücü kursu: kart ve sitede ehliyet / direksiyon vurgusu; «Ehliyet» menü türü otomatik eklenir.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setInstitutionSegment("education");
+              }}
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                institutionSegment === "education"
+                  ? "border-indigo-500 bg-indigo-50 text-indigo-950"
+                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+              }`}
+            >
+              Eğitim kurumu
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setInstitutionSegment("driving_school");
+                setExamNavIds((prev) => normalizeExamNavIds([...prev, "EHLİYET"]));
+              }}
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                institutionSegment === "driving_school"
+                  ? "border-emerald-600 bg-emerald-50 text-emerald-950"
+                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+              }`}
+            >
+              Sürücü kursu (ehliyet)
+            </button>
+          </div>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className={label}>Kurum adı *</label>

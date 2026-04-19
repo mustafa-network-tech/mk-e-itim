@@ -30,6 +30,7 @@ export function buildInstitutionPersistencePayload(d: Institution): Partial<Inst
   const programCards = normalizeProgramCards(d.programCards);
   return {
     name: d.name,
+    institutionSegment: d.institutionSegment,
     officialStatus: d.officialStatus,
     city: d.city,
     district: d.district,
@@ -78,6 +79,7 @@ export function mergeInstitutionWithPending(inst: Institution): Institution {
   return {
     ...inst,
     ...body,
+    institutionSegment: body.institutionSegment ?? inst.institutionSegment,
     aboutCards,
     longDescription:
       body.aboutCards !== undefined
@@ -96,6 +98,7 @@ export function mergeInstitutionWithPending(inst: Institution): Institution {
 /** buildInstitutionPersistencePayload ile aynı alan anahtarları (sıra korunur). */
 const PERSISTENCE_BODY_KEYS: (keyof Institution)[] = [
   "name",
+  "institutionSegment",
   "officialStatus",
   "city",
   "district",
@@ -130,6 +133,7 @@ const PERSISTENCE_BODY_KEYS: (keyof Institution)[] = [
 
 const PENDING_FIELD_LABELS: Partial<Record<keyof Institution, string>> = {
   name: "Kurum adı",
+  institutionSegment: "Kurum türü (eğitim / sürücü kursu)",
   officialStatus: "Resmî statü",
   city: "Şehir",
   district: "İlçe",
@@ -179,6 +183,9 @@ function previewFieldValue(key: keyof Institution, v: unknown): string {
   }
   if (typeof v === "boolean") return v ? "Evet" : "Hayır";
   if (typeof v === "number") return String(v);
+  if (key === "institutionSegment") {
+    return v === "driving_school" ? "Sürücü kursu" : "Eğitim kurumu";
+  }
   const s = String(v).trim();
   return s.length > 160 ? `${s.slice(0, 157)}…` : s || "—";
 }

@@ -18,6 +18,7 @@ import {
   sortInstitutionTypes,
 } from "@/data/institutionTypesSeed";
 import { aboutCardsFromDbRow } from "@/lib/institutionAboutCards";
+import { normalizeInstitutionSegment } from "@/lib/institutions";
 import { programCardsFromDbRow, programsArrayFromProgramCards } from "@/lib/institutionProgramCards";
 import { parsePendingPayloadFromDb } from "@/lib/institutionSavePayload";
 import type {
@@ -68,6 +69,7 @@ export type InstitutionDbRow = {
   discount_end_date: string | null;
   pending_manager_payload?: unknown | null;
   pending_submitted_at?: string | null;
+  institution_segment?: string | null;
   about_cards?: unknown;
   about_institution?: string | null;
   program_cards?: unknown;
@@ -92,6 +94,7 @@ export function mapInstitutionRow(
   const programs = programsArrayFromProgramCards(programCards);
   return {
     id: row.id,
+    institutionSegment: normalizeInstitutionSegment(row.institution_segment),
     name: row.name,
     officialStatus: row.official_status ?? "",
     category,
@@ -153,6 +156,7 @@ export function institutionToInsertRow(
   return {
     ...(i.id ? { id: i.id } : {}),
     name: i.name,
+    institution_segment: normalizeInstitutionSegment(i.institutionSegment ?? "education"),
     category: i.category,
     exam_nav_ids: normalizeExamNavIds(i.examNavIds),
     city: i.city,
@@ -192,6 +196,7 @@ export function institutionPartialToRow(patch: Partial<Institution>): Record<str
   const o: Record<string, unknown> = {};
   const map: [keyof Institution, string][] = [
     ["name", "name"],
+    ["institutionSegment", "institution_segment"],
     ["officialStatus", "official_status"],
     ["category", "category"],
     ["city", "city"],
@@ -227,6 +232,9 @@ export function institutionPartialToRow(patch: Partial<Institution>): Record<str
   for (const [k, col] of map) {
     if (k in patch && patch[k] !== undefined) {
       let v: unknown = patch[k];
+      if (col === "institution_segment") {
+        v = normalizeInstitutionSegment(v);
+      }
       if (col === "discount_start_date" || col === "discount_end_date") {
         v = (v as string) || null;
       }

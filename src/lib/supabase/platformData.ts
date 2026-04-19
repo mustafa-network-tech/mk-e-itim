@@ -7,7 +7,7 @@ export const INSTITUTION_SELECT_WITH_RELS = `
   institution_grade_levels ( grade_level_id )
 `;
 import {
-  categoryDisplayFromExamNavIds,
+  institutionCategoryFromExam,
   legacyCategoryToExamNavIds,
   normalizeExamNavIds,
 } from "@/lib/examMenuNav";
@@ -84,17 +84,18 @@ export function mapInstitutionRow(
   const tags = (row.institution_tags ?? []).map((t) => t.tag_id);
   const gradeLevelIds = (row.institution_grade_levels ?? []).map((g) => g.grade_level_id);
   const fromDb = row.exam_nav_ids;
+  const segment = normalizeInstitutionSegment(row.institution_segment);
   const examNavIds =
     fromDb && fromDb.length > 0
       ? normalizeExamNavIds(fromDb)
       : legacyCategoryToExamNavIds(row.category ?? "");
-  const category = categoryDisplayFromExamNavIds(examNavIds, typeLabelMap);
-  const aboutCards = aboutCardsFromDbRow(row.about_cards, row.long_description ?? "");
+  const category = institutionCategoryFromExam(segment, examNavIds, typeLabelMap);
+  const aboutCards = aboutCardsFromDbRow(row.about_cards, row.long_description ?? "", segment);
   const programCards = programCardsFromDbRow(row.program_cards, row.programs ?? []);
   const programs = programsArrayFromProgramCards(programCards);
   return {
     id: row.id,
-    institutionSegment: normalizeInstitutionSegment(row.institution_segment),
+    institutionSegment: segment,
     name: row.name,
     officialStatus: row.official_status ?? "",
     category,

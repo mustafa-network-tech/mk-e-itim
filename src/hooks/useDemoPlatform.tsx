@@ -23,7 +23,7 @@ import {
   buildPendingPayloadFromDraft,
   parsePendingPayloadFromDb,
 } from "@/lib/institutionSavePayload";
-import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
+import { institutionCategoryFromExam, normalizeExamNavIds } from "@/lib/examMenuNav";
 import { normalizeInstitutionSegment } from "@/lib/institutions";
 import { instructors as seedInstructors } from "@/data/instructors";
 import { createBrowserSupabaseClientOrNull } from "@/lib/supabase/client";
@@ -317,18 +317,24 @@ export function DemoPlatformProvider({
     institutionId: string,
     payload: Partial<Institution>,
   ): Promise<PlatformSaveResult> => {
+    const current = institutionList.find((i) => i.id === institutionId);
     let mergedPayload: Partial<Institution> = { ...payload };
+    if (payload.institutionSegment !== undefined) {
+      mergedPayload.institutionSegment = normalizeInstitutionSegment(payload.institutionSegment);
+    }
     if (payload.examNavIds !== undefined) {
       const n = normalizeExamNavIds(payload.examNavIds);
       const lm = labelMapFromInstitutionTypes(sortInstitutionTypes(institutionTypeList));
+      const seg = normalizeInstitutionSegment(
+        mergedPayload.institutionSegment ?? current?.institutionSegment ?? "education",
+      );
       mergedPayload = {
         ...mergedPayload,
         examNavIds: n,
-        category: categoryDisplayFromExamNavIds(n, lm),
+        category: institutionCategoryFromExam(seg, n, lm),
       };
     }
     if (payload.minPrice !== undefined || payload.maxPrice !== undefined) {
-      const current = institutionList.find((i) => i.id === institutionId);
       if (current) {
         const nm = payload.minPrice ?? current.minPrice;
         const nx = payload.maxPrice ?? current.maxPrice;
@@ -336,11 +342,14 @@ export function DemoPlatformProvider({
       }
     }
     if (payload.aboutCards !== undefined) {
-      const cards = normalizeAboutCards(payload.aboutCards);
+      const seg = normalizeInstitutionSegment(
+        mergedPayload.institutionSegment ?? current?.institutionSegment ?? "education",
+      );
+      const cards = normalizeAboutCards(payload.aboutCards, seg);
       mergedPayload = {
         ...mergedPayload,
         aboutCards: cards,
-        longDescription: longDescriptionFromAboutCards(cards),
+        longDescription: longDescriptionFromAboutCards(cards, seg),
       };
     }
     if (payload.programCards !== undefined) {
@@ -351,11 +360,7 @@ export function DemoPlatformProvider({
         programs: programsArrayFromProgramCards(pc),
       };
     }
-    if (payload.institutionSegment !== undefined) {
-      mergedPayload.institutionSegment = normalizeInstitutionSegment(payload.institutionSegment);
-    }
     {
-      const current = institutionList.find((i) => i.id === institutionId);
       const effectiveSegment = normalizeInstitutionSegment(
         mergedPayload.institutionSegment ?? current?.institutionSegment ?? "education",
       );
@@ -364,13 +369,11 @@ export function DemoPlatformProvider({
         const n = normalizeExamNavIds(baseIds);
         if (!n.includes("EHLİYET")) {
           const n2 = normalizeExamNavIds([...n, "EHLİYET"]);
+          const lm = labelMapFromInstitutionTypes(sortInstitutionTypes(institutionTypeList));
           mergedPayload = {
             ...mergedPayload,
             examNavIds: n2,
-            category: categoryDisplayFromExamNavIds(
-              n2,
-              labelMapFromInstitutionTypes(sortInstitutionTypes(institutionTypeList)),
-            ),
+            category: institutionCategoryFromExam(effectiveSegment, n2, lm),
           };
         }
       }
@@ -475,7 +478,7 @@ export function DemoPlatformProvider({
         ...payload,
         institutionSegment: segment,
         examNavIds,
-        category: categoryDisplayFromExamNavIds(examNavIds, typeLabelMap),
+        category: institutionCategoryFromExam(segment, examNavIds, typeLabelMap),
         id: `inst-${Date.now()}`,
         createdAt: new Date().toISOString().slice(0, 10),
         listed: payload.listed ?? true,
@@ -503,7 +506,7 @@ export function DemoPlatformProvider({
       ...payload,
       institutionSegment: segment,
       examNavIds,
-      category: categoryDisplayFromExamNavIds(examNavIds, typeLabelMap),
+      category: institutionCategoryFromExam(segment, examNavIds, typeLabelMap),
       id: "",
       createdAt: new Date().toISOString().slice(0, 10),
       listed: payload.listed ?? true,
@@ -980,7 +983,7 @@ export function DemoPlatformProvider({
       setInstitutionList((list) =>
         list.map((i) => ({
           ...i,
-          category: categoryDisplayFromExamNavIds(i.examNavIds, lm),
+          category: institutionCategoryFromExam(i.institutionSegment, i.examNavIds, lm),
         })),
       );
       return;

@@ -11,8 +11,9 @@ import {
   syncInstitutionPriceDisplayFields,
 } from "@/lib/discount";
 import {
+  aboutCardTitlesForSegment,
+  createEmptyAboutCards,
   longDescriptionFromAboutCards,
-  INSTITUTION_ABOUT_CARD_TITLES,
   normalizeAboutCards,
 } from "@/lib/institutionAboutCards";
 import {
@@ -23,7 +24,12 @@ import {
   programsArrayFromProgramCards,
   PROGRAM_MODAL_ITEM_COUNT,
 } from "@/lib/institutionProgramCards";
-import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
+import {
+  DRIVING_OFFERING_EXAM_IDS,
+  institutionCategoryFromExam,
+  normalizeExamNavIds,
+} from "@/lib/examMenuNav";
+import { labelMapFromInstitutionTypes, sortInstitutionTypes } from "@/data/institutionTypesSeed";
 import type {
   GradeLevel,
   Institution,
@@ -224,15 +230,30 @@ export function InstitutionEditorFields({
                                     key={opt.id}
                                     type="button"
                                     onClick={() => {
+                                      const lm = labelMapFromInstitutionTypes(
+                                        sortInstitutionTypes(examTypesForForms),
+                                      );
                                       if (opt.id === "driving_school") {
                                         const ids = normalizeExamNavIds([...draft.examNavIds, "EHLİYET"]);
+                                        const ac = createEmptyAboutCards("driving_school");
                                         onPatch({
                                           institutionSegment: "driving_school",
                                           examNavIds: ids,
-                                          category: categoryDisplayFromExamNavIds(ids),
+                                          category: institutionCategoryFromExam("driving_school", ids, lm),
+                                          aboutCards: ac,
+                                          longDescription: longDescriptionFromAboutCards(ac, "driving_school"),
+                                          tags: [],
+                                          gradeLevelIds: [],
                                         });
                                       } else {
-                                        onPatch({ institutionSegment: "education" });
+                                        const ac = normalizeAboutCards(draft.aboutCards, "education");
+                                        onPatch({
+                                          institutionSegment: "education",
+                                          examNavIds: draft.examNavIds,
+                                          category: institutionCategoryFromExam("education", draft.examNavIds, lm),
+                                          aboutCards: ac,
+                                          longDescription: longDescriptionFromAboutCards(ac, "education"),
+                                        });
                                       }
                                     }}
                                     className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
@@ -256,16 +277,35 @@ export function InstitutionEditorFields({
                           </p>
                         )}
                         <p className="mt-1 text-xs text-slate-500">
-                          Kurum türleri: LGS, YKS, … üst menü ve listeleme filtresiyle aynıdır. En az biri
-                          zorunludur; çoklu seçimde kurum ilgili her menüde görünür. Kart metni otomatik
-                          üretilir.
+                          {draft.institutionSegment === "driving_school"
+                            ? "Ehliyet, SRC ve operatörlük burada seçilir; kartta rozet olarak görünür. LGS / YKS gibi eğitim türleri sürücü kursunda kullanılmaz."
+                            : "Kurum türleri: LGS, YKS, … üst menü ve listeleme filtresiyle aynıdır. En az biri zorunludur; çoklu seçimde kurum ilgili her menüde görünür. Kart metni otomatik üretilir."}
                         </p>
                         <div className="mt-3">
                           <ExamNavMultiSelect
-                            types={examTypesForForms}
+                            types={sortInstitutionTypes(examTypesForForms).filter((t) =>
+                              draft.institutionSegment === "driving_school"
+                                ? (DRIVING_OFFERING_EXAM_IDS as readonly string[]).includes(t.id)
+                                : true,
+                            )}
+                            variant={
+                              draft.institutionSegment === "driving_school" ? "drivingOfferings" : "default"
+                            }
                             idPrefix={fieldIdPrefix}
                             value={draft.examNavIds}
-                            onChange={(next) => onPatch({ examNavIds: next })}
+                            onChange={(next) => {
+                              const lm = labelMapFromInstitutionTypes(
+                                sortInstitutionTypes(examTypesForForms),
+                              );
+                              onPatch({
+                                examNavIds: next,
+                                category: institutionCategoryFromExam(
+                                  draft.institutionSegment,
+                                  next,
+                                  lm,
+                                ),
+                              });
+                            }}
                           />
                         </div>
                         <label className="mb-1 mt-3 block text-xs font-semibold text-slate-700">
@@ -366,35 +406,59 @@ export function InstitutionEditorFields({
                         id={`${sectionIdPrefix}-detay-metni`}
                         className="scroll-mt-28 rounded-xl border border-slate-100 bg-white p-4"
                       >
-                        <h4 className="text-sm font-bold text-slate-900">
-                          Kurum genel bilgileri — 8 kart
-                        </h4>
+                        <h4 className="text-sm font-bold text-slate-900">Kurum genel bilgileri — 8 kart</h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Detayda «Kurum genel bilgileri» altında 2 sütunlu grid. Başlıklar sabit; yalnızca alt metin
-                          düzenlenir. Boş metin — gösterilir.
+                          {draft.institutionSegment === "driving_school"
+                            ? "Detayda «Kurum genel bilgileri» başlığı altında gösterilir. Her kartın başlığı ve metni kurum tarafından tamamen elle yazılır (sabit LGS/derslik başlığı yok)."
+                            : "Detayda «Kurum genel bilgileri» altında 2 sütunlu grid. Başlıklar sabit; yalnızca alt metin düzenlenir. Boş metin — gösterilir."}
                         </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                          {normalizeAboutCards(draft.aboutCards).map((card, i) => (
+                          {normalizeAboutCards(draft.aboutCards, draft.institutionSegment).map((card, i) => (
                             <div
                               key={i}
                               className="rounded-lg border border-slate-200 bg-slate-50/90 p-3"
                             >
-                              <p className="mb-2 text-sm font-semibold leading-snug text-slate-900">
-                                {INSTITUTION_ABOUT_CARD_TITLES[i]}
-                              </p>
+                              {draft.institutionSegment === "driving_school" ? (
+                                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                                  Kart başlığı
+                                </label>
+                              ) : (
+                                <p className="mb-2 text-sm font-semibold leading-snug text-slate-900">
+                                  {aboutCardTitlesForSegment(draft.institutionSegment)[i]}
+                                </p>
+                              )}
+                              {draft.institutionSegment === "driving_school" ? (
+                                <input
+                                  type="text"
+                                  className="mb-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                  value={card.title}
+                                  placeholder={`Örn. Teorik ders programı (${i + 1})`}
+                                  onChange={(e) => {
+                                    const list = normalizeAboutCards(draft.aboutCards, "driving_school");
+                                    list[i] = { ...list[i], title: e.target.value };
+                                    onPatch({
+                                      aboutCards: list,
+                                      longDescription: longDescriptionFromAboutCards(list, "driving_school"),
+                                    });
+                                  }}
+                                />
+                              ) : null}
                               <label className="mb-1 block text-xs font-semibold text-slate-700">
-                                Alt metin
+                                {draft.institutionSegment === "driving_school" ? "Metin" : "Alt metin"}
                               </label>
                               <textarea
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
                                 rows={3}
                                 value={card.body}
                                 onChange={(e) => {
-                                  const list = normalizeAboutCards(draft.aboutCards);
+                                  const list = normalizeAboutCards(draft.aboutCards, draft.institutionSegment);
                                   list[i] = { ...list[i], body: e.target.value };
                                   onPatch({
                                     aboutCards: list,
-                                    longDescription: longDescriptionFromAboutCards(list),
+                                    longDescription: longDescriptionFromAboutCards(
+                                      list,
+                                      draft.institutionSegment,
+                                    ),
                                   });
                                 }}
                               />
@@ -402,17 +466,25 @@ export function InstitutionEditorFields({
                           ))}
                         </div>
                         <label className="mb-1 mt-4 block text-xs font-semibold text-slate-700">
-                          Kurum hakkında (serbest metin)
+                          {draft.institutionSegment === "driving_school"
+                            ? "Kurs hakkında (serbest metin)"
+                            : "Kurum hakkında (serbest metin)"}
                         </label>
                         <p className="mb-2 text-xs text-slate-500">
-                          Detayda «Kurum genel bilgileri» ile «Programlar» arasında gösterilir; boş bırakılabilir.
+                          {draft.institutionSegment === "driving_school"
+                            ? "Kartların altında gösterilir; örn. kampanya, taksit, ek hizmet. Boş bırakılabilir."
+                            : "Detayda «Kurum genel bilgileri» ile «Programlar» arasında gösterilir; boş bırakılabilir."}
                         </p>
                         <textarea
                           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
                           rows={5}
                           value={draft.aboutInstitution ?? ""}
                           onChange={(e) => onPatch({ aboutInstitution: e.target.value })}
-                          placeholder="Kurumunuzu anlatan metin…"
+                          placeholder={
+                            draft.institutionSegment === "driving_school"
+                              ? "Örn. direksiyon paketleri, sınav desteği, bayan eğitmen…"
+                              : "Kurumunuzu anlatan metin…"
+                          }
                         />
                       </div>
 
@@ -422,8 +494,9 @@ export function InstitutionEditorFields({
                       >
                         <h4 className="text-sm font-bold text-slate-900">Programlar ve görseller</h4>
                         <p className="mt-1 text-xs text-slate-500">
-                          Programlar: en az 2, en fazla 8 kart; başlık listede ve WhatsApp teklifinde kullanılır.
-                          Modala 8 şeffaf kutu yansır. Görseller: kapak için ilk satır önemli.
+                          {draft.institutionSegment === "driving_school"
+                            ? "Ehliyet paketleri ve kampanyalar burada tamamen elle girilir; eğitim kurumlarındaki hazır şablon mantığı yoktur. Görseller sürücü kursu sayfasına özeldir."
+                            : "Programlar: en az 2, en fazla 8 kart; başlık listede ve WhatsApp teklifinde kullanılır. Modala 8 şeffaf kutu yansır. Görseller: kapak için ilk satır önemli."}
                         </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           {normalizeProgramCards(draft.programCards).map((card, i) => (
@@ -689,95 +762,108 @@ export function InstitutionEditorFields({
                       </div>
                       <div id={`${sectionIdPrefix}-etiket-sinif-egitmen`} className="scroll-mt-28">
                         <p className="mb-1 text-sm font-semibold">
-                          Etiketler, hedef sınıflar, eğitmenler — «Kurum kartını düzenle»
+                          {draft.institutionSegment === "driving_school"
+                            ? "Eğitmenler — «Kurum kartını düzenle»"
+                            : "Etiketler, hedef sınıflar, eğitmenler — «Kurum kartını düzenle»"}
                         </p>
-                        <div className="flex flex-wrap gap-2">
-                          {tags.map((tag) => {
-                            const active = draft.tags.includes(tag.id);
-                            return (
-                              <button
-                                key={tag.id}
-                                type="button"
-                                onClick={() =>
-                                  onPatch({
-                                    tags: active
-                                      ? draft.tags.filter((t) => t !== tag.id)
-                                      : [...draft.tags, tag.id],
-                                  })
-                                }
-                                className={`rounded-full px-3 py-1 text-xs ${
-                                  active
-                                    ? "bg-slate-900 text-white"
-                                    : "bg-slate-100 text-slate-700"
-                                }`}
-                              >
-                                {tag.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {allowCreateTag ? (
-                          <div className="mt-2 flex gap-2">
-                            <input
-                              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                              placeholder="Yeni etiket adı"
-                              value={newCardTagName}
-                              onChange={(e) => setNewCardTagName(e.target.value)}
-                            />
-                            <button
-                              type="button"
-                              className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
-                              onClick={() => {
-                                void (async () => {
-                                  if (!newCardTagName.trim()) return;
-                                  const newTagId = await createTag(newCardTagName);
-                                  if (newTagId && !draft.tags.includes(newTagId)) {
-                                    onPatch({ tags: [...draft.tags, newTagId] });
-                                  }
-                                  setNewCardTagName("");
-                                })();
-                              }}
-                            >
-                              Etiket Ekle
-                            </button>
-                          </div>
-                        ) : (
-                          <p className="mt-2 text-xs text-slate-500">
-                            Yeni etiket tanımı yalnızca platform yöneticisi içindir.
+                        {draft.institutionSegment === "driving_school" ? (
+                          <p className="mb-2 text-xs text-slate-500">
+                            Sürücü kurslarında kart etiketleri LGS / YKS vb. kullanılmaz; sunduklarınız yukarıdaki
+                            Ehliyet / SRC / Operatörlük seçiminden gelir.
                           </p>
+                        ) : (
+                          <>
+                            <div className="flex flex-wrap gap-2">
+                              {tags.map((tag) => {
+                                const active = draft.tags.includes(tag.id);
+                                return (
+                                  <button
+                                    key={tag.id}
+                                    type="button"
+                                    onClick={() =>
+                                      onPatch({
+                                        tags: active
+                                          ? draft.tags.filter((t) => t !== tag.id)
+                                          : [...draft.tags, tag.id],
+                                      })
+                                    }
+                                    className={`rounded-full px-3 py-1 text-xs ${
+                                      active
+                                        ? "bg-slate-900 text-white"
+                                        : "bg-slate-100 text-slate-700"
+                                    }`}
+                                  >
+                                    {tag.name}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {allowCreateTag ? (
+                              <div className="mt-2 flex gap-2">
+                                <input
+                                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                  placeholder="Yeni etiket adı"
+                                  value={newCardTagName}
+                                  onChange={(e) => setNewCardTagName(e.target.value)}
+                                />
+                                <button
+                                  type="button"
+                                  className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
+                                  onClick={() => {
+                                    void (async () => {
+                                      if (!newCardTagName.trim()) return;
+                                      const newTagId = await createTag(newCardTagName);
+                                      if (newTagId && !draft.tags.includes(newTagId)) {
+                                        onPatch({ tags: [...draft.tags, newTagId] });
+                                      }
+                                      setNewCardTagName("");
+                                    })();
+                                  }}
+                                >
+                                  Etiket Ekle
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-xs text-slate-500">
+                                Yeni etiket tanımı yalnızca platform yöneticisi içindir.
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
-                      <div>
-                        <p className="mb-1 text-sm font-semibold">Hedef sınıflar</p>
-                        <p className="mb-2 text-xs text-slate-500">
-                          Hero ve listelemede sınıf filtresi bu seçimlere göre çalışır.
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {gradeLevels.map((gl) => {
-                            const active = draft.gradeLevelIds.includes(gl.id);
-                            return (
-                              <button
-                                key={gl.id}
-                                type="button"
-                                onClick={() =>
-                                  onPatch({
-                                    gradeLevelIds: active
-                                      ? draft.gradeLevelIds.filter((id) => id !== gl.id)
-                                      : [...draft.gradeLevelIds, gl.id],
-                                  })
-                                }
-                                className={`rounded-full px-3 py-1 text-xs ${
-                                  active
-                                    ? "bg-amber-700 text-white"
-                                    : "bg-slate-100 text-slate-700"
-                                }`}
-                              >
-                                {gl.label}
-                              </button>
-                            );
-                          })}
+                      {draft.institutionSegment === "education" ? (
+                        <div>
+                          <p className="mb-1 text-sm font-semibold">Hedef sınıflar</p>
+                          <p className="mb-2 text-xs text-slate-500">
+                            Hero ve listelemede sınıf filtresi bu seçimlere göre çalışır.
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {gradeLevels.map((gl) => {
+                              const active = draft.gradeLevelIds.includes(gl.id);
+                              return (
+                                <button
+                                  key={gl.id}
+                                  type="button"
+                                  onClick={() =>
+                                    onPatch({
+                                      gradeLevelIds: active
+                                        ? draft.gradeLevelIds.filter((id) => id !== gl.id)
+                                        : [...draft.gradeLevelIds, gl.id],
+                                    })
+                                  }
+                                  className={`rounded-full px-3 py-1 text-xs ${
+                                    active
+                                      ? "bg-amber-700 text-white"
+                                      : "bg-slate-100 text-slate-700"
+                                  }`}
+                                >
+                                  {gl.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
+                      ) : null}
                       <div>
                         <p className="mb-1 text-sm font-semibold">Eğitmenler</p>
                         <div className="space-y-2">

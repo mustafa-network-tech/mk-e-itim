@@ -128,11 +128,12 @@ export function InstitutionProgramCardsSection({
         aria-labelledby="programlar-heading"
       >
         <h2 id="programlar-heading" className="text-lg font-semibold tracking-tight text-slate-900">
-          {driving ? "Ehliyet paketleri ve modüller" : "Programlar"}
+          {driving ? "Ehliyet, SRC ve operatörlük paketleri" : "Programlar"}
         </h2>
         {driving ? (
           <p className="mt-1 text-sm text-emerald-900/80">
-            Örnek: teorik ders, direksiyon saatleri, bayan eğitmen, sınav desteği — kutuları kurumunuz doldurur.
+            Örnek kart başlıkları: B sınıfı paketi, SRC-5, iş makinesi operatörlüğü, ek direksiyon saati — modal
+            kutularına ayrıntı yazılır.
           </p>
         ) : null}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">

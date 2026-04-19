@@ -33,6 +33,7 @@ Sıra | Dosya                                      | Kısa açıklama
  19  | 20260330240000_hero_rotating_titles.sql | Ana sayfa hero: 4 dönüşümlü başlık metni
  20  | 20260330250000_storage_institution_images_bucket.sql | storage: institution-images (kurum galerisi; admin + kurum yöneticisi yazma)
  21  | 20260419193000_institutions_institution_segment.sql | institutions.institution_segment (eğitim / sürücü kursu)
+ 22  | 20260419200000_institution_types_src_operatorluk.sql | Kurum türleri: SRC, operatörlük, iş makinesi (exam_nav_ids)
 
 
 Notlar

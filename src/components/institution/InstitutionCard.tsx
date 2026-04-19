@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Institution, Review } from "@/types";
+import { DrivingOfferingBadges } from "@/components/institution/DrivingOfferingBadges";
+import { drivingSchoolOfferingsLabels } from "@/lib/examMenuNav";
 import {
   getPublicRating,
   institutionCoverImage,
@@ -19,10 +21,10 @@ interface InstitutionCardProps {
 export function InstitutionCard({ institution, reviews }: InstitutionCardProps) {
   const { average, count } = getPublicRating(institution, reviews);
   const cover = institutionCoverImage(institution);
-  const categoryLabel = institution.category;
+  const driving = isDrivingSchoolInstitution(institution);
+  const drivingOfferLabels = driving ? drivingSchoolOfferingsLabels(institution.examNavIds) : [];
   const waHref = institutionWhatsAppHref(institution);
   const hasDiscountBadge = isDiscountCurrentlyActive(institution);
-  const driving = isDrivingSchoolInstitution(institution);
 
   return (
     <article
@@ -67,21 +69,27 @@ export function InstitutionCard({ institution, reviews }: InstitutionCardProps) 
         <div
           className={`relative z-10 flex min-h-[280px] flex-1 flex-col md:min-h-[300px] ${hasDiscountBadge ? "pt-10 sm:pt-11" : ""}`}
         >
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {driving ? (
+                <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider text-emerald-100 [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">
+                  Sürücü kursu
+                </span>
+              ) : (
+                <p className="text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.14em] text-white/80 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)]">
+                  {institution.category}
+                </p>
+              )}
+            </div>
             {driving ? (
-              <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider text-emerald-100 [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">
-                Sürücü kursu
-              </span>
+              <DrivingOfferingBadges examNavIds={institution.examNavIds} variant="cardDark" />
             ) : null}
-            <p className="text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.14em] text-white/80 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)]">
-              {categoryLabel}
-            </p>
+            {driving && drivingOfferLabels.length === 0 ? (
+              <p className="text-[0.6875rem] font-medium leading-snug text-emerald-100/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
+                Ehliyet, SRC veya operatörlük — panelden sunduklarınızı işaretleyin
+              </p>
+            ) : null}
           </div>
-          {driving ? (
-            <p className="mt-2 text-[0.6875rem] font-medium leading-snug text-emerald-100/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
-              Ehliyet · Direksiyon · Sınav hazırlık
-            </p>
-          ) : null}
 
           <h3 className="mt-3 line-clamp-2 text-[1.375rem] font-bold leading-[1.2] tracking-[-0.02em] text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.75)] md:text-2xl md:leading-tight">
             {institution.name}

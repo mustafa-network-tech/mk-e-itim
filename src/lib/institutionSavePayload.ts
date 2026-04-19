@@ -26,7 +26,7 @@ export function formatInstitutionSaveError(message: string): string {
 /** Admin / onay akışında kurum satırına yazılacak alanlar (etiketler ayrı). */
 export function buildInstitutionPersistencePayload(d: Institution): Partial<Institution> {
   const priceFields = syncInstitutionPriceDisplayFields(d.minPrice, d.maxPrice);
-  const aboutCards = normalizeAboutCards(d.aboutCards);
+  const aboutCards = normalizeAboutCards(d.aboutCards, d.institutionSegment);
   const programCards = normalizeProgramCards(d.programCards);
   return {
     name: d.name,
@@ -42,7 +42,7 @@ export function buildInstitutionPersistencePayload(d: Institution): Partial<Inst
     shortDescription: d.shortDescription,
     aboutCards,
     aboutInstitution: d.aboutInstitution.trim(),
-    longDescription: longDescriptionFromAboutCards(aboutCards),
+    longDescription: longDescriptionFromAboutCards(aboutCards, d.institutionSegment),
     programCards,
     programs: programsArrayFromProgramCards(programCards),
     examNavIds: d.examNavIds,
@@ -72,8 +72,9 @@ export function mergeInstitutionWithPending(inst: Institution): Institution {
   const p = inst.pendingManagerPayload;
   if (!p?.body) return inst;
   const body = p.body;
+  const pendingSeg = body.institutionSegment ?? inst.institutionSegment;
   const aboutCards =
-    body.aboutCards !== undefined ? normalizeAboutCards(body.aboutCards) : inst.aboutCards;
+    body.aboutCards !== undefined ? normalizeAboutCards(body.aboutCards, pendingSeg) : inst.aboutCards;
   const programCards =
     body.programCards !== undefined ? normalizeProgramCards(body.programCards) : inst.programCards;
   return {
@@ -83,7 +84,7 @@ export function mergeInstitutionWithPending(inst: Institution): Institution {
     aboutCards,
     longDescription:
       body.aboutCards !== undefined
-        ? longDescriptionFromAboutCards(aboutCards)
+        ? longDescriptionFromAboutCards(aboutCards, pendingSeg)
         : (body.longDescription ?? inst.longDescription),
     programCards,
     programs:

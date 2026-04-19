@@ -38,7 +38,7 @@ export function filterInstitutions(
       .join(" ");
     const segmentHint =
       institution.institutionSegment === "driving_school"
-        ? "sürücü ehliyet direksiyon kurs"
+        ? "sürücü ehliyet src operatörlük iş makinesi direksiyon teorik ders mesleki yeterlilik"
         : "";
     const text =
       `${institution.name} ${institution.officialStatus} ${institution.shortDescription} ${institution.longDescription} ${institution.aboutInstitution} ${institution.city} ${institution.category} ${institution.examNavIds.join(" ")} ${institution.minPrice} ${institution.maxPrice} ${institution.priceRange} ${aboutText} ${programText} ${institution.programs.join(" ")} ${segmentHint}`.toLowerCase();

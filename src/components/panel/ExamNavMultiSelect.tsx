@@ -11,9 +11,18 @@ type Props = {
   idPrefix?: string;
   /** true iken hiç seçim yoksa kırmızı çerçeve */
   showError?: boolean;
+  /** Sürücü kursu: yalnızca ehliyet / SRC / operatörlük seçenekleri ve açıklama metni */
+  variant?: "default" | "drivingOfferings";
 };
 
-export function ExamNavMultiSelect({ types, value, onChange, idPrefix = "exam-nav", showError }: Props) {
+export function ExamNavMultiSelect({
+  types,
+  value,
+  onChange,
+  idPrefix = "exam-nav",
+  showError,
+  variant = "default",
+}: Props) {
   const normalized = normalizeExamNavIds(value);
   const sorted = sortInstitutionTypes(types);
 
@@ -37,12 +46,22 @@ export function ExamNavMultiSelect({ types, value, onChange, idPrefix = "exam-na
           : "border-slate-200 bg-slate-50/50"
       }`}
       role="group"
-      aria-label="Kurum türleri"
+      aria-label={variant === "drivingOfferings" ? "Sürücü kursu uzmanlıkları" : "Kurum türleri"}
     >
       <p className="mb-2 text-[11px] text-slate-600">
-        Kurum türünüz üst menüdeki filtreyle aynı sabit kodlara bağlıdır; görünen adları yalnızca admin
-        değiştirir. <strong className="text-slate-800">En az bir tür zorunludur;</strong> birden fazla
-        seçebilirsiniz.
+        {variant === "drivingOfferings" ? (
+          <>
+            Üst kurum türü <strong className="text-slate-800">sürücü kursu</strong>; burada sunduğunuz{" "}
+            <strong className="text-slate-800">ehliyet, SRC ve operatörlük / iş makinesi</strong> seçeneklerini
+            işaretleyin. <strong className="text-slate-800">En az biri zorunludur.</strong>
+          </>
+        ) : (
+          <>
+            Kurum türünüz üst menüdeki filtreyle aynı sabit kodlara bağlıdır; görünen adları yalnızca admin
+            değiştirir. <strong className="text-slate-800">En az bir tür zorunludur;</strong> birden fazla
+            seçebilirsiniz.
+          </>
+        )}
       </p>
       <ul className="grid gap-2 sm:grid-cols-2">
         {sorted.map((item) => {

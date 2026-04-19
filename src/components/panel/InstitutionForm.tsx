@@ -8,8 +8,8 @@ import {
   syncInstitutionPriceDisplayFields,
 } from "@/lib/discount";
 import {
+  aboutCardTitlesForSegment,
   createEmptyAboutCards,
-  INSTITUTION_ABOUT_CARD_TITLES,
   longDescriptionFromAboutCards,
   normalizeAboutCards,
 } from "@/lib/institutionAboutCards";
@@ -23,10 +23,18 @@ import {
 } from "@/lib/institutionProgramCards";
 import type { InstitutionAboutCard, InstitutionProgramCard, InstitutionSegment } from "@/types";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
-import { categoryDisplayFromExamNavIds, normalizeExamNavIds } from "@/lib/examMenuNav";
+import {
+  DRIVING_OFFERING_EXAM_IDS,
+  institutionCategoryFromExam,
+  normalizeExamNavIds,
+} from "@/lib/examMenuNav";
 import { ExamNavMultiSelect } from "@/components/panel/ExamNavMultiSelect";
 import { InstitutionImagesField } from "@/components/panel/InstitutionImagesField";
-import { INSTITUTION_TYPES_SEED } from "@/data/institutionTypesSeed";
+import {
+  INSTITUTION_TYPES_SEED,
+  labelMapFromInstitutionTypes,
+  sortInstitutionTypes,
+} from "@/data/institutionTypesSeed";
 
 const input =
   "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300";
@@ -78,6 +86,12 @@ export function InstitutionForm({
   const [officialStatus, setOfficialStatus] = useState("");
   const [institutionSegment, setInstitutionSegment] = useState<InstitutionSegment>("education");
   const [examNavIds, setExamNavIds] = useState<string[]>(() => [...defaults.examNavIds]);
+
+  const examTypesForSelect = useMemo(() => {
+    const s = sortInstitutionTypes(examTypes);
+    if (institutionSegment !== "driving_school") return s;
+    return s.filter((t) => (DRIVING_OFFERING_EXAM_IDS as readonly string[]).includes(t.id));
+  }, [examTypes, institutionSegment]);
   const [city, setCity] = useState(defaults.city);
   const [district, setDistrict] = useState(defaults.district);
   const [neighborhood, setNeighborhood] = useState("");
@@ -201,8 +215,9 @@ export function InstitutionForm({
           numField(minPrice, defaults.minPrice),
           numField(maxPrice, defaults.maxPrice),
         );
-        const cardsNorm = normalizeAboutCards(aboutCards);
+        const cardsNorm = normalizeAboutCards(aboutCards, institutionSegment);
         const progNorm = normalizeProgramCards(programCards);
+        const typeLabelMap = labelMapFromInstitutionTypes(sortInstitutionTypes(examTypes));
 
         const created = await createInstitution({
           name: name.trim(),
@@ -210,7 +225,7 @@ export function InstitutionForm({
           officialStatus: officialStatus.trim(),
           ownerUserId: ownerId,
           examNavIds: navIds,
-          category: categoryDisplayFromExamNavIds(navIds),
+          category: institutionCategoryFromExam(institutionSegment, navIds, typeLabelMap),
           city: city.trim(),
           district: district.trim(),
           neighborhood: neighborhood.trim(),
@@ -222,7 +237,7 @@ export function InstitutionForm({
             shortDescription.trim() || "Kurum açıklaması kısa özet olarak güncellenebilir.",
           aboutCards: cardsNorm,
           aboutInstitution: aboutInstitution.trim(),
-          longDescription: longDescriptionFromAboutCards(cardsNorm),
+          longDescription: longDescriptionFromAboutCards(cardsNorm, institutionSegment),
           price: priceSync.price,
           priceRange: priceSync.priceRange,
           minPrice: priceSync.minPrice,
@@ -271,6 +286,12 @@ export function InstitutionForm({
               type="button"
               onClick={() => {
                 setInstitutionSegment("education");
+                setAboutCards((prev) =>
+                  normalizeAboutCards(
+                    prev.map((c) => ({ title: c.title, body: c.body })),
+                    "education",
+                  ),
+                );
               }}
               className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
                 institutionSegment === "education"
@@ -285,6 +306,9 @@ export function InstitutionForm({
               onClick={() => {
                 setInstitutionSegment("driving_school");
                 setExamNavIds((prev) => normalizeExamNavIds([...prev, "EHLİYET"]));
+                setAboutCards(createEmptyAboutCards("driving_school"));
+                setSelectedTags([]);
+                setSelectedGradeIds([]);
               }}
               className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
                 institutionSegment === "driving_school"
@@ -317,9 +341,14 @@ export function InstitutionForm({
             />
           </div>
           <div className="sm:col-span-2">
-            <label className={label}>Kurum türleri (kartta birleşik gösterilir)</label>
+            <label className={label}>
+              {institutionSegment === "driving_school"
+                ? "Ehliyet, SRC ve operatörlük (sürücü kursu içinde sunduklarınız)"
+                : "Kurum türleri (kartta birleşik gösterilir)"}
+            </label>
             <ExamNavMultiSelect
-              types={examTypes}
+              types={examTypesForSelect}
+              variant={institutionSegment === "driving_school" ? "drivingOfferings" : "default"}
               idPrefix="new-inst-exam"
               value={examNavIds}
               onChange={setExamNavIds}
@@ -400,23 +429,41 @@ export function InstitutionForm({
           />
         </div>
         <div>
-          <p className={`${label} mb-2`}>Kurum genel bilgileri — 8 bilgi kartı (detayda bu başlık altında)</p>
+          <p className={`${label} mb-2`}>Kurum genel bilgileri — 8 kart</p>
           <p className="mb-3 text-xs text-slate-500">
-            Kart başlıkları sabittir; yalnızca alt metni düzenleyebilirsiniz. Boş metinler sitede — olarak görünür.
+            {institutionSegment === "driving_school"
+              ? "Her kartın başlığı ve metni kuruma özel, tamamen elle girilir. LGS / derslik gibi sabit başlık yoktur."
+              : "Kart başlıkları sabittir; yalnızca alt metni düzenleyebilirsiniz. Boş metinler sitede — olarak görünür."}
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             {aboutCards.map((card, i) => (
               <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                <p className="mb-2 text-sm font-semibold leading-snug text-slate-900">
-                  {INSTITUTION_ABOUT_CARD_TITLES[i]}
-                </p>
-                <label className={label}>Alt metin</label>
+                {institutionSegment === "driving_school" ? (
+                  <label className={label}>Kart başlığı</label>
+                ) : (
+                  <p className="mb-2 text-sm font-semibold leading-snug text-slate-900">
+                    {aboutCardTitlesForSegment(institutionSegment)[i]}
+                  </p>
+                )}
+                {institutionSegment === "driving_school" ? (
+                  <input
+                    className={`${input} mb-2`}
+                    value={card.title}
+                    placeholder={`Örn. Teorik program (${i + 1})`}
+                    onChange={(e) => {
+                      const next = normalizeAboutCards(aboutCards, "driving_school");
+                      next[i] = { ...next[i], title: e.target.value };
+                      setAboutCards(next);
+                    }}
+                  />
+                ) : null}
+                <label className={label}>{institutionSegment === "driving_school" ? "Metin" : "Alt metin"}</label>
                 <textarea
                   className={input}
                   rows={3}
                   value={card.body}
                   onChange={(e) => {
-                    const next = normalizeAboutCards(aboutCards);
+                    const next = normalizeAboutCards(aboutCards, institutionSegment);
                     next[i] = { ...next[i], body: e.target.value };
                     setAboutCards(next);
                   }}
@@ -428,14 +475,20 @@ export function InstitutionForm({
         <div>
           <label className={label}>Kurum hakkında (detay sayfası)</label>
           <p className="mb-2 text-xs text-slate-500">
-            «Kurum genel bilgileri» kartlarından sonra, serbest metin alanı. Boş bırakılabilir.
+            {institutionSegment === "driving_school"
+              ? "Kartlardan sonra serbest alan: örn. taksit, kampanya, bayan eğitmen talebi. Boş bırakılabilir."
+              : "«Kurum genel bilgileri» kartlarından sonra, serbest metin alanı. Boş bırakılabilir."}
           </p>
           <textarea
             className={input}
             rows={5}
             value={aboutInstitution}
             onChange={(e) => setAboutInstitution(e.target.value)}
-            placeholder="Kurumunuzu anlatan metin…"
+            placeholder={
+              institutionSegment === "driving_school"
+                ? "Örn. direksiyon saatleri, sınav randevusu, ek ücretler…"
+                : "Kurumunuzu anlatan metin…"
+            }
           />
         </div>
       </div>
@@ -485,8 +538,9 @@ export function InstitutionForm({
       <div className="space-y-4">
         <SectionTitle>Programlar (2–8 kart)</SectionTitle>
         <p className="text-xs text-slate-500">
-          En az 2, en fazla 8 program kartı. Kart başlığı sitede listede ve WhatsApp «Teklif Al» metninde
-          kullanılır; programa tıklanınca modala 8 şeffaf kutu (başlık + alt metin) yansır.
+          {institutionSegment === "driving_school"
+            ? "Ehliyet paketleri ve kampanyalar burada tamamen elle girilir. Kart başlığı sitede ve WhatsApp «Teklif Al» metninde kullanılır."
+            : "En az 2, en fazla 8 program kartı. Kart başlığı sitede listede ve WhatsApp «Teklif Al» metninde kullanılır; programa tıklanınca modala 8 şeffaf kutu (başlık + alt metin) yansır."}
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           {normalizeProgramCards(programCards).map((card, i) => (
@@ -709,57 +763,66 @@ export function InstitutionForm({
         </div>
       </div>
 
-      <div className="space-y-4">
-        <SectionTitle>Etiketler</SectionTitle>
-        <p className="text-xs text-slate-500">
-          Arama ve filtrelerle eşleşir. Yeni etiket için Admin → Etiketler bölümünü kullanın.
+      {institutionSegment === "education" ? (
+        <div className="space-y-4">
+          <SectionTitle>Etiketler</SectionTitle>
+          <p className="text-xs text-slate-500">
+            Arama ve filtrelerle eşleşir. Yeni etiket için Admin → Etiketler bölümünü kullanın.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() =>
+                  setSelectedTags((prev) =>
+                    prev.includes(tag.id) ? prev.filter((item) => item !== tag.id) : [...prev, tag.id],
+                  )
+                }
+                className={`rounded-full px-3 py-1 text-xs ${
+                  selectedTags.includes(tag.id)
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {tag.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="rounded-lg border border-emerald-100 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-900">
+          Sürücü kurslarında LGS / YKS vb. etiket kullanılmaz; sunduklarınız «Ehliyet, SRC ve operatörlük»
+          alanından seçilir.
         </p>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() =>
-                setSelectedTags((prev) =>
-                  prev.includes(tag.id) ? prev.filter((item) => item !== tag.id) : [...prev, tag.id],
-                )
-              }
-              className={`rounded-full px-3 py-1 text-xs ${
-                selectedTags.includes(tag.id)
-                  ? "bg-indigo-600 text-white"
-                  : "bg-slate-100 text-slate-700"
-              }`}
-            >
-              {tag.name}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
-      <div className="space-y-4">
-        <SectionTitle>Hedef sınıflar</SectionTitle>
-        <p className="text-xs text-slate-500">Hero ve listelemede sınıf filtresi için. Admin → Sınıf seçenekleri.</p>
-        <div className="flex flex-wrap gap-2">
-          {gradeLevels.map((gl) => (
-            <button
-              key={gl.id}
-              type="button"
-              onClick={() =>
-                setSelectedGradeIds((prev) =>
-                  prev.includes(gl.id) ? prev.filter((id) => id !== gl.id) : [...prev, gl.id],
-                )
-              }
-              className={`rounded-full px-3 py-1 text-xs ${
-                selectedGradeIds.includes(gl.id)
-                  ? "bg-amber-700 text-white"
-                  : "bg-slate-100 text-slate-700"
-              }`}
-            >
-              {gl.label}
-            </button>
-          ))}
+      {institutionSegment === "education" ? (
+        <div className="space-y-4">
+          <SectionTitle>Hedef sınıflar</SectionTitle>
+          <p className="text-xs text-slate-500">Hero ve listelemede sınıf filtresi için. Admin → Sınıf seçenekleri.</p>
+          <div className="flex flex-wrap gap-2">
+            {gradeLevels.map((gl) => (
+              <button
+                key={gl.id}
+                type="button"
+                onClick={() =>
+                  setSelectedGradeIds((prev) =>
+                    prev.includes(gl.id) ? prev.filter((id) => id !== gl.id) : [...prev, gl.id],
+                  )
+                }
+                className={`rounded-full px-3 py-1 text-xs ${
+                  selectedGradeIds.includes(gl.id)
+                    ? "bg-amber-700 text-white"
+                    : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {gl.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {!selfServeManager ? (
         <div className="space-y-4">

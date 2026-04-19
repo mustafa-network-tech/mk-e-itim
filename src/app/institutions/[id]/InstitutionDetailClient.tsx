@@ -6,6 +6,7 @@ import { notFound, useParams } from "next/navigation";
 import { useDemoPlatform } from "@/hooks/useDemoPlatform";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { TagBadge } from "@/components/ui/TagBadge";
+import { DrivingOfferingBadges } from "@/components/institution/DrivingOfferingBadges";
 import {
   getPublicRating,
   institutionCanOpenWhatsAppChat,
@@ -48,6 +49,10 @@ export function InstitutionDetailClient() {
   const waHref = institutionWhatsAppHref(institution);
   const hasWhatsAppNumber = institutionCanOpenWhatsAppChat(institution);
   const driving = isDrivingSchoolInstitution(institution);
+  const aboutCardsNormalized = normalizeAboutCards(institution.aboutCards, institution.institutionSegment);
+  const aboutCardsToShow = driving
+    ? aboutCardsNormalized.filter((c) => c.title.trim() || c.body.trim())
+    : aboutCardsNormalized;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
@@ -76,20 +81,24 @@ export function InstitutionDetailClient() {
         <InstitutionDetailDiscountBand institution={institution} />
 
         <div className={`border-t px-6 py-5 md:px-8 ${driving ? "border-emerald-100" : "border-slate-100"}`}>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {driving ? (
+                <span className="rounded-full border border-emerald-300/80 bg-emerald-100/90 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-emerald-900">
+                  Sürücü kursu
+                </span>
+              ) : (
+                <p className="text-sm font-medium text-amber-800">{institution.category}</p>
+              )}
+            </div>
             {driving ? (
-              <span className="rounded-full border border-emerald-300/80 bg-emerald-100/90 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-emerald-900">
-                Sürücü kursu
-              </span>
+              <DrivingOfferingBadges examNavIds={institution.examNavIds} variant="detailLight" />
             ) : null}
-            <p className={`text-sm font-medium ${driving ? "text-emerald-900" : "text-amber-800"}`}>
-              {institution.category}
-            </p>
           </div>
           {driving ? (
             <p className="mt-2 text-sm text-emerald-800/90">
-              Direksiyon eğitimi, ehliyet sınavı hazırlığı ve teorik dersler — ihtiyacınıza göre paketler
-              aşağıda.
+              Sunduğunuz hizmetler (ehliyet, SRC, operatörlük) yukarıdaki rozetlerde; ayrıntılar aşağıdaki kart ve
+              programlarda kurum tarafından yazılır.
             </p>
           ) : null}
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">{institution.name}</h1>
@@ -144,11 +153,13 @@ export function InstitutionDetailClient() {
                   {institution.neighborhood ? ` · ${institution.neighborhood}` : ""}
                 </p>
                 <InstitutionPriceBlock institution={institution} variant="detailLight" />
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {institution.tags.map((tagId) => (
-                    <TagBadge key={tagId} label={tags.find((t) => t.id === tagId)?.name ?? tagId} />
-                  ))}
-                </div>
+                {!driving ? (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {institution.tags.map((tagId) => (
+                      <TagBadge key={tagId} label={tags.find((t) => t.id === tagId)?.name ?? tagId} />
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
                 <a
@@ -188,20 +199,38 @@ export function InstitutionDetailClient() {
             aria-labelledby="kurum-genel-bilgileri-heading"
           >
             <h2 id="kurum-genel-bilgileri-heading" className="text-lg font-semibold tracking-tight text-slate-900">
-              {driving ? "Kurs ve donanım bilgileri" : "Kurum genel bilgileri"}
+              Kurum genel bilgileri
             </h2>
+            {driving ? (
+              <p className="mt-2 text-sm text-emerald-900/85">
+                Bu bölümdeki başlık ve metinler tamamen kuruma özeldir; LGS / YKS gibi eğitim etiketleri
+                kullanılmaz.
+              </p>
+            ) : null}
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {normalizeAboutCards(institution.aboutCards).map((card, i) => (
-                <div
-                  key={i}
-                  className="flex min-h-[7rem] flex-col rounded-xl border border-slate-100 bg-slate-50/90 p-4"
-                >
-                  <h3 className="text-sm font-semibold text-slate-900">{card.title.trim()}</h3>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
-                    {card.body.trim() ? card.body.trim() : "—"}
-                  </p>
-                </div>
-              ))}
+              {aboutCardsToShow.length === 0 && driving ? (
+                <p className="text-sm text-slate-500 sm:col-span-2">
+                  Bu alanlar henüz doldurulmadı. Kurum panelinden 8 bilgi kartına başlık ve metin girebilirsiniz.
+                </p>
+              ) : (
+                aboutCardsToShow.map((card, i) => (
+                  <div
+                    key={`${card.title}-${i}`}
+                    className={`flex min-h-[7rem] flex-col rounded-xl border p-4 ${
+                      driving
+                        ? "border-emerald-200/90 bg-emerald-50/35"
+                        : "border-slate-100 bg-slate-50/90"
+                    }`}
+                  >
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      {card.title.trim() ? card.title.trim() : driving ? "(Başlıksız kart)" : card.title.trim()}
+                    </h3>
+                    <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                      {card.body.trim() ? card.body.trim() : "—"}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 

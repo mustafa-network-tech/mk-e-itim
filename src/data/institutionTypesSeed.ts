@@ -6,8 +6,10 @@ export const INSTITUTION_TYPES_SEED: InstitutionTypeDef[] = [
   { id: "YKS", label: "YKS", sortOrder: 2 },
   { id: "YABANCI DİL", label: "Yabancı dil", sortOrder: 3 },
   { id: "EHLİYET", label: "Ehliyet", sortOrder: 4 },
-  { id: "KPSS", label: "KPSS", sortOrder: 5 },
-  { id: "DIGER", label: "Diğer", sortOrder: 6 },
+  { id: "SRC", label: "SRC belgesi", sortOrder: 5 },
+  { id: "OPERATORLUK", label: "Operatörlük belgesi", sortOrder: 6 },
+  { id: "KPSS", label: "KPSS", sortOrder: 8 },
+  { id: "DIGER", label: "Diğer", sortOrder: 9 },
 ];
 
 export function labelMapFromInstitutionTypes(defs: InstitutionTypeDef[]): Record<string, string> {
